@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - SwingCity</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body class="leaderboard-body">
+
+<div class="leaderboard-container">
+    <!-- Header -->
+    <div class="leaderboard-header">
+        <img src="/images/swingcity-logo.png" alt="SwingCity" class="leaderboard-logo">
+        <p class="subtitle">Tap your RFID card to view team scores</p>
+    </div>
+
+    <!-- RFID Input State -->
+    <div class="leaderboard-state active" id="rfidInputState">
+        <div class="rfid-prompt">
+            <div class="rfid-icon">�</div>
+            <h2>Ready for RFID Scan</h2>
+            <p>Tap your team card on the reader to view scores</p>
+            <div class="input-fallback">
+                <p class="small-text">Or manually enter RFID:</p>
+                <input type="text" id="manualRfid" placeholder="Enter RFID number" class="manual-input">
+                <button onclick="lookupTeam()" class="btn btn-primary btn-sm">Lookup Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="leaderboard-state" id="loadingState">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <h2>Loading Team Data...</h2>
+            <p>Please wait</p>
+        </div>
+    </div>
+
+    <!-- Team Scores Display -->
+    <div class="leaderboard-state" id="scoresState">
+        <div class="team-header">
+            <h2 id="teamName">Team Name</h2>
+            <div class="team-stats">
+                <span class="stat">Total Score: <strong id="totalScore">0</strong></span>
+                <span class="stat">Holes Completed: <strong id="holesCompleted">0</strong>/12</span>
+            </div>
+        </div>
+
+        <div class="scores-container">
+            <div class="players-grid" id="playersGrid">
+                <!-- Players will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="leaderboard-actions">
+            <button onclick="resetView()" class="btn btn-secondary">New Scan</button>
+            <button onclick="printScores()" class="btn btn-primary">Print Scores</button>
+            <a href="/admin" class="btn btn-info">Admin</a>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="leaderboard-state" id="errorState">
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h2>Team Not Found</h2>
+            <p id="errorMessage">The RFID card was not recognized.</p>
+            <button onclick="resetView()" class="btn btn-primary">Try Again</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden RFID input to capture keyboard scanner input -->
+<input type="text" id="hiddenRfidInput" style="position: absolute; left: -9999px; opacity: 0;" tabindex="-1">
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Global variables
+let currentTeam = null;
+let socket = null;
+let scanTimeout = null;
+
+// Hole ID to display name mapping
+const HOLE_NAMES = {
+    'Plinko': 'Plinko',
+    'SpinningTop': 'Spinning Top', 
+    'Haphazard': 'Haphazard',
+    'Roundhouse': 'Roundhouse',
+    'HillHop': 'Hill Hop',
+    'SkiJump': 'Ski Jump',
+    'Mastermind': 'Mastermind',
+    'Igloo': 'Igloo',
+    'Octagon': 'Octagon',
+    'LoopDeLoop': 'Loop De Loop',
+    'UpAndOver': 'Up And Over',
+    'Lopsided': 'Lopsided',
+    'Lopside': 'Lopside'
+};
+
+// Initialize the leaderboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    setupRFIDCapture();
+    resetView();
+    
+    // Auto test with sample data for debugging (remove in production)
+    if (window.location.search.includes('test=true')) {
+        setTimeout(() => {
+            const testData = {
+                teamName: "Test Team",
+                totalScore: 1250,
+                holesCompleted: 8,
+                players: [
+                    {
+                        name: "Alice",
+                        scores: {
+                            "Plinko": { total: 150 },
+                            "SpinningTop": { total: 75 },
+                            "Haphazard": { total: -25 },
+                            "Roundhouse": { total: 100 },
+                            "HillHop": { total: 200 },
+                            "SkiJump": { total: -50 },
+                            "Mastermind": { total: 125 },
+                            "Igloo": { total: 175 },
+                            "Octagon": { total: 100 },
+                            "LoopDeLoop": { total: 150 },
+                            "UpAndOver": { total: 75 },
+                            "Lopside": { total: 50 }
+                        }
+                    },
+                    {
+                        name: "Bob",
+                        scores: {
+                            "Plinko": { total: 100 },
+                            "SpinningTop": { total: 125 },
+                            "Haphazard": { total: 50 },
+                            "Roundhouse": { total: 75 },
+                            "HillHop": { total: 150 },
+                            "SkiJump": { total: -75 },
+                            "Mastermind": { total: 100 },
+                            "Igloo": { total: 200 }
+                        }
+                    }
+                ]
+            };
+            displayTeamScores(testData);
+        }, 1000);
+    }
+});
+
+function initializeSocket() {
+    socket = io();
+    
+    socket.on('connect', function() {
+        console.log('Leaderboard connected to server');
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('Leaderboard disconnected from server');
+    });
+}
+
+function setupRFIDCapture() {
+    const hiddenInput = document.getElementById('hiddenRfidInput');
+    
+    // Keep focus on hidden input to capture RFID scanner output
+    hiddenInput.focus();
+    
+    // Refocus if user clicks elsewhere
+    document.addEventListener('click', function() {
+        setTimeout(() => hiddenInput.focus(), 100);
+    });
+    
+    // Handle RFID input
+    hiddenInput.addEventListener('input', function(e) {
+        const value = e.target.value.trim();
+        
+        // Clear any existing timeout
+        if (scanTimeout) {
+            clearTimeout(scanTimeout);
+        }
+        
+        // Set timeout to process the input (RFID scanners typically send all data quickly)
+        scanTimeout = setTimeout(() => {
+            if (value.length >= 8) { // Minimum RFID length
+                processRFIDScan(value);
+                hiddenInput.value = ''; // Clear input
+            }
+        }, 100);
+    });
+    
+    // Handle Enter key (some RFID scanners append this)
+    hiddenInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const value = e.target.value.trim();
+            if (value.length >= 8) {
+                processRFIDScan(value);
+                hiddenInput.value = '';
+            }
+        }
+    });
+}
+
+function processRFIDScan(rfid) {
+    console.log('RFID Scanned:', rfid);
+    showState('loading');
+    
+    // Fetch team data
+    fetch(`/api/team/${rfid}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(teamData => {
+            displayTeamScores(teamData);
+        })
+        .catch(error => {
+            console.error('Error fetching team data:', error);
+            showError('Team not found or server error');
+        });
+}
+
+function lookupTeam() {
+    const manualInput = document.getElementById('manualRfid');
+    const rfid = manualInput.value.trim();
+    
+    if (!rfid) {
+        alert('Please enter an RFID number');
+        return;
+    }
+    
+    if (rfid.length < 8) {
+        alert('RFID number too short');
+        return;
+    }
+    
+    processRFIDScan(rfid);
+    manualInput.value = '';
+}
+
+function displayTeamScores(teamData) {
+    currentTeam = teamData;
+    
+    // Update team header
+    document.getElementById('teamName').textContent = teamData.teamName;
+    document.getElementById('totalScore').textContent = teamData.totalScore.toLocaleString();
+    document.getElementById('holesCompleted').textContent = teamData.holesCompleted;
+    
+    // Create scorecard table
+    const playersGrid = document.getElementById('playersGrid');
+    playersGrid.innerHTML = '';
+    
+    const scorecardTable = createScorecardTable(teamData.players);
+    playersGrid.appendChild(scorecardTable);
+    
+    showState('scores');
+    
+    // Auto-reset after 30 seconds of inactivity
+    setTimeout(() => {
+        if (getCurrentState() === 'scores') {
+            resetView();
+        }
+    }, 30000);
+}
+
+function createScorecardTable(players) {
+    console.log('Creating scorecard table for players:', players);
+    
+    const table = document.createElement('table');
+    table.className = 'scorecard-table';
+    
+    // Define hole order (matches actual database holes)
+    const holeOrder = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+    
+    // Create header using DOM methods instead of innerHTML
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    // Player name header
+    const playerHeader = document.createElement('th');
+    playerHeader.className = 'player-name-header';
+    playerHeader.textContent = 'Player';
+    headerRow.appendChild(playerHeader);
+    console.log('Added player header');
+    
+    // Hole headers
+    holeOrder.forEach((holeId, index) => {
+        const holeName = HOLE_NAMES[holeId] || holeId;
+        const th = document.createElement('th');
+        th.className = 'hole-header';
+        th.textContent = holeName; // Put text directly in th, not in span
+        headerRow.appendChild(th);
+        console.log(`Added hole header ${index + 1}: ${holeName}`);
+    });
+    
+    // Total header
+    const totalHeader = document.createElement('th');
+    totalHeader.className = 'total-header';
+    totalHeader.textContent = 'Total';
+    headerRow.appendChild(totalHeader);
+    console.log('Added total header');
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    console.log('Header row children:', headerRow.children.length);
+    
+    // Create body rows
+    const tbody = document.createElement('tbody');
+    players.forEach(player => {
+        const playerTotal = Object.values(player.scores).reduce((sum, holeScore) => {
+            return sum + (holeScore.total || 0);
+        }, 0);
+        
+        const row = document.createElement('tr');
+        
+        // Player name cell
+        const nameCell = document.createElement('td');
+        nameCell.className = 'player-name-cell';
+        nameCell.textContent = player.name;
+        row.appendChild(nameCell);
+        
+        // Score cells
+        holeOrder.forEach(holeId => {
+            const score = player.scores[holeId];
+            const scoreValue = score ? score.total : '-';
+            const scoreClass = score ? (score.total > 0 ? 'positive-score' : score.total < 0 ? 'negative-score' : 'zero-score') : 'no-score';
+            
+            const scoreCell = document.createElement('td');
+            scoreCell.className = `score-cell ${scoreClass}`;
+            scoreCell.textContent = scoreValue;
+            row.appendChild(scoreCell);
+        });
+        
+        // Total cell
+        const totalClass = playerTotal > 0 ? 'positive-score' : playerTotal < 0 ? 'negative-score' : 'zero-score';
+        const totalCell = document.createElement('td');
+        totalCell.className = `total-cell ${totalClass}`;
+        totalCell.textContent = playerTotal;
+        row.appendChild(totalCell);
+        
+        tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    return table;
+}
+
+function showState(stateName) {
+    // Hide all states
+    document.querySelectorAll('.leaderboard-state').forEach(state => {
+        state.classList.remove('active');
+    });
+    
+    // Show requested state
+    const stateElement = document.getElementById(stateName + 'State');
+    if (stateElement) {
+        stateElement.classList.add('active');
+    }
+    
+    // Ensure hidden input stays focused
+    setTimeout(() => {
+        document.getElementById('hiddenRfidInput').focus();
+    }, 100);
+}
+
+function getCurrentState() {
+    const activeState = document.querySelector('.leaderboard-state.active');
+    if (activeState) {
+        return activeState.id.replace('State', '');
+    }
+    return 'rfidInput';
+}
+
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    showState('error');
+}
+
+function resetView() {
+    currentTeam = null;
+    showState('rfidInput');
+    
+    // Clear manual input
+    document.getElementById('manualRfid').value = '';
+}
+
+function printScores() {
+    if (!currentTeam) return;
+    
+    // Create a printable version
+    const printWindow = window.open('', '_blank');
+    const printContent = generatePrintContent(currentTeam);
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function generatePrintContent(teamData) {
+    let playersHTML = '';
+    
+    teamData.players.forEach(player => {
+        const playerTotal = Object.values(player.scores).reduce((sum, holeScore) => {
+            return sum + (holeScore.total || 0);
+        }, 0);
+        
+        let scoresHTML = '';
+        Object.entries(player.scores).forEach(([holeId, holeScore]) => {
+            const holeNumber = Object.keys(window.HOLES || {}).indexOf(holeId) + 1 || '?';
+            scoresHTML += `
+                <tr>
+                    <td>Hole ${holeNumber}</td>
+                    <td>${holeScore.total}</td>
+                    <td>${holeScore.throws.length}</td>
+                </tr>
+            `;
+        });
+        
+        playersHTML += `
+            <div class="player-section">
+                <h3>${player.name} - ${playerTotal.toLocaleString()} points</h3>
+                <table border="1" cellpadding="5" cellspacing="0">
+                    <thead>
+                        <tr><th>Hole</th><th>Score</th><th>Throws</th></tr>
+                    </thead>
+                    <tbody>
+                        ${scoresHTML}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    });
+    
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>SwingCity Scores - ${teamData.teamName}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .player-section { margin-bottom: 30px; }
+                table { width: 100%; }
+                th { background: #f0f0f0; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🏆 SwingCity Scores</h1>
+                <h2>${teamData.teamName}</h2>
+                <p>Total Score: ${teamData.totalScore.toLocaleString()} | Holes Completed: ${teamData.holesCompleted}/12</p>
+                <p>Generated: ${new Date().toLocaleString()}</p>
+            </div>
+            ${playersHTML}
+        </body>
+        </html>
+    `;
+}
+
+// Handle manual input enter key
+document.getElementById('manualRfid').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        lookupTeam();
+    }
+});
+</script>
+
+</body>
+</html>

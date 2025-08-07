@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>Hole <%= holeNumber %> - <%= hole.name %> - SwingCity</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
+    <link rel="stylesheet" href="/css/unity-feel.css?v=<%= Date.now() %>">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+
+<%
+// Determine background pattern based on hole number
+// Odd holes get stripes, even holes get zebra
+const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra';
+%>
+
+<div class="tablet-container <%= backgroundPattern %> hole-<%= holeNumber %>">
+    <!-- Top Scoreboard Button -->
+    <button class="top-scoreboard-button" id="openScoreboardBtn" onclick="openTeamScoreboard()" style="display: none;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
+            <path d="M7 7h10v2H7zM7 11h10v2H7zM7 15h7v2H7z"/>
+        </svg>
+    </button>
+    
+    <!-- Fullscreen Button for Mobile -->
+    <button class="fullscreen-button" id="fullscreenBtn" onclick="toggleFullscreen()" style="display: none;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+    </button>
+    
+    <!-- SwingCity Logo - Centered at top -->
+    <div class="top-logo">
+        <img src="/images/swingcity-main-logo.png" alt="SwingCity Interactive Arcade Golf" />
+    </div>
+    
+    <div class="hole-header">
+        <div class="hole-info">
+            <div class="hole-logo">
+                <%
+                // Map hole names to image filenames
+                const holeImageMap = {
+                    'Plinko': 'Plinko',
+                    'SpinningTop': 'SpinningTop_2lines',
+                    'Haphazard': 'Haphazard',
+                    'Roundhouse': 'Roundhouse', 
+                    'HillHop': 'HillHop',
+                    'SkiJump': 'SkiJump',
+                    'Mastermind': 'Mastermind',
+                    'Igloo': 'Igloo',
+                    'Octagon': 'Octagon',
+                    'LoopDeLoop': 'LoopDeLoop',
+                    'UpAndOver': 'UpOver',
+                    'Lopside': 'Lopside'
+                };
+                const imageFileName = holeImageMap[hole.name] || hole.name;
+                %>
+                <img src="/images/hole-names-png/<%= holeNumber %>_<%= imageFileName %>_WhiteText.png" 
+                     alt="<%= hole.name %>" 
+                     class="hole-logo-image-fullsize"
+                     onerror="document.getElementById('fallback-text').style.display='block'; this.style.display='none';">
+                <!-- Fallback text if image doesn't load -->
+                <div id="fallback-text" style="display: none;">
+                    <h1>Hole <%= holeNumber %></h1>
+                    <h2><%= hole.name %></h2>
+                    <div class="par-info">Par <%= hole.par %></div>
+                </div>
+            </div>
+        </div>
+        <div class="hole-status" id="holeStatus">
+            <span class="status-indicator waiting">Waiting for Team</span>
+        </div>
+    </div>
+
+    <!-- Vertical Ball Indicator - Center Left -->
+    <div class="vertical-status-indicator">
+        <div class="status-circle" id="ball1Indicator" title="Ball 1"></div>
+        <div class="status-circle" id="ball2Indicator" title="Ball 2"></div>
+        <div class="status-circle" id="ball3Indicator" title="Ball 3"></div>
+    </div>
+
+    <!-- Bottom Text Border - HIDDEN -->
+    <div class="bottom-text-border" id="bottomTextBorder" style="display: none !important;">
+        <!-- Text content can be dynamically updated -->
+    </div>
+
+    <!-- Waiting State -->
+    <div class="game-state waiting-state active" id="waitingState">
+        <div class="rfid-prompt" id="rfidPrompt">
+            <div class="rfid-icon" id="rfidIcon">
+                <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Center dot -->
+                    <circle cx="50" cy="50" r="6" fill="#FFFFFF"/>
+                    
+                    <!-- Inner wave -->
+                    <path d="M35 35 Q50 20, 65 35" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <path d="M35 65 Q50 80, 65 65" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    
+                    <!-- Middle wave -->
+                    <path d="M25 25 Q50 5, 75 25" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <path d="M25 75 Q50 95, 75 75" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    
+                    <!-- Outer wave -->
+                    <path d="M15 15 Q50 -10, 85 15" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <path d="M15 85 Q50 110, 85 85" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+            <h3 id="rfidPromptTitle">Tap your team card to start</h3>
+            <p id="rfidPromptMessage">Hold your RFID card near the reader</p>
+            <div id="rfidPromptTest" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <p style="font-size: 0.9rem; opacity: 0.7;">🧪 Test Mode: Press "1" + Enter to load test team</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Playing State -->
+    <div class="game-state playing-state" id="playingState">
+        <!-- Current Player Display -->
+        <div class="current-player-display">
+            <div class="player-name" id="currentPlayerName">Player Name</div>
+            <div class="player-hole-score" id="currentPlayerScore">0</div>
+        </div>
+        
+        <!-- Bottom Team Members Border -->
+        <div class="bottom-team-border" id="bottomTeamBorder">
+            <!-- Team members will be dynamically populated here -->
+        </div>
+    </div>
+
+    <!-- Completed State -->
+    <div class="game-state completed-state" id="completedState">
+        <div class="completion-message">
+            <div class="completion-icon">✅</div>
+            <h3>Hole Complete!</h3>
+            <div class="hole-summary" id="holeSummary">
+                <p>Score: <span id="finalScore">0</span></p>
+                <p id="scoreDescription"></p>
+            </div>
+            <div class="next-actions">
+                <button class="next-hole-btn" onclick="proceedToNextHole()">
+                    Continue to Next Hole
+                </button>
+                <button class="finish-game-btn" onclick="finishGame()" style="display: none;">
+                    Finish Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="game-state error-state" id="errorState">
+        <div class="error-message">
+            <div class="error-icon">⚠️</div>
+            <h3>Something went wrong</h3>
+            <p id="errorText">Please try again or contact staff for assistance.</p>
+            <button class="retry-btn" onclick="resetToWaiting()">
+                Try Again
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Team Scoreboard Modal -->
+<div class="team-scoreboard-modal" id="teamScoreboardModal">
+    <div class="scoreboard-content">
+        <div class="scoreboard-header">
+            <h2>📊 Team Scoreboard</h2>
+            <button class="close-modal-btn" onclick="closeTeamScoreboard()">✕</button>
+        </div>
+        <div class="scoreboard-body">
+            <div class="modal-team-info" id="modalTeamInfo">
+                <h3 id="modalTeamName">Team Name</h3>
+                <div class="modal-team-stats">
+                    <div class="modal-stat">
+                        <span class="label">Total Score</span>
+                        <span class="value" id="modalTotalScore">0</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span class="label">Holes Completed</span>
+                        <span class="value" id="modalHolesCompleted">0</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span class="label">Current Hole</span>
+                        <span class="value" id="modalCurrentHole"><%= holeNumber %></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-scorecard-container" id="modalScorecardContainer">
+                <!-- Scorecard table will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Info (remove in production) -->
+<div class="debug-info">
+    <h4>Debug Info:</h4>
+    <p>Hole: <%= holeNumber %> (<%= hole.name %>)</p>
+    <p>Par: <%= hole.par %></p>
+    <p>Config: <%= JSON.stringify(hole) %></p>
+    <p>Socket Status: <span id="socketStatus">Connecting...</span></p>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/image-autocrop.js"></script>
+<script src="/js/main.js"></script>
+<script>
+// Global variables
+let currentTeam = null;
+let selectedScore = null;
+let socket = null;
+const holeNumber = <%= holeNumber %>;
+const holeConfig = <%- JSON.stringify(hole) %>;
+
+// Make hole data available globally for RFID handler
+window.holeData = {
+    number: holeNumber,
+    name: '<%= hole.name %>',
+    config: holeConfig
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    resetToWaiting();
+    initializeFullscreen();
+    initializeDynamicSizing();
+});
+
+// Dynamic sizing system for current player display
+function initializeDynamicSizing() {
+    calculateAndSetDynamicSizes();
+    
+    // Recalculate on window resize and orientation change
+    window.addEventListener('resize', debounce(calculateAndSetDynamicSizes, 100));
+    window.addEventListener('orientationchange', () => {
+        setTimeout(calculateAndSetDynamicSizes, 200);
+    });
+}
+
+function calculateAndSetDynamicSizes() {
+    // Get the actual positions of the top and bottom elements
+    const topLogo = document.querySelector('.top-logo');
+    const holeHeader = document.querySelector('.hole-header');
+    const bottomBorder = document.querySelector('.bottom-team-border');
+    
+    let topOffset = 280; // Default fallback
+    let bottomOffset = 128; // Default bottom border height
+    
+    // Calculate actual top offset (logo + header height)
+    if (topLogo && holeHeader) {
+        const logoRect = topLogo.getBoundingClientRect();
+        const headerRect = holeHeader.getBoundingClientRect();
+        topOffset = Math.max(logoRect.bottom, headerRect.bottom);
+    } else if (holeHeader) {
+        const headerRect = holeHeader.getBoundingClientRect();
+        topOffset = headerRect.bottom;
+    }
+    
+    // Calculate actual bottom offset
+    if (bottomBorder) {
+        const borderRect = bottomBorder.getBoundingClientRect();
+        bottomOffset = borderRect.height || 128;
+    }
+    
+    // Calculate available height for current player display
+    const viewportHeight = window.innerHeight;
+    const availableHeight = viewportHeight - topOffset - bottomOffset;
+    
+    // Calculate font sizes based on available space
+    // Each section (name and score) gets roughly half the available height
+    const sectionHeight = availableHeight / 2;
+    
+    // Base the font size on a percentage of the section height
+    // Use a reasonable scaling factor to prevent text from being too large or small
+    const nameSize = Math.max(2, Math.min(sectionHeight * 0.25, 8)); // Between 2rem and 8rem
+    const scoreSize = Math.max(2, Math.min(nameSize * 0.65, 6)); // Score is 65% of name size (was 50%), capped at 6rem
+    
+    // Set CSS custom properties
+    document.documentElement.style.setProperty('--top-offset', `${topOffset}px`);
+    document.documentElement.style.setProperty('--available-height', `${availableHeight}px`);
+    document.documentElement.style.setProperty('--player-name-size', `${nameSize}rem`);
+    document.documentElement.style.setProperty('--player-score-size', `${scoreSize}rem`);
+    
+    console.log(`🎯 Dynamic sizing calculated:`, {
+        topOffset: topOffset + 'px',
+        availableHeight: availableHeight + 'px',
+        nameSize: nameSize + 'rem',
+        scoreSize: scoreSize + 'rem'
+    });
+}
+
+// Debounce utility to prevent excessive recalculations
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Fullscreen functionality for Android tablets
+function initializeFullscreen() {
+    // Check if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    // Set CSS custom property for viewport height (fixes mobile browser issues)
+    function setViewportHeight() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    
+    setViewportHeight();
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(setViewportHeight, 100);
+    });
+    
+    // Function to request fullscreen
+    const requestFullscreen = () => {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(err => {
+                console.log('Fullscreen request failed:', err);
+                hideBrowserUI();
+            });
+        } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+            docEl.msRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+            docEl.mozRequestFullScreen();
+        } else {
+            hideBrowserUI();
+        }
+    };
+    
+    // Function to exit fullscreen
+    const exitFullscreen = () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        }
+        document.body.classList.remove('fullscreen-active');
+    };
+    
+    // Fallback method to hide browser UI
+    const hideBrowserUI = () => {
+        // Force landscape orientation if possible
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+                console.log('Could not lock orientation');
+            });
+        }
+        
+        // Hide address bar on mobile browsers
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.body.classList.add('fullscreen-active');
+        }, 100);
+        
+        // Add meta tag to hide status bar if not already present
+        let metaTag = document.querySelector('meta[name="theme-color"]');
+        if (metaTag) {
+            metaTag.content = '#000000';
+        }
+    };
+    
+    // Automatically request fullscreen after page load
+    setTimeout(() => {
+        requestFullscreen();
+    }, 1000);
+    
+    // Setup 4-tap sequence on team status bar to exit fullscreen
+    const teamStatusBar = document.querySelector('.status-indicator');
+    if (teamStatusBar) {
+        let tapCount = 0;
+        let tapTimer;
+        const maxTapInterval = 800; // Max time between taps (ms)
+        
+        teamStatusBar.addEventListener('click', (e) => {
+            tapCount++;
+            
+            // Clear existing timer
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+            }
+            
+            // Check if we reached 4 taps
+            if (tapCount >= 4) {
+                // Vibrate if available
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100, 50, 100]);
+                }
+                
+                // Toggle fullscreen based on current state
+                const isCurrentlyFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || 
+                                                document.mozFullScreenElement || document.msFullscreenElement);
+                
+                if (isCurrentlyFullscreen) {
+                    // Exit fullscreen
+                    exitFullscreen();
+                    showToggleMessage(false);
+                } else {
+                    // Enter fullscreen
+                    requestFullscreen();
+                    showToggleMessage(true);
+                }
+                
+                // Reset tap count
+                tapCount = 0;
+                return;
+            }
+            
+            // Set timer to reset tap count if no more taps come
+            tapTimer = setTimeout(() => {
+                tapCount = 0;
+            }, maxTapInterval);
+            
+            // Visual feedback for taps
+            teamStatusBar.style.transform = 'scale(0.95)';
+            
+            // Show tap count indicator
+            showTapCountIndicator(tapCount);
+            
+            setTimeout(() => {
+                teamStatusBar.style.transform = '';
+            }, 100);
+        });
+        
+        // Prevent context menu on the status bar
+        teamStatusBar.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+    }
+    
+    // Show message when toggling fullscreen
+    function showToggleMessage(enteringFullscreen) {
+        const message = document.createElement('div');
+        message.id = 'fullscreen-toggle-message';
+        
+        if (enteringFullscreen) {
+            message.textContent = 'Entered fullscreen mode. Tap team status 4 times quickly to exit fullscreen.';
+        } else {
+            message.textContent = 'Exited fullscreen mode. Tap team status 4 times quickly to enter fullscreen again.';
+        }
+        
+        message.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-size: 14px;
+            text-align: center;
+            max-width: 90%;
+        `;
+        document.body.appendChild(message);
+        
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 3000);
+    }
+    
+    // Prevent context menu on long press (except on team status bar)
+    document.addEventListener('contextmenu', (e) => {
+        if (!e.target.classList.contains('status-indicator')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Prevent text selection
+    document.addEventListener('selectstart', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Prevent default touch behaviors that could exit fullscreen
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Prevent accidental navigation gestures
+    document.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+    });
+    
+    document.addEventListener('gesturechange', (e) => {
+        e.preventDefault();
+    });
+    
+    document.addEventListener('gestureend', (e) => {
+        e.preventDefault();
+    });
+    
+    // Re-enable fullscreen when page becomes visible again (only if user hasn't manually exited)
+    let userManuallyExitedFullscreen = false;
+    
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !document.fullscreenElement && !userManuallyExitedFullscreen) {
+            // Page became visible and not in fullscreen, and user didn't manually exit
+            setTimeout(() => {
+                requestFullscreen();
+            }, 1000); // Longer delay to be less aggressive
+        }
+    });
+    
+    // Re-enable fullscreen on window focus (only if user hasn't manually exited)
+    window.addEventListener('focus', () => {
+        if (!document.fullscreenElement && !userManuallyExitedFullscreen) {
+            setTimeout(() => {
+                requestFullscreen();
+            }, 1000); // Longer delay to be less aggressive
+        }
+    });
+    
+    // Listen for fullscreen changes and track user manual exits
+    const fullscreenEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+    fullscreenEvents.forEach(event => {
+        document.addEventListener(event, () => {
+            const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || 
+                                  document.mozFullScreenElement || document.msFullscreenElement);
+            
+            if (isFullscreen) {
+                console.log('Entered fullscreen mode');
+                document.body.classList.add('fullscreen-active');
+                // Additional mobile optimizations
+                if (isAndroid) {
+                    setTimeout(() => {
+                        window.scrollTo(0, 1);
+                        setTimeout(() => window.scrollTo(0, 0), 50);
+                    }, 100);
+                }
+            } else {
+                console.log('Exited fullscreen mode');
+                document.body.classList.remove('fullscreen-active');
+                // User exited fullscreen - assume it was manual for now
+                userManuallyExitedFullscreen = true;
+                // Reset this flag after some time so auto-fullscreen can work again later
+                setTimeout(() => {
+                    userManuallyExitedFullscreen = false;
+                }, 30000); // Reset after 30 seconds
+            }
+        });
+    });
+}
+
+// Function to toggle fullscreen manually
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log('Error attempting to enable fullscreen:', err.message);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function initializeSocket() {
+    socket = io();
+    
+    socket.on('connect', function() {
+        console.log('Connected to server');
+        document.getElementById('socketStatus').textContent = 'Connected';
+        
+        // Register this tablet with the server
+        socket.emit('tablet-register', {
+            holeId: window.holeData.name,
+            tabletId: `tablet-${holeNumber}`
+        });
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+        document.getElementById('socketStatus').textContent = 'Disconnected';
+    });
+    
+    // Handle game started from RFID tap
+    socket.on('game-started', function(gameData) {
+        console.log('🎮 Game started event received:', gameData);
+        if (gameData.holeId === window.holeData.name || gameData.holeId === holeNumber) {
+            handleGameStarted(gameData);
+        }
+    });
+    
+    // Handle hole state updates (when reconnecting or initial load)
+    socket.on('hole-state-update', function(holeState) {
+        console.log('🏌️ Hole state update received:', holeState);
+        if (holeState && holeState.status === 'playing') {
+            handleGameStarted(holeState);
+        }
+    });
+    
+    // Handle game reset from admin
+    socket.on('game-reset', function(data) {
+        console.log('🔄 Game reset received:', data);
+        if (data.holeId === window.holeData.name) {
+            resetToWaiting();
+        }
+    });
+    
+    // Handle legacy team-started event 
+    socket.on('team-started', function(data) {
+        if (data.hole === holeNumber) {
+            handleTeamStarted(data);
+        }
+    });
+    
+    socket.on('score-recorded', function(data) {
+        if (data.hole === holeNumber) {
+            handleScoreRecorded(data);
+        }
+    });
+    
+    socket.on('hole-completed', function(data) {
+        if (data.hole === holeNumber) {
+            handleHoleCompleted(data);
+        }
+    });
+    
+    socket.on('error', function(data) {
+        showError(data.message || 'An unknown error occurred');
+    });
+}
+
+function resetToWaiting() {
+    currentTeam = null;
+    selectedScore = null;
+    
+    // Hide current player display
+    const currentPlayerDisplay = document.querySelector('.current-player-display');
+    if (currentPlayerDisplay) {
+        currentPlayerDisplay.classList.remove('show');
+    }
+    
+    // Hide bottom border
+    const bottomBorder = document.getElementById('bottomTeamBorder');
+    if (bottomBorder) {
+        bottomBorder.classList.remove('show');
+        bottomBorder.innerHTML = ''; // Clear content
+    }
+    
+    // Hide scoreboard button since no team is active
+    updateScoreboardButtonVisibility();
+    
+    showState('waiting');
+    updateStatus('Waiting for Team', 'waiting');
+}
+
+function showState(stateName) {
+    // Hide all states
+    document.querySelectorAll('.game-state').forEach(state => {
+        state.classList.remove('active');
+    });
+    
+    // Show requested state
+    const stateElement = document.getElementById(stateName + 'State');
+    if (stateElement) {
+        stateElement.classList.add('active');
+    }
+}
+
+function updateStatus(message, className) {
+    const statusElement = document.getElementById('holeStatus');
+    const indicator = statusElement.querySelector('.status-indicator');
+    indicator.textContent = message;
+    indicator.className = `status-indicator ${className}`;
+}
+
+function handleGameStarted(gameData) {
+    console.log('🎮 Processing game started data:', gameData);
+    
+    // Convert server game data to our expected format
+    currentTeam = {
+        rfid: gameData.rfid,
+        name: gameData.teamName,
+        teamName: gameData.teamName,
+        totalScore: 0, // Calculate from players
+        holesCompleted: 0,
+        players: gameData.players || []
+    };
+    
+    // Calculate total score from player data
+    currentTeam.totalScore = currentTeam.players.reduce((total, player) => {
+        return total + (player.totalScore || 0);
+    }, 0);
+    
+    // Reset RFID prompt state
+    resetRFIDPromptState();
+    
+    // Recalculate dynamic sizing before showing player display
+    calculateAndSetDynamicSizes();
+    
+    // Show the current player in center with animation
+    updateCurrentPlayerDisplay();
+    const currentPlayerDisplay = document.querySelector('.current-player-display');
+    if (currentPlayerDisplay) {
+        currentPlayerDisplay.classList.add('show');
+    }
+    
+    // Show other team players in bottom border with slide-up animation
+    updateBottomPlayersDisplay();
+    const bottomBorder = document.getElementById('bottomTeamBorder');
+    if (bottomBorder) {
+        bottomBorder.classList.add('show');
+    }
+    
+    // Activate the first ball indicator (pink)
+    activateBallIndicator(1);
+    
+    // Show scoreboard button now that we have team data
+    updateScoreboardButtonVisibility();
+    
+    showState('playing');
+    updateStatus(`${currentTeam.name} Playing`, 'playing');
+    
+    console.log('✅ Game started successfully for:', currentTeam.name);
+}
+
+function handleTeamStarted(data) {
+    currentTeam = data.team;
+    
+    // Show the current player in center with animation
+    updateCurrentPlayerDisplay();
+    const currentPlayerDisplay = document.querySelector('.current-player-display');
+    if (currentPlayerDisplay) {
+        currentPlayerDisplay.classList.add('show');
+    }
+    
+    // Show other team players in bottom border with slide-up animation
+    updateBottomPlayersDisplay();
+    const bottomBorder = document.getElementById('bottomTeamBorder');
+    if (bottomBorder) {
+        bottomBorder.classList.add('show');
+    }
+    
+    // Activate the first ball indicator (pink)
+    activateBallIndicator(1);
+    
+    // Show scoreboard button now that we have team data
+    updateScoreboardButtonVisibility();
+    
+    showState('playing');
+    updateStatus(`${data.team.name} Playing`, 'playing');
+}
+
+function updateCurrentPlayerDisplay() {
+    if (!currentTeam || !currentTeam.players || currentTeam.players.length === 0) return;
+    
+    // For now, show the first player (this could be dynamic based on game state)
+    const currentPlayer = currentTeam.players[0];
+    
+    // Update player name
+    const playerNameElement = document.getElementById('currentPlayerName');
+    if (playerNameElement) {
+        playerNameElement.textContent = currentPlayer.name || 'Player';
+    }
+    
+    // Update player's score for this hole
+    const playerScoreElement = document.getElementById('currentPlayerScore');
+    if (playerScoreElement) {
+        const holeNames = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+        const currentHoleId = holeNames[holeNumber - 1];
+        
+        let holeScore = 0;
+        if (currentPlayer.scores && currentPlayer.scores[currentHoleId]) {
+            holeScore = currentPlayer.scores[currentHoleId].total || 0;
+        }
+        
+        playerScoreElement.textContent = holeScore;
+    }
+}
+
+function updateBottomPlayersDisplay() {
+    const bottomBorder = document.getElementById('bottomTeamBorder');
+    
+    if (!bottomBorder) {
+        console.log('❌ Bottom border element not found');
+        return;
+    }
+    
+    if (!currentTeam || !currentTeam.players || currentTeam.players.length === 0) {
+        bottomBorder.innerHTML = '';
+        return;
+    }
+    
+    const holeNames = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+    const currentHoleId = holeNames[holeNumber - 1];
+    
+    let html = '';
+    
+    currentTeam.players.forEach((player, index) => {
+        let displayScore = 0;
+        
+        // All players in bottom border show their total score
+        // The current player's hole score is displayed in the center of screen
+        if (player.scores) {
+            displayScore = Object.values(player.scores).reduce((total, holeScore) => {
+                return total + (holeScore.total || 0);
+            }, 0);
+        }
+        
+        const isCurrentClass = index === 0 ? ' current' : '';
+        
+        html += `
+            <div class="team-member${isCurrentClass}">
+                <div class="team-member-name">${player.name || `Player ${index + 1}`}</div>
+                <div class="team-member-score">${displayScore}</div>
+            </div>
+        `;
+    });
+    
+    bottomBorder.innerHTML = html;
+}
+
+function selectScore(score) {
+    selectedScore = score;
+    
+    // Update button states
+    document.querySelectorAll('.score-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    document.querySelector(`[data-score="${score}"]`).classList.add('selected');
+    document.getElementById('submitScoreBtn').disabled = false;
+}
+
+function submitScore() {
+    if (!selectedScore || !currentTeam) {
+        showError('Please select a score');
+        return;
+    }
+    
+    const scoreData = {
+        teamId: currentTeam.id,
+        hole: holeNumber,
+        score: selectedScore
+    };
+    
+    // Send to server via API
+    fetch('/api/score/input', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(scoreData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Score will be handled by socket event
+            updateStatus('Recording Score...', 'processing');
+        } else {
+            showError(data.message || 'Failed to record score');
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting score:', error);
+        showError('Network error. Please try again.');
+    });
+}
+
+function skipHole() {
+    if (!currentTeam) return;
+    
+    // Record maximum score for skipped hole
+    selectedScore = 8;
+    submitScore();
+}
+
+function handleScoreRecorded(data) {
+    // Update display with recorded score
+    document.getElementById('finalScore').textContent = data.score;
+    
+    // Generate score description
+    let description = '';
+    const par = holeConfig.par;
+    const score = data.score;
+    
+    if (score === 1) {
+        description = 'HOLE IN ONE! 🎉';
+    } else if (score === par - 2) {
+        description = 'Eagle! 🦅';
+    } else if (score === par - 1) {
+        description = 'Birdie! 🐦';
+    } else if (score === par) {
+        description = 'Par - Nice job! 👍';
+    } else if (score === par + 1) {
+        description = 'Bogey';
+    } else if (score === par + 2) {
+        description = 'Double Bogey';
+    } else {
+        description = 'Keep trying!';
+    }
+    
+    document.getElementById('scoreDescription').textContent = description;
+}
+
+function handleHoleCompleted(data) {
+    showState('completed');
+    updateStatus('Hole Complete', 'completed');
+    
+    // Show appropriate next action button
+    if (data.isLastHole) {
+        document.querySelector('.next-hole-btn').style.display = 'none';
+        document.querySelector('.finish-game-btn').style.display = 'block';
+    }
+}
+
+function proceedToNextHole() {
+    if (!currentTeam) return;
+    
+    // Redirect to next hole or leaderboard
+    const nextHole = holeNumber + 1;
+    if (nextHole <= 12) {
+        window.location.href = `/tablet/${nextHole}`;
+    } else {
+        window.location.href = '/leaderboard';
+    }
+}
+
+function finishGame() {
+    window.location.href = '/leaderboard';
+}
+
+function showError(message) {
+    document.getElementById('errorText').textContent = message;
+    showState('error');
+    updateStatus('Error', 'error');
+}
+
+// Auto-refresh connection if disconnected for too long
+setInterval(function() {
+    if (socket && !socket.connected) {
+        console.log('Attempting to reconnect...');
+        socket.connect();
+    }
+}, 5000);
+
+// Ball Indicator Test Functionality - Click to toggle
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to test ball indicators
+    document.getElementById('ball1Indicator').addEventListener('click', function() {
+        this.classList.toggle('active');
+    });
+    
+    document.getElementById('ball2Indicator').addEventListener('click', function() {
+        this.classList.toggle('active');
+    });
+    
+    document.getElementById('ball3Indicator').addEventListener('click', function() {
+        this.classList.toggle('active');
+    });
+});
+
+// Function to activate ball indicator (call from game logic)
+function activateBallIndicator(ballNumber) {
+    const indicator = document.getElementById(`ball${ballNumber}Indicator`);
+    if (indicator) {
+        indicator.classList.add('active');
+    }
+}
+
+// Function to deactivate ball indicator
+function deactivateBallIndicator(ballNumber) {
+    const indicator = document.getElementById(`ball${ballNumber}Indicator`);
+    if (indicator) {
+        indicator.classList.remove('active');
+    }
+}
+
+// Function to reset all ball indicators
+function resetBallIndicators() {
+    for (let i = 1; i <= 3; i++) {
+        deactivateBallIndicator(i);
+    }
+}
+
+// Function to update bottom border text
+function updateBottomText(text) {
+    const bottomBorder = document.getElementById('bottomTextBorder');
+    if (bottomBorder) {
+        bottomBorder.textContent = text;
+    }
+}
+
+// Function to hide/show bottom border
+function toggleBottomBorder(show = true) {
+    const bottomBorder = document.getElementById('bottomTextBorder');
+    if (bottomBorder) {
+        bottomBorder.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// Team Scoreboard Modal Functions
+async function openTeamScoreboard() {
+    if (!currentTeam) {
+        console.warn('No current team data available');
+        return;
+    }
+    
+    const modal = document.getElementById('teamScoreboardModal');
+    if (modal) {
+        // Show modal first
+        modal.classList.add('active');
+        
+        // Update modal content with current data first (fast display)
+        updateScoreboardModal();
+        
+        // If we don't have detailed player scores, fetch them
+        const needsFullData = !currentTeam.players || 
+                             currentTeam.players.length === 0 || 
+                             !currentTeam.players.some(p => p.scores && Object.keys(p.scores).length > 0);
+        
+        if (needsFullData) {
+            // Fetch full team data in background
+            await fetchFullTeamData();
+            // Update modal content with full data
+            updateScoreboardModal();
+        }
+    }
+}
+
+async function fetchFullTeamData() {
+    if (!currentTeam || !currentTeam.rfid) return;
+    
+    try {
+        // Show loading state
+        const container = document.getElementById('modalScorecardContainer');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #ccc;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 20px;">Loading team scorecard...</p>
+                </div>`;
+        }
+        
+        const response = await fetch(`/api/team/${currentTeam.rfid}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch team data: ${response.status}`);
+        }
+        
+        const teamData = await response.json();
+        
+        // Update current team data with full player info
+        if (teamData && teamData.players) {
+            // Convert the API format to our expected format
+            const fullTeamData = {
+                ...currentTeam,
+                players: teamData.players.map(player => ({
+                    id: player.id,
+                    name: player.name || player.displayName || player.id.replace(/[@_]/g, ' '),
+                    scores: player.scores || {}
+                })),
+                totalScore: teamData.totalScore || 0,
+                holesCompleted: teamData.holesCompleted || 0
+            };
+            
+            // Update global currentTeam
+            currentTeam = fullTeamData;
+        } else {
+            throw new Error('Invalid team data format received');
+        }
+    } catch (error) {
+        console.error('Error fetching team data:', error);
+        const container = document.getElementById('modalScorecardContainer');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                    <h4 style="color: #dc3545; margin-bottom: 15px;">Error Loading Data</h4>
+                    <p style="margin-bottom: 20px;">Unable to load team scorecard</p>
+                    <button onclick="fetchFullTeamData()" class="retry-btn" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        Try Again
+                    </button>
+                </div>`;
+        }
+    }
+}
+
+// Convert Firebase score format to our expected format
+function convertScoreFormat(firebaseScores) {
+    const holeOrder = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+    const convertedScores = {};
+    
+    holeOrder.forEach(holeId => {
+        if (firebaseScores[holeId] !== undefined) {
+            convertedScores[holeId] = {
+                total: firebaseScores[holeId]
+            };
+        }
+    });
+    
+    return convertedScores;
+}
+
+function closeTeamScoreboard() {
+    const modal = document.getElementById('teamScoreboardModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function updateScoreboardModal() {
+    if (!currentTeam) return;
+    
+    // Update team name
+    const modalTeamName = document.getElementById('modalTeamName');
+    if (modalTeamName) {
+        modalTeamName.textContent = currentTeam.teamName || currentTeam.name || 'Team Name';
+    }
+    
+    // Update team stats
+    const modalTotalScore = document.getElementById('modalTotalScore');
+    if (modalTotalScore) {
+        modalTotalScore.textContent = (currentTeam.totalScore || 0).toLocaleString();
+    }
+    
+    const modalHolesCompleted = document.getElementById('modalHolesCompleted');
+    if (modalHolesCompleted) {
+        modalHolesCompleted.textContent = `${currentTeam.holesCompleted || 0}/12`;
+    }
+    
+    const modalCurrentHole = document.getElementById('modalCurrentHole');
+    if (modalCurrentHole) {
+        modalCurrentHole.textContent = holeNumber;
+    }
+    
+    // Calculate additional stats
+    if (currentTeam.players && currentTeam.players.length > 0) {
+        // Calculate average score per hole
+        let totalHoles = 0;
+        let totalScoreSum = 0;
+        
+        currentTeam.players.forEach(player => {
+            if (player.scores) {
+                Object.values(player.scores).forEach(holeScore => {
+                    if (holeScore && holeScore.total !== undefined) {
+                        totalHoles++;
+                        totalScoreSum += holeScore.total;
+                    }
+                });
+            }
+        });
+        
+        const averageScore = totalHoles > 0 ? Math.round(totalScoreSum / totalHoles) : 0;
+        
+        // Update additional stat display
+        const modalStats = document.querySelector('.modal-team-stats');
+        if (modalStats && modalStats.children.length > 3) {
+            // Remove any existing extra stats
+            while (modalStats.children.length > 3) {
+                modalStats.removeChild(modalStats.lastChild);
+            }
+        }
+        
+        // Add average score stat
+        if (modalStats && totalHoles > 0) {
+            const avgStat = document.createElement('div');
+            avgStat.className = 'modal-stat';
+            avgStat.innerHTML = `
+                <span class="label">Average Score</span>
+                <span class="value">${averageScore}</span>
+            `;
+            modalStats.appendChild(avgStat);
+        }
+    }
+    
+    // Generate scorecard table
+    generateModalScorecard();
+}
+
+function generateModalScorecard() {
+    if (!currentTeam || !currentTeam.players) return;
+    
+    const container = document.getElementById('modalScorecardContainer');
+    if (!container) return;
+    
+    // Define hole order and names
+    const holeOrder = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+    const holeNames = {
+        'Plinko': 'Plinko',
+        'SpinningTop': 'Spinning Top',
+        'Haphazard': 'Haphazard',
+        'Roundhouse': 'Roundhouse',
+        'HillHop': 'Hill Hop',
+        'SkiJump': 'Ski Jump',
+        'Mastermind': 'Mastermind',
+        'Igloo': 'Igloo',
+        'Octagon': 'Octagon',
+        'LoopDeLoop': 'Loop De Loop',
+        'UpAndOver': 'Up And Over',
+        'Lopside': 'Lopside'
+    };
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'modal-scorecard-table';
+    
+    // Create header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    // Player name header
+    const playerHeader = document.createElement('th');
+    playerHeader.textContent = 'Player';
+    headerRow.appendChild(playerHeader);
+    
+    // Hole headers
+    holeOrder.forEach((holeId, index) => {
+        const th = document.createElement('th');
+        th.textContent = `${index + 1}`;
+        th.title = holeNames[holeId] || holeId;
+        headerRow.appendChild(th);
+    });
+    
+    // Total header
+    const totalHeader = document.createElement('th');
+    totalHeader.textContent = 'Total';
+    headerRow.appendChild(totalHeader);
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // Create body
+    const tbody = document.createElement('tbody');
+    
+    currentTeam.players.forEach(player => {
+        const row = document.createElement('tr');
+        
+        // Player name cell
+        const nameCell = document.createElement('td');
+        nameCell.textContent = player.name || 'Player';
+        row.appendChild(nameCell);
+        
+        // Score cells
+        let playerTotal = 0;
+        holeOrder.forEach(holeId => {
+            const td = document.createElement('td');
+            const score = player.scores && player.scores[holeId] ? player.scores[holeId].total : null;
+            
+            if (score !== null && score !== undefined) {
+                td.textContent = score;
+                playerTotal += score;
+                
+                // Add score styling
+                if (score > 0) {
+                    td.classList.add('modal-score-positive');
+                } else if (score < 0) {
+                    td.classList.add('modal-score-negative');
+                } else {
+                    td.classList.add('modal-score-zero');
+                }
+            } else {
+                td.textContent = '-';
+                td.classList.add('modal-score-incomplete');
+            }
+            
+            row.appendChild(td);
+        });
+        
+        // Total cell
+        const totalCell = document.createElement('td');
+        totalCell.textContent = playerTotal;
+        if (playerTotal > 0) {
+            totalCell.classList.add('modal-score-positive');
+        } else if (playerTotal < 0) {
+            totalCell.classList.add('modal-score-negative');
+        } else {
+            totalCell.classList.add('modal-score-zero');
+        }
+        row.appendChild(totalCell);
+        
+        tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    
+    // Replace existing table
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+// Show/hide scoreboard button based on team status
+function updateScoreboardButtonVisibility() {
+    const button = document.getElementById('openScoreboardBtn');
+    if (button && currentTeam) {
+        button.style.display = 'block';
+    } else if (button) {
+        button.style.display = 'none';
+    }
+}
+
+// Close modal on outside click
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('teamScoreboardModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeTeamScoreboard();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeTeamScoreboard();
+        }
+        // Open modal with 'S' key (for Scoreboard) when a team is active
+        if (e.key.toLowerCase() === 's' && currentTeam && !document.getElementById('teamScoreboardModal').classList.contains('active')) {
+            openTeamScoreboard();
+        }
+    });
+});
+
+// RFID Card Reader Handler
+// RFID readers type the card number and hit Enter, just like a keyboard
+let rfidInput = '';
+let rfidTimeout = null;
+
+document.addEventListener('keydown', function(e) {
+    // Only capture RFID input when in waiting state
+    const currentState = getCurrentState();
+    if (currentState !== 'waiting') {
+        return;
+    }
+    
+    // Handle RFID input (numbers, letters, and some special characters)
+    if (e.key.match(/^[0-9A-Fa-f]$/)) {
+        rfidInput += e.key;
+        
+        // Clear any existing timeout
+        if (rfidTimeout) {
+            clearTimeout(rfidTimeout);
+        }
+        
+        // Set timeout to clear input if no Enter received (in case of partial scan)
+        rfidTimeout = setTimeout(() => {
+            console.log('🚨 RFID input timeout, clearing buffer');
+            rfidInput = '';
+        }, 3000);
+        
+    } else if (e.key === 'Enter' && rfidInput) {
+        // RFID scanners send Enter after the card data
+        e.preventDefault(); // Prevent form submission if any
+        
+        // Clear timeout
+        if (rfidTimeout) {
+            clearTimeout(rfidTimeout);
+        }
+        
+        console.log(`📡 RFID Card Detected: ${rfidInput}`);
+        handleRFIDScan(rfidInput);
+        rfidInput = ''; // Reset
+        
+    } else if (e.key === 'Escape') {
+        // Allow manual clearing of input buffer
+        if (rfidTimeout) {
+            clearTimeout(rfidTimeout);
+        }
+        rfidInput = '';
+        console.log('🔄 RFID input buffer cleared');
+    }
+    
+    // Test mode fallback (press "1" + Enter)
+    if (e.key === '1' && !rfidInput) {
+        rfidInput = '1';
+    }
+});
+
+// Handle RFID scan by sending to server
+async function handleRFIDScan(rfidCode) {
+    console.log(`🎯 Processing RFID: ${rfidCode}`);
+    
+    // Show loading state
+    showLoadingState('Loading team...');
+    
+    // Special test mode
+    if (rfidCode === '1') {
+        console.log('🧪 Test mode: Loading test team');
+        setTimeout(() => {
+            simulateTestRFIDTap();
+        }, 1000); // Show loading for a moment
+        return;
+    }
+    
+    try {
+        // Send RFID tap to server
+        const response = await fetch('/api/rfid/tap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                rfid: rfidCode,
+                holeId: window.holeData.name, // Use the hole name from server data
+                picoId: `tablet-${window.holeData.number}` // Identify this tablet
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ RFID tap sent to server:', result);
+            
+            // The server will send game-started event via socket.io if successful
+            // Set a timeout in case no response comes back
+            setTimeout(() => {
+                const currentState = getCurrentState();
+                if (currentState === 'waiting') {
+                    resetRFIDPromptState();
+                    showError('No team found for this card. Please register at the counter.');
+                }
+            }, 5000);
+            
+        } else {
+            const error = await response.json();
+            console.error('❌ RFID tap failed:', error);
+            resetRFIDPromptState();
+            showError('Failed to process card. Please try again.');
+        }
+        
+    } catch (error) {
+        console.error('❌ Network error:', error);
+        resetRFIDPromptState();
+        showError('Connection error. Please try again.');
+    }
+}
+
+// Show error state
+function showError(message) {
+    updateStatus(message, 'error');
+    resetRFIDPromptState();
+    setTimeout(() => {
+        if (getCurrentState() === 'waiting') {
+            updateStatus('Waiting for Team', 'waiting');
+        }
+    }, 3000);
+}
+
+// Show loading state while processing RFID
+function showLoadingState(message = 'Loading team...') {
+    const rfidIcon = document.getElementById('rfidIcon');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const promptTitle = document.getElementById('rfidPromptTitle');
+    const promptMessage = document.getElementById('rfidPromptMessage');
+    
+    if (rfidIcon) rfidIcon.style.display = 'none';
+    if (loadingSpinner) loadingSpinner.style.display = 'block';
+    if (promptTitle) promptTitle.textContent = message;
+    if (promptMessage) promptMessage.textContent = 'Please wait...';
+    
+    updateStatus(message, 'loading');
+}
+
+// Reset RFID prompt to default state
+function resetRFIDPromptState() {
+    const rfidIcon = document.getElementById('rfidIcon');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const promptTitle = document.getElementById('rfidPromptTitle');
+    const promptMessage = document.getElementById('rfidPromptMessage');
+    
+    if (rfidIcon) rfidIcon.style.display = 'block';
+    if (loadingSpinner) loadingSpinner.style.display = 'none';
+    if (promptTitle) promptTitle.textContent = 'Tap your team card to start';
+    if (promptMessage) promptMessage.textContent = 'Hold your RFID card near the reader';
+}
+
+// Get current state helper function
+function getCurrentState() {
+    const activeState = document.querySelector('.game-state.active');
+    if (activeState) {
+        return activeState.id.replace('State', '');
+    }
+    return 'waiting';
+}
+
+// Show tap count indicator for visual feedback
+function showTapCountIndicator(count) {
+    // Remove any existing tap indicator
+    const existingIndicator = document.getElementById('tap-count-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    // Create new tap indicator
+    const indicator = document.createElement('div');
+    indicator.id = 'tap-count-indicator';
+    indicator.textContent = `${count}/4`;
+    indicator.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 9999;
+        pointer-events: none;
+        animation: tapIndicatorPulse 0.3s ease-out;
+    `;
+    
+    // Add animation keyframes if not already present
+    if (!document.querySelector('#tap-indicator-styles')) {
+        const style = document.createElement('style');
+        style.id = 'tap-indicator-styles';
+        style.textContent = `
+            @keyframes tapIndicatorPulse {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+                50% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1.1);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(indicator);
+    
+    // Remove indicator after a short delay
+    setTimeout(() => {
+        if (indicator.parentNode) {
+            indicator.remove();
+        }
+    }, 600);
+}
+
+// Simulate a test RFID tap for easy testing
+function simulateTestRFIDTap() {
+    // Create mock team data that would normally come from the server
+    const testTeam = {
+        rfid: '1234567890',
+        name: 'Test Team Alpha',
+        teamName: 'Test Team Alpha',
+        totalScore: 1850,
+        holesCompleted: 8,
+        players: [
+            {
+                id: 'alice@test.com',
+                name: 'Alice',
+                scores: {
+                    'Plinko': { total: 200, throws: [100, 50, 50] },
+                    'SpinningTop': { total: 150, throws: [75, 75] },
+                    'Haphazard': { total: -50, throws: [-25, -25] },
+                    'Roundhouse': { total: 100, throws: [50, 25, 25] },
+                    'HillHop': { total: 175, throws: [100, 75] },
+                    'SkiJump': { total: 75, throws: [75] },
+                    'Mastermind': { total: 125, throws: [50, 50, 25] },
+                    'Igloo': { total: 250, throws: [125, 125] }
+                }
+            },
+            {
+                id: 'bob@test.com',
+                name: 'Bob',
+                scores: {
+                    'Plinko': { total: 150, throws: [100, 50] },
+                    'SpinningTop': { total: 200, throws: [100, 100] },
+                    'Haphazard': { total: 25, throws: [50, -25] },
+                    'Roundhouse': { total: 175, throws: [100, 75] },
+                    'HillHop': { total: 100, throws: [50, 50] },
+                    'SkiJump': { total: -25, throws: [-25] },
+                    'Mastermind': { total: 200, throws: [100, 100] },
+                    'Igloo': { total: 0, throws: [25, -25] }
+                }
+            },
+            {
+                id: 'charlie@test.com',
+                name: 'Charlie',
+                scores: {
+                    'Plinko': { total: 100, throws: [100] },
+                    'SpinningTop': { total: 125, throws: [75, 50] },
+                    'Haphazard': { total: 75, throws: [50, 25] },
+                    'Roundhouse': { total: 50, throws: [50] },
+                    'HillHop': { total: 200, throws: [100, 100] },
+                    'SkiJump': { total: 150, throws: [150] },
+                    'Mastermind': { total: 25, throws: [25] },
+                    'Igloo': { total: 175, throws: [100, 75] }
+                }
+            }
+        ]
+    };
+    
+    // Simulate the server response that would normally happen
+    currentTeam = testTeam;
+    
+    // Recalculate dynamic sizing before showing player display
+    calculateAndSetDynamicSizes();
+    
+    // Show the current player in center with animation
+    updateCurrentPlayerDisplay();
+    const currentPlayerDisplay = document.querySelector('.current-player-display');
+    if (currentPlayerDisplay) {
+        currentPlayerDisplay.classList.add('show');
+    }
+    
+    // Show other team players in bottom border with slide-up animation
+    updateBottomPlayersDisplay();
+    const bottomBorder = document.getElementById('bottomTeamBorder');
+    if (bottomBorder) {
+        bottomBorder.classList.add('show');
+    }
+    
+    // Activate the first ball indicator (pink)
+    activateBallIndicator(1);
+    
+    // Show scoreboard button
+    updateScoreboardButtonVisibility();
+    
+    // Switch to playing state
+    showState('playing');
+    updateStatus(`${testTeam.name} Playing`, 'playing');
+    
+    console.log('🎮 Test team loaded successfully!');
+}
+</script>
+
+</body>
+</html>

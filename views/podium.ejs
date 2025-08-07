@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podium - SwingCity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .podium-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .podium-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            border-right: 1px solid #444;
+            padding: 2rem;
+        }
+        
+        .podium-section:last-child {
+            border-right: none;
+        }
+        
+        .player-name {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .player-score {
+            font-size: 2rem;
+            color: #ccc;
+            text-align: center;
+        }
+        
+        .logo-placeholder {
+            max-width: 200px;
+            height: auto;
+            opacity: 0.6;
+        }
+        
+        /* Second place (left) - white */
+        .second-section .player-name {
+            color: #FFFFFF;
+        }
+        .second-section .player-score {
+            color: #FFFFFF;
+        }
+        
+        /* First place (middle) - white */
+        .first-section .player-name {
+            color: #FFFFFF;
+            font-size: 3.5rem;
+        }
+        .first-section .player-score {
+            color: #FFFFFF;
+            font-size: 2.5rem;
+        }
+        
+        /* Third place (right) - white */
+        .third-section .player-name {
+            color: #FFFFFF;
+        }
+        .third-section .player-score {
+            color: #FFFFFF;
+        }
+        
+        .tap-prompt {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            padding: 3rem;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        
+        .tap-prompt.show {
+            display: block;
+        }
+        
+        .tap-prompt h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tap-prompt p {
+            color: #ccc;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="podium-container">
+    <!-- Second Place (Left) -->
+    <div class="podium-section second-section">
+        <div class="player-name" id="secondName">Tap RFID Card</div>
+        <div class="player-score" id="secondScore"></div>
+    </div>
+
+    <!-- First Place (Middle) -->
+    <div class="podium-section first-section">
+        <div class="player-name" id="firstName">to load</div>
+        <div class="player-score" id="firstScore"></div>
+    </div>
+
+    <!-- Third Place (Right) -->
+    <div class="podium-section third-section">
+        <div class="player-name" id="thirdName">top 3 players</div>
+        <div class="player-score" id="thirdScore"></div>
+    </div>
+</div>
+
+<script>
+let currentState = 'waiting';
+let rfidBuffer = '';
+let winners = [];
+
+document.addEventListener('keypress', (e) => {
+    // Reset if Enter pressed and showing players
+    if (e.key === 'Enter' && currentState === 'showing') {
+        resetPodium();
+        return;
+    }
+    
+    // Only accept input when waiting
+    if (currentState !== 'waiting') return;
+    
+    if (e.key === '1') {
+        rfidBuffer = '1';
+        return;
+    }
+    
+    if (e.key !== 'Enter') {
+        rfidBuffer += e.key;
+    } else {
+        if (rfidBuffer === '1') {
+            showTestData();
+        } else if (rfidBuffer.length > 3) {
+            loadRealData(rfidBuffer);
+        }
+        rfidBuffer = '';
+    }
+});
+
+function showTestData() {
+    winners = [
+        { name: 'Alice', totalScore: 850 }
+        // Only 1 player to test logo display
+    ];
+    displayPodium();
+}
+
+function loadRealData(rfid) {
+    fetch(`/api/podium/${rfid}`)
+        .then(response => response.json())
+        .then(data => {
+            winners = data.winners || [];
+            displayPodium();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError();
+        });
+}
+
+function displayPodium() {
+    // First place (middle)
+    if (winners[0]) {
+        document.getElementById('firstName').innerHTML = winners[0].name;
+        document.getElementById('firstScore').textContent = winners[0].totalScore;
+    } else {
+        document.getElementById('firstName').innerHTML = '<img src="/images/swingcity-main-logo.png" alt="SwingCity" class="logo-placeholder">';
+        document.getElementById('firstScore').textContent = '';
+    }
+    
+    // Second place (left)
+    if (winners[1]) {
+        document.getElementById('secondName').innerHTML = winners[1].name;
+        document.getElementById('secondScore').textContent = winners[1].totalScore;
+    } else {
+        document.getElementById('secondName').innerHTML = '<img src="/images/swingcity-main-logo.png" alt="SwingCity" class="logo-placeholder">';
+        document.getElementById('secondScore').textContent = '';
+    }
+    
+    // Third place (right)
+    if (winners[2]) {
+        document.getElementById('thirdName').innerHTML = winners[2].name;
+        document.getElementById('thirdScore').textContent = winners[2].totalScore;
+    } else {
+        document.getElementById('thirdName').innerHTML = '<img src="/images/swingcity-main-logo.png" alt="SwingCity" class="logo-placeholder">';
+        document.getElementById('thirdScore').textContent = '';
+    }
+    
+    currentState = 'showing';
+}
+
+function resetPodium() {
+    document.getElementById('firstName').textContent = 'to load';
+    document.getElementById('firstScore').textContent = '';
+    document.getElementById('secondName').textContent = 'Tap RFID Card';
+    document.getElementById('secondScore').textContent = '';
+    document.getElementById('thirdName').textContent = 'top 3 players';
+    document.getElementById('thirdScore').textContent = '';
+    
+    currentState = 'waiting';
+    winners = [];
+}
+
+function showError() {
+    document.getElementById('firstName').textContent = 'Error loading';
+    document.getElementById('firstScore').textContent = '';
+    document.getElementById('secondName').textContent = 'team data';
+    document.getElementById('secondScore').textContent = '';
+    document.getElementById('thirdName').textContent = 'Try again';
+    document.getElementById('thirdScore').textContent = '';
+    
+    setTimeout(resetPodium, 3000);
+}
+
+console.log('Podium loaded - Press 1+Enter for test data');
+</script>
+
+</body>
+</html>

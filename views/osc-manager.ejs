@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSC Router Manager - SwingCity</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body class="admin-body">
+
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <img src="/images/swingcity-logo.png" alt="SwingCity" class="admin-logo">
+        <h1>🎵 OSC Router Manager</h1>
+        <div class="header-actions">
+            <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+            <button class="btn btn-info" id="refreshStatusBtn">🔄 Refresh Status</button>
+        </div>
+    </div>
+
+    <!-- OSC Status Section -->
+    <div class="osc-status-section">
+        <div class="creator-card">
+            <div class="card-header">
+                <h2>📊 OSC Router Status</h2>
+                <p>Monitor and control the integrated OSC message routing system</p>
+            </div>
+            
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Router Status</div>
+                    <div class="status-value" id="routerStatus">
+                        <span class="spinner-border spinner-border-sm"></span> Loading...
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-label">Connected Clients</div>
+                    <div class="status-value" id="connectedClients">-</div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-label">Routing Entries</div>
+                    <div class="status-value" id="routingEntries">-</div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-label">Mastermind Data</div>
+                    <div class="status-value" id="mastermindData">-</div>
+                </div>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="btn btn-success" id="startOscBtn">▶️ Start Router</button>
+                <button class="btn btn-warning" id="restartOscBtn">🔄 Restart Router</button>
+                <button class="btn btn-danger" id="stopOscBtn">⏹️ Stop Router</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Information Section -->
+    <div class="connection-info-section">
+        <div class="creator-card">
+            <div class="card-header">
+                <h2>🌐 Connection Information</h2>
+                <p>OSC router connection details for your hole devices</p>
+            </div>
+            
+            <div class="connection-grid">
+                <div class="connection-item">
+                    <div class="connection-label">Server IP Address</div>
+                    <div class="connection-value" id="serverIP">
+                        <span class="spinner-border spinner-border-sm"></span> Loading...
+                    </div>
+                    <div class="connection-note">Configure your hole devices to send OSC messages to this IP</div>
+                </div>
+                
+                <div class="connection-item">
+                    <div class="connection-label">OSC Listen Port</div>
+                    <div class="connection-value">57121</div>
+                    <div class="connection-note">UDP port that the OSC router listens on</div>
+                </div>
+                
+                <div class="connection-item">
+                    <div class="connection-label">Message Format</div>
+                    <div class="connection-value">/[hole_name]/score [value]</div>
+                    <div class="connection-note">Example: /plinko/score 100</div>
+                </div>
+                
+                <div class="connection-item">
+                    <div class="connection-label">Mastermind Special</div>
+                    <div class="connection-value">Float + String</div>
+                    <div class="connection-note">Needs both: /mastermind/score 85 then /mastermind/score "completed"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routing Configuration Section -->
+    <div class="routing-config-section">
+        <div class="list-card">
+            <div class="card-header">
+                <h2>🎯 Hole Routing Configuration</h2>
+                <p>Configure where OSC messages for each hole are forwarded</p>
+            </div>
+            
+            <div class="routing-container">
+                <div id="routingLoadingIndicator" class="loading-indicator">
+                    <div class="spinner"></div>
+                    <p>Loading routing configuration...</p>
+                </div>
+                
+                <div id="routingTable" class="routing-table" style="display: none;">
+                    <!-- Routing table will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OSC Message Log -->
+    <div class="osc-log-section">
+        <div class="list-card">
+            <div class="card-header">
+                <h2>📝 OSC Message Log</h2>
+                <div class="header-actions">
+                    <button class="btn btn-outline-secondary btn-sm" id="clearLogBtn">🗑️ Clear Log</button>
+                    <button class="btn btn-outline-primary btn-sm" id="pauseLogBtn">⏸️ Pause</button>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <div id="oscLog" class="osc-log">
+                    <div class="log-entry">
+                        <span class="log-time">Ready</span>
+                        <span class="log-message">OSC Router Manager initialized. Waiting for messages...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Modals -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">✅ Success</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="successMessage">Operation completed successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">❌ Error</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage">An error occurred.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Routing Modal -->
+<div class="modal fade" id="editRoutingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">✏️ Edit Routing</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRoutingForm">
+                    <div class="mb-3">
+                        <label class="form-label">Hole Name:</label>
+                        <input type="text" id="editHoleName" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Destination Address:</label>
+                        <input type="text" id="editHoleAddress" class="form-control" placeholder="192.168.1.100:58008" required>
+                        <div class="form-text">Format: IP:PORT (e.g., 192.168.1.100:58008)</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveRoutingBtn">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/osc-manager.js"></script>
+
+</body>
+</html>

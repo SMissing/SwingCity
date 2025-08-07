@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEBUG - Team Creator</title>
+    <style>
+        body {
+            background: #1a1a1a !important;
+            color: #ffffff !important;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .debug-container {
+            background: #2d2d2d !important;
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #8a2be2;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .debug-info {
+            background: #333;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="debug-container">
+    <div class="header">
+        <h1>🔧 DEBUG: Team Creator Page</h1>
+        <p>If you can see this, the basic page structure is working</p>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Test 1: Basic HTML</h2>
+        <p>✅ HTML is rendering correctly</p>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Test 2: CSS Loading</h2>
+        <p id="css-test">⏳ Testing CSS...</p>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Test 3: JavaScript Execution</h2>
+        <p id="js-test">⏳ Testing JavaScript...</p>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Test 4: API Connection</h2>
+        <p id="api-test">⏳ Testing API...</p>
+    </div>
+</div>
+
+<script>
+console.log('DEBUG: JavaScript is executing');
+
+// Test CSS
+document.getElementById('css-test').innerHTML = '✅ CSS is working - colors and styling applied';
+
+// Test JavaScript
+document.getElementById('js-test').innerHTML = '✅ JavaScript is executing correctly';
+
+// Test API
+fetch('/api/teams')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('api-test').innerHTML = `✅ API is working - Found ${data.teams ? data.teams.length : 0} teams`;
+    })
+    .catch(error => {
+        document.getElementById('api-test').innerHTML = `❌ API Error: ${error.message}`;
+    });
+
+console.log('DEBUG: All tests initiated');
+</script>
+
+</body>
+</html>
