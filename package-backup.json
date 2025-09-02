@@ -1,0 +1,39 @@
+{
+  "name": "swingcity-v2-launcher",
+  "version": "1.0.0",
+  "description": "SwingCity V2 Desktop Launcher",
+  "main": "launcher/main.js",
+  "scripts": {
+    "launcher": "electron launcher/main.js",
+    "build": "electron-builder"
+  },
+  "author": "Sam Missing",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.swingcity.launcher",
+    "productName": "SwingCity V2 Launcher",
+    "directories": {
+      "output": "dist-launcher"
+    },
+    "files": [
+      "launcher/**/*",
+      "server.js",
+      "package.json",
+      "config/**/*",
+      "services/**/*",
+      "views/**/*",
+      "public/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

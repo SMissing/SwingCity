@@ -10,20 +10,20 @@ class FirebaseRestService {
 
   // Initialize the service
   async initialize() {
-    console.log('🔥 Initializing Firebase REST Service...');
+  // Test Firebase REST Service connection
     
     try {
       // Test the connection
       const response = await fetch(`${this.baseUrl}/.json`);
       if (response.ok) {
-        console.log('✅ Firebase REST Service initialized successfully');
-        this.mockMode = false;
+  console.log('✅ Firebase REST Service initialized successfully'); // Only log this once for test
+  this.mockMode = false;
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('❌ Firebase REST Service initialization failed:', error.message);
-      console.log('🚨 Running in MOCK MODE');
+  // Running in mock mode (no database connection)
       this.mockMode = true;
     }
   }
@@ -50,7 +50,7 @@ class FirebaseRestService {
         throw new Error(`RFID ${rfid} not found in database`);
       }
 
-      console.log('🔍 Found RFID card:', cardData);
+  // Removed verbose RFID card debug log
 
       // Build team structure from the card data
       const players = [];
@@ -326,6 +326,78 @@ class FirebaseRestService {
     } catch (error) {
       console.error(`❌ Error getting player scores:`, error.message);
       return {};
+    }
+  }
+
+  // ==================== GAME SESSION OPERATIONS ====================
+
+  // Save active game session (lightweight snapshot for monitoring)
+  async saveGameSession(sessionData) {
+    if (this.mockMode) {
+      console.log('🔄 MOCK: Would save game session:', sessionData && sessionData.rfid);
+      return { success: true };
+    }
+
+    try {
+      if (!sessionData || !sessionData.rfid) {
+        throw new Error('Invalid session data: rfid is required');
+      }
+
+      const toIso = (d) => (d instanceof Date ? d.toISOString() : d);
+
+      const payload = {
+        holeId: sessionData.holeId,
+        teamName: sessionData.teamName,
+        currentPlayerIndex: sessionData.currentPlayerIndex,
+        currentThrow: sessionData.currentThrow,
+        status: sessionData.status,
+        startTime: toIso(sessionData.startTime),
+        lastActivity: toIso(sessionData.lastActivity)
+      };
+
+      const response = await fetch(`${this.baseUrl}/activeSessions/${sessionData.rfid}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`✅ Game session saved: ${sessionData.rfid}`);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error saving game session:', error.message);
+      throw error;
+    }
+  }
+
+  // Remove completed game session
+  async removeGameSession(rfid) {
+    if (this.mockMode) {
+      console.log('🔄 MOCK: Would remove game session:', rfid);
+      return { success: true };
+    }
+
+    try {
+      if (!rfid) {
+        throw new Error('rfid is required');
+      }
+
+      const response = await fetch(`${this.baseUrl}/activeSessions/${rfid}.json`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`✅ Game session removed: ${rfid}`);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error removing game session:', error.message);
+      throw error;
     }
   }
 

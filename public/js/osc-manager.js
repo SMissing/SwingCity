@@ -64,6 +64,28 @@ function setupEventListeners() {
     
     // Save routing changes
     document.getElementById('saveRoutingBtn').addEventListener('click', saveRoutingChanges);
+    
+    // Add handler for OSC test message form
+    const oscSendForm = document.getElementById('oscSendForm');
+    if (oscSendForm) {
+        oscSendForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const holeName = document.getElementById('oscHoleName').value.trim();
+            const scoreValue = parseFloat(document.getElementById('oscScoreValue').value);
+            if (!holeName || isNaN(scoreValue)) {
+                document.getElementById('oscSendResult').textContent = 'Please enter a valid hole name and score.';
+                return;
+            }
+            // Emit test OSC message to server
+            if (socket) {
+                socket.emit('send-osc-test', {
+                    holeId: holeName,
+                    score: scoreValue
+                });
+                document.getElementById('oscSendResult').textContent = `Sent OSC test: /${holeName}/score ${scoreValue}`;
+            }
+        });
+    }
 }
 
 async function loadStatus() {

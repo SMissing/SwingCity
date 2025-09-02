@@ -449,7 +449,6 @@ app.get('/api/osc/network', (req, res) => {
 // Get OSC routing table
 app.get('/api/osc/routing', (req, res) => {
   try {
-    const routingTable = oscRouter.getRoutingTable();
     res.json({
       success: true,
       routing: routingTable
@@ -646,6 +645,15 @@ app.get('/api/games/active', (req, res) => {
 // ==================== SOCKET.IO HANDLERS ====================
 
 io.on('connection', (socket) => {
+  // OSC test message injection from OSC Manager
+  socket.on('send-osc-test', ({ holeId, score }) => {
+    // Simulate OSC message as if received from network
+    const address = `/${holeId}/score`;
+    const msg = [address, score];
+    // Fake rinfo for debug
+    const rinfo = { address: '127.0.0.1', port: 57121 };
+    oscRouter._onMessage(msg, rinfo);
+  });
   console.log(`🔌 Client connected: ${socket.id}`);
 
   // Tablet registration
@@ -904,12 +912,10 @@ async function startServer() {
         message: 'Firebase REST service connected successfully',
         teamsFound: Array.isArray(testData) ? testData.length : 0
       };
-      console.log('🔥 Firebase REST service connected successfully');
-      console.log(`📊 Found ${firebaseStatus.teamsFound} teams in leaderboard`);
+  console.log('🔥 Firebase REST service connected successfully'); // Only log this once for test
     } catch (error) {
       firebaseStatus = { connected: false, error: error.message };
-      console.log('⚠️ Firebase REST connection failed, running in fallback mode');
-      console.log('Error:', firebaseStatus.error);
+  console.log('⚠️ Firebase REST connection failed, running in fallback mode');
     }
     
     // Start the server
@@ -929,9 +935,105 @@ async function startServer() {
         oscRouter.on('message', (logEntry) => {
           io.to('osc-log').emit('osc-message', logEntry);
         });
-        
+
         oscRouter.on('logCleared', () => {
           io.to('osc-log').emit('osc-log-cleared');
+        });
+
+        // Listen for osc-score and emit to the correct tablet(s)
+        oscRouter.on('osc-score', (data) => {
+          // Find all tablets registered for this hole (case-insensitive)
+          const tabletsForHole = [];
+          for (let [tabletId, info] of gameState.tablets.entries()) {
+            if (info.holeId && info.holeId.toLowerCase() === data.hole.toLowerCase()) {
+              io.to(info.socketId).emit('osc-debug-score', { score: data.score, holeId: info.holeId });
+              tabletsForHole.push(info.socketId);
+            }
+          }
+
+          // Find the active game session for this hole (case-insensitive)
+          let gameSession = null;
+          for (let [rfid, session] of gameState.activeGames.entries()) {
+            if (session.holeId && session.holeId.toLowerCase() === data.hole.toLowerCase()) {
+              gameSession = session;
+              break;
+            }
+          }
+
+          if (gameSession) {
+            // Get the current player
+            const currentPlayer = gameSession.players[gameSession.currentPlayerIndex];
+            // Ensure scores object exists
+            if (!currentPlayer.scores[gameSession.holeId]) {
+              currentPlayer.scores[gameSession.holeId] = {
+                throws: [],
+                total: 0
+              };
+            }
+            // Allow up to 3 throws per player
+            const throwsArr = currentPlayer.scores[gameSession.holeId].throws;
+            if (throwsArr.length < 3) {
+              throwsArr.push(data.score);
+              currentPlayer.scores[gameSession.holeId].total += data.score;
+              gameSession.currentThrow = throwsArr.length;
+              gameSession.lastActivity = new Date();
+
+              // Save to Firebase as throw1, throw2, throw3
+              const throwData = {
+                [`throw${throwsArr.length}`]: data.score, // 1-based
+                throws: throwsArr,
+                total: currentPlayer.scores[gameSession.holeId].total,
+                timestamp: new Date().toISOString()
+              };
+              firebaseService.savePlayerScore(
+                currentPlayer.id,
+                gameSession.holeId,
+                throwData
+              ).catch(error => {
+                console.error('Failed to save OSC score to Firebase:', error.message);
+              });
+              console.log(`✅ OSC score ${data.score} saved for ${currentPlayer.name} on ${gameSession.holeId} (throw ${throwsArr.length})`);
+              // Update holeStates for consistency
+              gameState.holeStates.set(gameSession.holeId, gameSession);
+              // Emit full game session update to all tablets for this hole
+              console.log('[WS] Emitting score-update to tablets:', tabletsForHole, JSON.stringify(gameSession));
+              broadcastToHole(gameSession.holeId, 'score-update', gameSession);
+
+              // If 3 throws, advance to next player or complete game
+              if (throwsArr.length === 3) {
+                // Reset throw count for next player
+                gameSession.currentThrow = 0;
+                gameSession.players[gameSession.currentPlayerIndex].throwsDone = true;
+                gameSession.currentPlayerIndex++;
+                if (gameSession.currentPlayerIndex >= gameSession.players.length) {
+                  // All players done - complete the hole
+                  completeHole(gameSession, gameSession.holeId);
+                } else {
+                  // Next player's turn
+                  broadcastToHole(gameSession.holeId, 'next-player', gameSession);
+                }
+              }
+            } else {
+              console.log(`⚠️ OSC score ignored: All 3 throws already set for ${currentPlayer.name} on ${gameSession.holeId}`);
+              // Notify tablets that the score was ignored
+              tabletsForHole.forEach(socketId => {
+                io.to(socketId).emit('score-ignored', {
+                  reason: 'All 3 throws already set',
+                  player: currentPlayer.name,
+                  holeId: gameSession.holeId
+                });
+              });
+            }
+          } else {
+            console.log(`⚠️ No active game session found for hole ${data.hole}`);
+            // Notify tablets that no session was found
+            tabletsForHole.forEach(socketId => {
+              io.to(socketId).emit('score-ignored', {
+                reason: 'No active game session found',
+                holeId: data.hole
+              });
+            });
+          }
         });
         
       } catch (error) {
@@ -1025,4 +1127,4 @@ app.post('/api/game/end', (req, res) => {
   });
 });
 
-module.exports = app;
+module.exports = { app, server };

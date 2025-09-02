@@ -1,0 +1,17 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.swingcity.launcher
+productName: SwingCity V2 Launcher
+files:
+  - filter:
+      - launcher/**/*
+      - public/**/*
+      - server.js
+      - services/**/*
+      - config/**/*
+mac:
+  target:
+    - dmg
+  category: public.app-category.utilities
+electronVersion: 30.5.1

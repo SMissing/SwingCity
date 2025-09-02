@@ -1,3 +1,19 @@
+/* Set Bebas Neue as the default font for the entire tablet view */
+.tablet-container, .tablet-container * {
+    font-family: 'Bebas Neue', Arial, sans-serif !important;
+    letter-spacing: 0.02em;
+}
+/* Double the font size for the current player's name */
+.current-player-display .player-name {
+    font-size: calc(var(--player-name-size, 6rem) * 2) !important;
+}
+/* Add Bebas Neue font-face for player names */
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('/fonts/Bebas-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 /* Unity FEEL Enhanced Styles - Polished Game UI */
 
 /* Aggressive CSS Reset - Full Screen, No Scrolling */
@@ -545,8 +561,11 @@ html, body {
     mask: none !important; /* Ensure no masking */
     
     /* Crisp rendering for all browsers */
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast; /* Safari and older Chrome */
+    image-rendering: -webkit-crisp-edges; /* Webkit */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    image-rendering: -o-crisp-edges; /* Opera */
+    image-rendering: crisp-edges; /* Standard */
 }
 
 /* Removed hover effects - keeping interface simple */
@@ -635,8 +654,8 @@ html, body {
     gap: 40px;
     
     /* Enhanced backdrop blur effect */
-    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.5),
         inset 0 1px 3px rgba(255, 255, 255, 0.1);
@@ -787,8 +806,8 @@ html, body {
     height: 128px !important;
     background: rgba(0, 0, 0, 0.9);
     border-top: 3px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
     z-index: 9999 !important;
     
     /* Center content vertically and horizontally */
@@ -893,53 +912,62 @@ html, body {
     z-index: 9998 !important;
     
     /* Button styling similar to Unity theme */
-    background: linear-gradient(145deg, #8a2be2, #6a1bb2);
-    border: 3px solid #a855f7;
-    border-radius: 20px;
+    background: linear-gradient(145deg, #8a2be2, #6a1bb2) !important;
+    border: 3px solid #a855f7 !important;
+    border-radius: 20px !important;
     color: white;
     font-size: 1.2rem;
     font-weight: bold;
-    padding: 15px 20px; /* More square for icon */
+    width: 70px !important;
+    height: 70px !important;
+    padding: 0 !important; /* Remove padding for perfect centering */
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     
     /* Unity-like effects */
     box-shadow: 
         0 0 20px rgba(138, 43, 226, 0.6),
         0 4px 8px rgba(0, 0, 0, 0.4),
-        inset 0 2px 5px rgba(255, 255, 255, 0.1);
+        inset 0 2px 5px rgba(255, 255, 255, 0.1) !important;
     
     transition: all 0.3s ease;
     
     /* Subtle glow animation */
 }
 
-/* Keep icon white */
+/* Keep icon white and perfectly centered */
 .top-scoreboard-button svg {
-    fill: white;
+    fill: white !important;
+    width: 32px !important;
+    height: 32px !important;
     transition: all 0.3s ease;
+    /* Ensure perfect centering */
+    margin: 0 !important;
+    vertical-align: middle;
 }
 
 .top-scoreboard-button:hover svg {
-    fill: white;
+    fill: white !important;
+    width: 34px !important;
+    height: 34px !important;
 }
 
 .top-scoreboard-button:hover {
-    transform: translateY(-2px) scale(1.05);
+    transform: translateY(-2px) scale(1.05) !important;
     box-shadow: 
         0 0 30px rgba(138, 43, 226, 0.8),
         0 6px 12px rgba(0, 0, 0, 0.4),
-        inset 0 2px 8px rgba(255, 255, 255, 0.15);
+        inset 0 2px 8px rgba(255, 255, 255, 0.15) !important;
 }
 
 .top-scoreboard-button:active {
-    transform: translateY(1px) scale(1.02);
+    transform: translateY(1px) scale(1.02) !important;
     box-shadow: 
         0 0 15px rgba(138, 43, 226, 0.6),
         0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        inset 0 2px 5px rgba(0, 0, 0, 0.2) !important;
 }
 
 @keyframes topButtonGlow {
@@ -1251,9 +1279,11 @@ html, body {
     margin: 0 !important;
     padding: 20px 40px !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
+    margin-bottom: 100px !important;
+    /*justify-content: center !important;
+    position: relative !important;
     /* Initially hidden - will appear when team enters */
     opacity: 0 !important;
     visibility: hidden !important;
@@ -1277,29 +1307,50 @@ html, body {
     }
 }
 
+/* Use Bebas Neue for player names */
 .player-name {
+    font-family: 'Bebas Neue', Arial, sans-serif !important;
     font-size: var(--player-name-size, 6rem) !important;
     font-weight: bold;
     color: white;
-    margin-bottom: 5px !important; /* Reduced from 10px to bring closer */
     text-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
     text-align: center !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90vw;
-    /* Take up the top half of the middle section */
-    flex: 1;
+    max-width: 100vw;
+    flex: 1 1 auto;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    /* No border - clean separation */
     position: relative;
-    /* No animation - instant appearance */
+    z-index: 2;
+    text-transform: uppercase !important;
+
+}
+
+.player-hole-score-fixed {
+    position: fixed !important;
+    bottom: var(--bottom-offset, 2500px) !important;
+    right: 0 !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--player-score-size, 4rem) !important;
+    font-weight: bold;
+    color: #8a2be2;
+    text-align: right !important;
+    text-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
+    background: rgba(0,0,0,0.0);
+    padding: 0 60px 0 0;
+    z-index: 10;
+    min-width: 120px;
+    line-height: 1.1;
+    pointer-events: none;
 }
 
 .player-hole-score {
     font-size: var(--player-score-size, 4rem) !important;
+    top: var(--top-offset, 280px) !important;
     font-weight: bold;
     color: #8a2be2;
     text-align: center !important;
@@ -1385,16 +1436,25 @@ html, body {
 }
 
 .team-member-name {
-    font-size: clamp(1.2rem, 2.5vw, 1.8rem) !important;
-    font-weight: bold !important;
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
+    text-transform: uppercase !important;
+    font-size: clamp(2.2rem, 3vw, 3.5rem) !important;
+    font-family: 'Bebas Neue', Arial, sans-serif !important;
+    font-weight: 700 !important;
     color: white !important;
-    margin-bottom: 8px !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+    margin-bottom: 0 !important;
+    text-shadow: 4px 4px 4px rgba(0.7,0.7,0.7,0.7) !important;
     text-align: center !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 140px !important;
+    max-width: 160px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    line-height: 1.1 !important;
     /* No animation - instant appearance */
 }
 
@@ -1449,4 +1509,70 @@ html, body {
 .bottom-team-border .team-member {
     position: relative !important;
     z-index: 100 !important; /* Much higher than chevron background z-index: -1 */
+}
+
+/* Ball Score Display - Next to Ball Indicators */
+.ball-score-display {
+    position: fixed;
+    left: 140px; /* Position to the right of the ball indicators */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    
+    /* Layout for vertical score items */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 40px; /* Match the gap of ball indicators */
+    
+    /* Offset to align with ball indicators vertically */
+    margin-top: 0px; /* Fine-tune if needed */
+}
+
+.ball-score-item {
+    width: 80px;
+    height: 32px; /* Match ball indicator height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    
+    /* Initially hidden */
+    opacity: 0;
+    visibility: hidden;
+    
+    /* Smooth transitions */
+    transition: all 0.4s ease;
+}
+
+.ball-score-item.visible {
+    opacity: 1;
+    visibility: visible;
+    animation: scoreSlideIn 0.5s ease forwards;
+}
+
+.ball-score-item.positive {
+    color: #28a745;
+}
+
+.ball-score-item.negative {
+    color: #dc3545;
+}
+
+.ball-score-item.zero {
+    color: #ffc107;
+}
+
+@keyframes scoreSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

@@ -14,7 +14,56 @@
     <!-- Header -->
     <div class="leaderboard-header">
         <img src="/images/swingcity-logo.png" alt="SwingCity" class="leaderboard-logo">
-        <p class="subtitle">Tap your RFID card to view team scores</p>
+        <script>
+        // Fullscreen toggle on 4x logo click, then 4x again to exit
+        (function() {
+            let logoClickCount = 0;
+            let logoClickTimer = null;
+            const logo = document.querySelector('.leaderboard-logo');
+            if (!logo) return;
+            function resetLogoClicks() {
+                logoClickCount = 0;
+                if (logoClickTimer) clearTimeout(logoClickTimer);
+                logoClickTimer = null;
+            }
+            function isFullscreen() {
+                return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            }
+            function enterFullscreen() {
+                const el = document.documentElement;
+                if (el.requestFullscreen) el.requestFullscreen();
+                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+                else if (el.msRequestFullscreen) el.msRequestFullscreen();
+                document.body.classList.add('fullscreen-active');
+            }
+            function exitFullscreen() {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+                document.body.classList.remove('fullscreen-active');
+            }
+            logo.addEventListener('click', function() {
+                logoClickCount++;
+                if (logoClickTimer) clearTimeout(logoClickTimer);
+                logoClickTimer = setTimeout(resetLogoClicks, 2000);
+                if (logoClickCount === 4) {
+                    if (!isFullscreen()) {
+                        enterFullscreen();
+                    } else {
+                        exitFullscreen();
+                    }
+                    // Wait for 4 more clicks to toggle again
+                    logoClickCount = 0;
+                }
+            });
+            // Remove fullscreen class on exit
+            document.addEventListener('fullscreenchange', function() {
+                if (!isFullscreen()) document.body.classList.remove('fullscreen-active');
+            });
+        })();
+        </script>
     </div>
 
     <!-- RFID Input State -->
@@ -42,25 +91,31 @@
 
     <!-- Team Scores Display -->
     <div class="leaderboard-state" id="scoresState">
-        <div class="team-header">
-            <h2 id="teamName">Team Name</h2>
-            <div class="team-stats">
-                <span class="stat">Total Score: <strong id="totalScore">0</strong></span>
-                <span class="stat">Holes Completed: <strong id="holesCompleted">0</strong>/12</span>
-            </div>
-        </div>
-
         <div class="scores-container">
             <div class="players-grid" id="playersGrid">
                 <!-- Players will be populated by JavaScript -->
             </div>
         </div>
 
-        <div class="leaderboard-actions">
-            <button onclick="resetView()" class="btn btn-secondary">New Scan</button>
-            <button onclick="printScores()" class="btn btn-primary">Print Scores</button>
-            <a href="/admin" class="btn btn-info">Admin</a>
-        </div>
+                <div class="leaderboard-actions">
+                        <button onclick="resetView()" class="btn btn-secondary">New Scan</button>
+                        <button onclick="openEmailModal()" class="btn btn-primary">Send Email</button>
+                        <a href="/admin" class="btn btn-info">Admin</a>
+                </div>
+
+                <!-- Email Modal -->
+                <div id="emailModal" class="modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+                    <div class="modal-content" style="background:#232323; color:#fff; border-radius:12px; padding:32px 24px; min-width:320px; max-width:90vw; box-shadow:0 8px 32px #000a; position:relative;">
+                        <button onclick="closeEmailModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+                        <h3 style="margin-top:0;">Send Scores by Email</h3>
+                        <form id="emailForm" onsubmit="sendScoresEmail(event)">
+                            <label for="emailInput">Recipient Email:</label>
+                            <input id="emailInput" name="email" type="email" required placeholder="you@email.com" style="width:100%; padding:10px; border-radius:6px; border:1px solid #444; margin:12px 0 20px; font-size:1rem;">
+                            <button type="submit" class="btn btn-primary" style="width:100%;">Send</button>
+                            <div id="emailStatus" style="margin-top:12px; font-size:0.95rem;"></div>
+                        </form>
+                    </div>
+                </div>
     </div>
 
     <!-- Error State -->
@@ -167,24 +222,29 @@ function initializeSocket() {
 
 function setupRFIDCapture() {
     const hiddenInput = document.getElementById('hiddenRfidInput');
-    
+
     // Keep focus on hidden input to capture RFID scanner output
     hiddenInput.focus();
-    
-    // Refocus if user clicks elsewhere
+
+    // Refocus if user clicks elsewhere, but NOT if modal is open
     document.addEventListener('click', function() {
-        setTimeout(() => hiddenInput.focus(), 100);
+        const modal = document.getElementById('emailModal');
+        if (!modal || modal.style.display === 'none') {
+            setTimeout(() => hiddenInput.focus(), 100);
+        }
     });
-    
-    // Handle RFID input
+
+    // Handle RFID input ONLY if modal is not open
     hiddenInput.addEventListener('input', function(e) {
+        const modal = document.getElementById('emailModal');
+        if (modal && modal.style.display !== 'none') return;
         const value = e.target.value.trim();
-        
+
         // Clear any existing timeout
         if (scanTimeout) {
             clearTimeout(scanTimeout);
         }
-        
+
         // Set timeout to process the input (RFID scanners typically send all data quickly)
         scanTimeout = setTimeout(() => {
             if (value.length >= 8) { // Minimum RFID length
@@ -193,9 +253,11 @@ function setupRFIDCapture() {
             }
         }, 100);
     });
-    
+
     // Handle Enter key (some RFID scanners append this)
     hiddenInput.addEventListener('keypress', function(e) {
+        const modal = document.getElementById('emailModal');
+        if (modal && modal.style.display !== 'none') return;
         if (e.key === 'Enter') {
             const value = e.target.value.trim();
             if (value.length >= 8) {
@@ -248,11 +310,6 @@ function lookupTeam() {
 function displayTeamScores(teamData) {
     currentTeam = teamData;
     
-    // Update team header
-    document.getElementById('teamName').textContent = teamData.teamName;
-    document.getElementById('totalScore').textContent = teamData.totalScore.toLocaleString();
-    document.getElementById('holesCompleted').textContent = teamData.holesCompleted;
-    
     // Create scorecard table
     const playersGrid = document.getElementById('playersGrid');
     playersGrid.innerHTML = '';
@@ -262,12 +319,12 @@ function displayTeamScores(teamData) {
     
     showState('scores');
     
-    // Auto-reset after 30 seconds of inactivity
+    // Auto-reset after 5 minutes of inactivity
     setTimeout(() => {
         if (getCurrentState() === 'scores') {
             resetView();
         }
-    }, 30000);
+    }, 300000);
 }
 
 function createScorecardTable(players) {
@@ -275,6 +332,14 @@ function createScorecardTable(players) {
     
     const table = document.createElement('table');
     table.className = 'scorecard-table';
+    table.setAttribute('role', 'table');
+    table.setAttribute('aria-describedby', 'teamName');
+
+    // Caption (visually hidden for accessibility)
+    const caption = document.createElement('caption');
+    caption.className = 'visually-hidden';
+    caption.textContent = 'Per-player hole scores and totals';
+    table.appendChild(caption);
     
     // Define hole order (matches actual database holes)
     const holeOrder = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
@@ -295,7 +360,9 @@ function createScorecardTable(players) {
         const holeName = HOLE_NAMES[holeId] || holeId;
         const th = document.createElement('th');
         th.className = 'hole-header';
-        th.textContent = holeName; // Put text directly in th, not in span
+        const span = document.createElement('span');
+        span.textContent = holeName;
+        th.appendChild(span);
         headerRow.appendChild(th);
         console.log(`Added hole header ${index + 1}: ${holeName}`);
     });
@@ -322,21 +389,25 @@ function createScorecardTable(players) {
         const row = document.createElement('tr');
         
         // Player name cell
-        const nameCell = document.createElement('td');
-        nameCell.className = 'player-name-cell';
-        nameCell.textContent = player.name;
-        row.appendChild(nameCell);
+    const nameCell = document.createElement('th');
+    nameCell.className = 'player-name-cell';
+    nameCell.setAttribute('scope', 'row');
+    nameCell.textContent = player.name;
+    row.appendChild(nameCell);
         
         // Score cells
+        const perHoleCells = [];
         holeOrder.forEach(holeId => {
             const score = player.scores[holeId];
             const scoreValue = score ? score.total : '-';
             const scoreClass = score ? (score.total > 0 ? 'positive-score' : score.total < 0 ? 'negative-score' : 'zero-score') : 'no-score';
-            
+
             const scoreCell = document.createElement('td');
             scoreCell.className = `score-cell ${scoreClass}`;
             scoreCell.textContent = scoreValue;
+            scoreCell.dataset.holeId = holeId;
             row.appendChild(scoreCell);
+            perHoleCells.push(scoreCell);
         });
         
         // Total cell
@@ -350,6 +421,34 @@ function createScorecardTable(players) {
     });
     
     table.appendChild(tbody);
+
+    // Highlight best/worst per column (excluding '-' and zero baseline). Done after full table built.
+    try {
+        const bodyRows = Array.from(tbody.querySelectorAll('tr'));
+        const holeCount = holeOrder.length;
+        for (let colIndex = 0; colIndex < holeCount; colIndex++) {
+            let values = [];
+            bodyRows.forEach(r => {
+                const cell = r.querySelectorAll('td,th')[colIndex+1]; // +1 offset due to name header th
+                if (!cell || cell.classList.contains('total-cell')) return;
+                const raw = cell.textContent.trim();
+                const num = parseInt(raw, 10);
+                if (!isNaN(num)) {
+                    values.push({ num, cell });
+                }
+            });
+            if (values.length) {
+                const max = Math.max(...values.map(v => v.num));
+                const min = Math.min(...values.map(v => v.num));
+                values.forEach(v => {
+                    if (v.num === max && max > 0) v.cell.classList.add('best-score');
+                    if (v.num === min && min < 0) v.cell.classList.add('worst-score');
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('Highlighting failed', e);
+    }
     return table;
 }
 
@@ -465,12 +564,82 @@ function generatePrintContent(teamData) {
     `;
 }
 
+
+// Email Modal logic
+function openEmailModal() {
+    document.getElementById('emailModal').style.display = 'flex';
+    document.getElementById('emailInput').focus();
+    document.getElementById('emailStatus').textContent = '';
+}
+function closeEmailModal() {
+    document.getElementById('emailModal').style.display = 'none';
+}
+
+async function sendScoresEmail(e) {
+    e.preventDefault();
+    const email = document.getElementById('emailInput').value.trim();
+    const status = document.getElementById('emailStatus');
+    status.textContent = 'Capturing scores...';
+
+    // Hide action buttons before capture
+    const actions = document.querySelector('.leaderboard-actions');
+    actions.style.visibility = 'hidden';
+
+    // Use html2canvas to capture the scores area as an image (excluding buttons)
+    let imgData;
+    try {
+        if (window.html2canvas) {
+            const scoresState = document.getElementById('scoresState');
+            const canvas = await window.html2canvas(scoresState, {backgroundColor: null, ignoreElements: el => el.classList.contains('leaderboard-actions')});
+            imgData = canvas.toDataURL('image/png');
+        } else {
+            status.textContent = 'Image capture library not loaded.';
+            actions.style.visibility = '';
+            return;
+        }
+    } catch (err) {
+        status.textContent = 'Failed to capture image.';
+        actions.style.visibility = '';
+        return;
+    }
+    actions.style.visibility = '';
+
+    status.textContent = 'Sending email...';
+    try {
+        const resp = await fetch('/api/send-scores-email', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, image: imgData })
+        });
+        if (resp.ok) {
+            status.textContent = 'Email sent!';
+            setTimeout(closeEmailModal, 1500);
+        } else {
+            status.textContent = 'Failed to send email.';
+        }
+    } catch (err) {
+        status.textContent = 'Error sending email.';
+    }
+}
+
+// Modal close on background click
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('emailModal');
+    if (modal && e.target === modal) closeEmailModal();
+});
+
 // Handle manual input enter key
 document.getElementById('manualRfid').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         lookupTeam();
     }
 });
+// Load html2canvas dynamically if not present
+if (!window.html2canvas) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    document.head.appendChild(script);
+}
 </script>
 
 </body>

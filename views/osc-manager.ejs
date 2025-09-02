@@ -19,6 +19,9 @@
             <button class="btn btn-info" id="refreshStatusBtn">🔄 Refresh Status</button>
         </div>
     </div>
+            </div>
+        </div>
+    </div>
 
     <!-- OSC Status Section -->
     <div class="osc-status-section">
@@ -41,6 +44,28 @@
                     <div class="status-value" id="connectedClients">-</div>
                 </div>
                 
+    <div class="osc-send-section">
+        <div class="list-card">
+            <div class="card-header">
+                <h2>🚀 Send OSC Test Message</h2>
+                <p>Send a test OSC message to the router for any hole</p>
+            </div>
+            <form id="oscSendForm" class="row g-2 align-items-center p-3">
+                <div class="col-auto">
+                    <label for="oscHoleName" class="form-label">Hole Name</label>
+                    <input type="text" id="oscHoleName" class="form-control" placeholder="plinko" required>
+                </div>
+                <div class="col-auto">
+                    <label for="oscScoreValue" class="form-label">Score Value</label>
+                    <input type="number" id="oscScoreValue" class="form-control" placeholder="100" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Send OSC</button>
+                </div>
+            </form>
+            <div id="oscSendResult" class="mt-2"></div>
+        </div>
+    </div>
                 <div class="status-item">
                     <div class="status-label">Routing Entries</div>
                     <div class="status-value" id="routingEntries">-</div>
@@ -206,6 +231,7 @@
     </div>
 </div>
 
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/osc-manager.js"></script>
 

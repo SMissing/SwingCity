@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a1a">
     <title>Hole <%= holeNumber %> - <%= hole.name %> - SwingCity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
     <link rel="stylesheet" href="/css/unity-feel.css?v=<%= Date.now() %>">
@@ -63,10 +66,17 @@ const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra'
                 };
                 const imageFileName = holeImageMap[hole.name] || hole.name;
                 %>
-                <img src="/images/hole-names-png/<%= holeNumber %>_<%= imageFileName %>_WhiteText.png" 
-                     alt="<%= hole.name %>" 
-                     class="hole-logo-image-fullsize"
-                     onerror="document.getElementById('fallback-text').style.display='block'; this.style.display='none';">
+                                <% if (hole.name === 'Plinko') { %>
+                                    <img src="/images/hole-names-png/1_Plinko_WhiteText_magenta_static.svg" 
+                                             alt="Plinko" 
+                                             class="hole-logo-image-fullsize"
+                                             onerror="document.getElementById('fallback-text').style.display='block'; this.style.display='none';">
+                                <% } else { %>
+                                    <img src="/images/hole-names-png/<%= holeNumber %>_<%= imageFileName %>_WhiteText.png" 
+                                             alt="<%= hole.name %>" 
+                                             class="hole-logo-image-fullsize"
+                                             onerror="document.getElementById('fallback-text').style.display='block'; this.style.display='none';">
+                                <% } %>
                 <!-- Fallback text if image doesn't load -->
                 <div id="fallback-text" style="display: none;">
                     <h1>Hole <%= holeNumber %></h1>
@@ -85,6 +95,13 @@ const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra'
         <div class="status-circle" id="ball1Indicator" title="Ball 1"></div>
         <div class="status-circle" id="ball2Indicator" title="Ball 2"></div>
         <div class="status-circle" id="ball3Indicator" title="Ball 3"></div>
+    </div>
+
+    <!-- Ball Score Display - Next to Ball Indicators -->
+    <div class="ball-score-display">
+        <div class="ball-score-item" id="ballScore1"></div>
+        <div class="ball-score-item" id="ballScore2"></div>
+        <div class="ball-score-item" id="ballScore3"></div>
     </div>
 
     <!-- Bottom Text Border - HIDDEN -->
@@ -120,6 +137,8 @@ const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra'
             <p id="rfidPromptMessage">Hold your RFID card near the reader</p>
             <div id="rfidPromptTest" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <p style="font-size: 0.9rem; opacity: 0.7;">🧪 Test Mode: Press "1" + Enter to load test team</p>
+                <p style="font-size: 0.8rem; opacity: 0.5; margin-top: 10px;">🔥 Firebase Test: Press "F" + Enter to load real Firebase team</p>
+                <p style="font-size: 0.7rem; opacity: 0.4; margin-top: 5px;">🔧 Debug: Press "D" to manually update ball scores</p>
             </div>
         </div>
     </div>
@@ -129,7 +148,7 @@ const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra'
         <!-- Current Player Display -->
         <div class="current-player-display">
             <div class="player-name" id="currentPlayerName">Player Name</div>
-            <div class="player-hole-score" id="currentPlayerScore">0</div>
+            <div class="player-hole-score-fixed" id="currentPlayerScore">0</div>
         </div>
         
         <!-- Bottom Team Members Border -->
@@ -173,31 +192,25 @@ const backgroundPattern = (holeNumber % 2 === 1) ? 'hole-stripes' : 'hole-zebra'
 
 <!-- Team Scoreboard Modal -->
 <div class="team-scoreboard-modal" id="teamScoreboardModal">
-    <div class="scoreboard-content">
-        <div class="scoreboard-header">
-            <h2>📊 Team Scoreboard</h2>
-            <button class="close-modal-btn" onclick="closeTeamScoreboard()">✕</button>
+    <div class="scoreboard-content" style="background: var(--bg-card); border-radius: 18px; box-shadow: 0 8px 32px #000a; padding: 0; min-width: 340px; max-width: 98vw;">
+        <div class="scoreboard-header" style="display: flex; align-items: center; justify-content: space-between; padding: 24px 32px 12px 32px; border-bottom: 1px solid var(--border-color); background: var(--bg-dark); border-radius: 18px 18px 0 0;">
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <img src="/images/swingcity-logo.png" alt="SwingCity" class="leaderboard-logo" style="height: 48px; width: auto;">
+                <h2 style="margin: 0; font-size: 2rem; font-weight: 800; color: var(--primary-color); letter-spacing: 1px;">Team Scoreboard</h2>
+            </div>
+            <button class="close-modal-btn" onclick="closeTeamScoreboard()" style="font-size: 2rem; background: none; border: none; color: var(--text-light); cursor: pointer;">✕</button>
         </div>
-        <div class="scoreboard-body">
-            <div class="modal-team-info" id="modalTeamInfo">
-                <h3 id="modalTeamName">Team Name</h3>
-                <div class="modal-team-stats">
-                    <div class="modal-stat">
-                        <span class="label">Total Score</span>
-                        <span class="value" id="modalTotalScore">0</span>
-                    </div>
+        <div class="scoreboard-body" style="padding: 24px 32px 32px 32px;">
+            <div class="modal-team-info" id="modalTeamInfo" style="margin-bottom: 18px;">
+                <h3 id="modalTeamName" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color); margin-bottom: 8px;">Team Name</h3>
+                <div class="modal-team-stats" style="display: flex; gap: 32px; flex-wrap: wrap;">
                     <div class="modal-stat">
                         <span class="label">Holes Completed</span>
                         <span class="value" id="modalHolesCompleted">0</span>
                     </div>
-                    <div class="modal-stat">
-                        <span class="label">Current Hole</span>
-                        <span class="value" id="modalCurrentHole"><%= holeNumber %></span>
-                    </div>
                 </div>
             </div>
-            
-            <div class="modal-scorecard-container" id="modalScorecardContainer">
+            <div class="modal-scorecard-container players-grid" id="modalScorecardContainer" style="overflow-x: auto;">
                 <!-- Scorecard table will be dynamically generated -->
             </div>
         </div>
@@ -225,6 +238,18 @@ let socket = null;
 const holeNumber = <%= holeNumber %>;
 const holeConfig = <%- JSON.stringify(hole) %>;
 
+// Score overlay shake configuration
+const SCORE_SHAKE = {
+    frequency: 12,   // Hz - how fast it shakes
+    depth: 24,       // px - initial amplitude (will decay)
+    duration: 1500   // ms - time to decay to 0
+};
+// Negative panel droop configuration
+const SCORE_DROOP = {
+    drop: 32,       // px - how far the text droops down
+    duration: 600   // ms - time to reach full droop
+};
+
 // Make hole data available globally for RFID handler
 window.holeData = {
     number: holeNumber,
@@ -232,13 +257,52 @@ window.holeData = {
     config: holeConfig
 };
 
+// Allow page to configure positive sounds via window.POSITIVE_PANEL_SOUNDS; fallback to defaults if empty
+window.POSITIVE_PANEL_SOUNDS = (Array.isArray(window.POSITIVE_PANEL_SOUNDS) && window.POSITIVE_PANEL_SOUNDS.length)
+        ? window.POSITIVE_PANEL_SOUNDS
+        : [
+                '/sounds/posPointsSweep.wav',
+                '/sounds/posPointsCam.wav',
+                '/sounds/posPointsStab.wav'
+            ];
+// Allow page to configure negative sounds; fallback to defaults if empty
+window.NEGATIVE_PANEL_SOUNDS = (Array.isArray(window.NEGATIVE_PANEL_SOUNDS) && window.NEGATIVE_PANEL_SOUNDS.length)
+    ? window.NEGATIVE_PANEL_SOUNDS
+    : [
+        '/sounds/negPointsBass.wav',
+        '/sounds/negPointsSweep.wav'
+        ];
+let __positiveSoundsCache = [];
+let __negativeSoundsCache = [];
+let __lastPositivePlayAt = 0;
+let __lastNegativePlayAt = 0;
+    let __audioUnlocked = false;
+    let __audioCtx = null;
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     initializeSocket();
     resetToWaiting();
     initializeFullscreen();
     initializeDynamicSizing();
+    // Preload positive/negative panel sounds if provided by page
+    if (Array.isArray(window.POSITIVE_PANEL_SOUNDS) && window.POSITIVE_PANEL_SOUNDS.length) {
+        preloadSounds(window.POSITIVE_PANEL_SOUNDS);
+    }
+    if (Array.isArray(window.NEGATIVE_PANEL_SOUNDS) && window.NEGATIVE_PANEL_SOUNDS.length) {
+        preloadNegativeSounds(window.NEGATIVE_PANEL_SOUNDS);
+    }
+    // Install one-time unlock handler to satisfy mobile autoplay policies
+    const unlock = () => enableAudio(true);
+        document.addEventListener('pointerdown', unlock, { once: true, capture: true });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') enableAudio(true);
+        }, { once: true, capture: true });
+        // If sounds configured, show a gentle prompt until unlocked
+    if (window.POSITIVE_PANEL_SOUNDS.length || window.NEGATIVE_PANEL_SOUNDS.length) ensureSoundPrompt();
 });
+
+// (Removed OSC debug listener and overlay)
 
 // Dynamic sizing system for current player display
 function initializeDynamicSizing() {
@@ -608,6 +672,7 @@ function initializeSocket() {
             holeId: window.holeData.name,
             tabletId: `tablet-${holeNumber}`
         });
+    // (OSC debug listener removed)
     });
     
     socket.on('disconnect', function() {
@@ -628,6 +693,23 @@ function initializeSocket() {
         console.log('🏌️ Hole state update received:', holeState);
         if (holeState && holeState.status === 'playing') {
             handleGameStarted(holeState);
+            try {
+                // After restoring game, set throws/indicators to current state
+                const holeId = String(holeState.holeId || (window.holeData && window.holeData.name) || '').toString();
+                const pIndex = holeState.currentPlayerIndex || 0;
+                const player = (holeState.players && holeState.players[pIndex]) ? holeState.players[pIndex] : null;
+                const holeScores = player && player.scores ? player.scores[holeId] : null;
+                const throws = (holeScores && Array.isArray(holeScores.throws)) ? holeScores.throws : [];
+                updateBallScoresFromThrows(throws);
+                const throwCount = typeof holeState.currentThrow === 'number' ? holeState.currentThrow : throws.length;
+                setCumulativeBallIndicators(throwCount);
+                // Update center score number to hole total
+                const total = (holeScores && typeof holeScores.total === 'number') ? holeScores.total : 0;
+                const scoreEl = document.getElementById('currentPlayerScore');
+                if (scoreEl) scoreEl.textContent = total;
+            } catch(err) {
+                console.warn('Failed to restore throw indicators from hole state:', err);
+            }
         }
     });
     
@@ -655,6 +737,47 @@ function initializeSocket() {
     socket.on('hole-completed', function(data) {
         if (data.hole === holeNumber) {
             handleHoleCompleted(data);
+        }
+    });
+
+    // New: handle unified score updates from server
+    socket.on('score-update', function(gameData) {
+        try {
+            if (!gameData || !gameData.holeId) return;
+            const thisHole = (window.holeData && window.holeData.name) ? String(window.holeData.name).toLowerCase() : '';
+            if (String(gameData.holeId).toLowerCase() !== thisHole) return; // ignore other holes
+
+            const pIndex = gameData.currentPlayerIndex || 0;
+            const player = (gameData.players && gameData.players[pIndex]) ? gameData.players[pIndex] : null;
+            const holeScores = player && player.scores ? player.scores[gameData.holeId] : null;
+            const throws = (holeScores && Array.isArray(holeScores.throws)) ? holeScores.throws : [];
+            const total = (holeScores && typeof holeScores.total === 'number') ? holeScores.total : 0;
+            const throwCount = throws.length;
+            const lastScore = throwCount > 0 ? throws[throwCount - 1] : null;
+
+            // Update center score immediately
+            const scoreEl = document.getElementById('currentPlayerScore');
+            if (scoreEl) scoreEl.textContent = total;
+
+            // Update bottom team border (current player highlight and total) if available
+            updateBottomPlayersDisplay();
+
+            // Update per-throw labels next to ball indicators
+            updateBallScoresFromThrows(throws);
+
+            // Cumulative indicators: after 1 throw => BI1, after 2 => BI1+BI2, after 3 => all
+            setCumulativeBallIndicators(throwCount);
+
+            // Show 3s overlay panel for the last score, then finalize visuals
+            if (lastScore !== null && lastScore !== undefined) {
+                showScoreOverlayPanel(lastScore, function() {
+                    // After overlay hides, ensure UI reflects the latest state
+                    updateBallScoresFromThrows(throws);
+                    setCumulativeBallIndicators(throwCount);
+                });
+            }
+        } catch (err) {
+            console.error('Error handling score-update:', err);
         }
     });
     
@@ -715,10 +838,36 @@ function handleGameStarted(gameData) {
         rfid: gameData.rfid,
         name: gameData.teamName,
         teamName: gameData.teamName,
-        totalScore: 0, // Calculate from players
+        totalScore: 0,
         holesCompleted: 0,
         players: gameData.players || []
     };
+    
+    // Handle different player data formats from Firebase
+    if (gameData.players) {
+        if (Array.isArray(gameData.players)) {
+            // Already in array format
+            currentTeam.players = gameData.players;
+            console.log('📊 Using array format players:', currentTeam.players);
+        } else if (typeof gameData.players === 'object') {
+            // Convert Firebase object format to array
+            currentTeam.players = Object.keys(gameData.players).map(playerId => {
+                const playerData = gameData.players[playerId];
+                console.log(`👤 Converting player ${playerId}:`, playerData);
+                console.log(`📊 Player's scorePerHole:`, playerData.scorePerHole);
+                return {
+                    id: playerId,
+                    name: playerData.displayName || playerId.replace(/[@_]/g, ' '),
+                    scores: playerData.scorePerHole || {}, // This is the key - scorePerHole from Firebase
+                    totalScore: playerData.totalScoreForThisVisit || 0
+                };
+            });
+            console.log('🔄 Converted Firebase players to array format:', currentTeam.players);
+        }
+    }
+    
+    console.log('🔄 Final converted team data:', currentTeam);
+    console.log('👥 Players with scorePerHole data:', currentTeam.players);
     
     // Calculate total score from player data
     currentTeam.totalScore = currentTeam.players.reduce((total, player) => {
@@ -745,8 +894,12 @@ function handleGameStarted(gameData) {
         bottomBorder.classList.add('show');
     }
     
-    // Activate the first ball indicator (pink)
-    activateBallIndicator(1);
+    // Start with no indicators lit (Ball1 state)
+    resetBallIndicators();
+    
+    // Update ball score display with Firebase data
+    console.log('🎯 About to call updateBallScoreDisplay() with converted team data');
+    updateBallScoreDisplay();
     
     // Show scoreboard button now that we have team data
     updateScoreboardButtonVisibility();
@@ -774,8 +927,8 @@ function handleTeamStarted(data) {
         bottomBorder.classList.add('show');
     }
     
-    // Activate the first ball indicator (pink)
-    activateBallIndicator(1);
+    // Start with no indicators lit (Ball1 state)
+    resetBallIndicators();
     
     // Show scoreboard button now that we have team data
     updateScoreboardButtonVisibility();
@@ -830,22 +983,10 @@ function updateBottomPlayersDisplay() {
     let html = '';
     
     currentTeam.players.forEach((player, index) => {
-        let displayScore = 0;
-        
-        // All players in bottom border show their total score
-        // The current player's hole score is displayed in the center of screen
-        if (player.scores) {
-            displayScore = Object.values(player.scores).reduce((total, holeScore) => {
-                return total + (holeScore.total || 0);
-            }, 0);
-        }
-        
         const isCurrentClass = index === 0 ? ' current' : '';
-        
         html += `
             <div class="team-member${isCurrentClass}">
                 <div class="team-member-name">${player.name || `Player ${index + 1}`}</div>
-                <div class="team-member-score">${displayScore}</div>
             </div>
         `;
     });
@@ -1024,6 +1165,353 @@ function updateBottomText(text) {
     }
 }
 
+// Ensure an overlay panel exists for showing the last score prominently
+function ensureScoreOverlayPanel() {
+    if (document.getElementById('scoreOverlayPanel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'scoreOverlayPanel';
+    panel.style.cssText = `
+        display: none;
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    overflow: hidden;
+    `;
+
+    // Overscan layer that we actually shake (larger than viewport)
+    const layer = document.createElement('div');
+    layer.id = 'scoreOverlayLayer';
+    layer.style.cssText = `
+        position: absolute;
+        top: -10vh;
+        left: -10vw;
+        width: 120vw;
+        height: 120vh;
+        background-repeat: repeat;
+        will-change: transform;
+        z-index: 1;
+    `;
+    panel.appendChild(layer);
+
+    const text = document.createElement('div');
+    text.id = 'scoreOverlayText';
+    text.style.cssText = `
+    font-size: 16vw;
+    font-weight: 900;
+    padding: 0.5vw 2vw;
+    border-radius: 1.2vw;
+    text-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    letter-spacing: 0.5vw;
+    position: relative;
+    z-index: 2;
+    `;
+    panel.appendChild(text);
+    document.body.appendChild(panel);
+}
+
+// Show the overlay panel for 3 seconds with yellow for + and pink/red for -
+function showScoreOverlayPanel(score, onDone) {
+    ensureScoreOverlayPanel();
+    const panel = document.getElementById('scoreOverlayPanel');
+    const layer = document.getElementById('scoreOverlayLayer');
+    const text = document.getElementById('scoreOverlayText');
+    if (!panel || !layer || !text) return;
+
+    if (score >= 0) {
+        // Yellow stripes: light and darker yellow alternating (larger bands)
+        layer.style.background = 'repeating-linear-gradient(45deg, #ffe36e 0 12vw, #d8b84a 12vw 24vw)';
+    text.style.color = '#FFFFFFFF';
+    text.style.background = 'transparent';
+    text.style.textShadow = '0 10px 24px rgba(0,0,0,0.45)';
+        playPositivePanelSounds();
+    } else {
+        // Use same magenta family as ball 1 indicator (ff44ff -> cc00cc)
+        layer.style.background = 'repeating-linear-gradient(45deg, #ff44ff 0 14vw, #cc00cc 14vw 28vw)';
+        text.style.color = '#FFFFFF';
+        text.style.background = 'transparent';
+        text.style.textShadow = '0 10px 32px rgba(255,0,255,0.55), 0 4px 12px rgba(0,0,0,0.55)';
+        playNegativePanelSounds();
+    }
+    text.textContent = (score > 0 ? '+' : '') + score;
+
+    panel.style.display = 'flex';
+    // Positive = screen shake; Negative = droop the text a bit
+    if (score >= 0) {
+        startElementShake(layer, SCORE_SHAKE);
+    } else {
+        startElementDroop(text, SCORE_DROOP);
+    }
+    setTimeout(() => {
+        panel.style.display = 'none';
+        // Cleanup any transforms
+        try { layer.style.transform = ''; } catch(_){}
+        try { text.style.transform = ''; } catch(_){}
+        if (typeof onDone === 'function') onDone();
+    }, 3000);
+}
+
+// Update the three throw labels beside the ball indicators from an array of throws
+function updateBallScoresFromThrows(throws) {
+    const container = document.querySelector('.ball-score-display');
+    if (container) {
+        container.style.display = (throws && throws.length) ? 'flex' : 'none';
+    }
+    for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById(`ballScore${i}`);
+        if (!el) continue;
+        const val = (throws && throws[i - 1] !== undefined && throws[i - 1] !== null) ? throws[i - 1] : null;
+        el.textContent = val === null ? '' : (val > 0 ? `+${val}` : `${val}`);
+        el.classList.remove('positive', 'negative', 'zero', 'visible');
+        if (val !== null) {
+            if (val > 0) el.classList.add('positive');
+            else if (val < 0) el.classList.add('negative');
+            else el.classList.add('zero');
+            el.classList.add('visible');
+        }
+    }
+}
+
+// Audio helpers for positive overlay
+function preloadSounds(urls = []) {
+    __positiveSoundsCache = urls.map(src => {
+        const a = new Audio();
+        a.src = src;
+        a.preload = 'auto';
+        return a;
+    });
+}
+
+function preloadNegativeSounds(urls = []) {
+    __negativeSoundsCache = urls.map(src => {
+        const a = new Audio();
+        a.src = src;
+        a.preload = 'auto';
+        return a;
+    });
+}
+
+function playPositivePanelSounds() {
+    try {
+        const now = Date.now();
+        if (now - __lastPositivePlayAt < 300) return; // throttle rapid replays
+        __lastPositivePlayAt = now;
+
+        const urls = Array.isArray(window.POSITIVE_PANEL_SOUNDS) ? window.POSITIVE_PANEL_SOUNDS : [];
+        if (!urls.length) return;
+
+        // Require user gesture unlock once
+        if (!__audioUnlocked) {
+            console.warn('Audio locked by browser autoplay policy. Tap to enable sound.');
+            ensureSoundPrompt();
+            return;
+        }
+
+        // If we preloaded, clone to avoid reusing the same element instance
+        if (__positiveSoundsCache.length === urls.length && __positiveSoundsCache.length > 0) {
+            __positiveSoundsCache.forEach(cached => {
+                const a = cached.cloneNode();
+                a.volume = 1.0;
+                a.play().catch(() => {});
+            });
+        } else {
+            urls.forEach(src => {
+                const a = new Audio(src);
+                a.volume = 1.0;
+                a.play().catch(() => {});
+            });
+        }
+    } catch (e) {
+        // Autoplay restrictions can cause play() to reject; safe to ignore
+    }
+}
+
+function playNegativePanelSounds() {
+    try {
+        const now = Date.now();
+        if (now - __lastNegativePlayAt < 300) return; // throttle
+        __lastNegativePlayAt = now;
+
+        const urls = Array.isArray(window.NEGATIVE_PANEL_SOUNDS) ? window.NEGATIVE_PANEL_SOUNDS : [];
+        if (!urls.length) return;
+
+        if (!__audioUnlocked) {
+            console.warn('Audio locked by browser autoplay policy. Tap to enable sound.');
+            ensureSoundPrompt();
+            return;
+        }
+
+        if (__negativeSoundsCache.length === urls.length && __negativeSoundsCache.length > 0) {
+            __negativeSoundsCache.forEach(cached => {
+                const a = cached.cloneNode();
+                a.volume = 1.0;
+                a.play().catch(() => {});
+            });
+        } else {
+            urls.forEach(src => {
+                const a = new Audio(src);
+                a.volume = 1.0;
+                a.play().catch(() => {});
+            });
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+function enableAudio(fromUserGesture = false) {
+    try {
+        if (__audioUnlocked) return;
+        // Web Audio unlock pattern for iOS/Safari
+        if (!__audioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                __audioCtx = new AudioCtx();
+            }
+        }
+        if (__audioCtx && __audioCtx.state === 'suspended') {
+            __audioCtx.resume().catch(() => {});
+        }
+        // Create and play a tiny silent buffer to satisfy policy
+        if (__audioCtx && __audioCtx.state === 'running') {
+            const buffer = __audioCtx.createBuffer(1, 1, 22050);
+            const source = __audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(__audioCtx.destination);
+            source.start(0);
+        }
+    // Warm up HTMLAudio by attempting muted playback once per URL (allowed on user gesture)
+    const posUrls = Array.isArray(window.POSITIVE_PANEL_SOUNDS) ? window.POSITIVE_PANEL_SOUNDS : [];
+    const negUrls = Array.isArray(window.NEGATIVE_PANEL_SOUNDS) ? window.NEGATIVE_PANEL_SOUNDS : [];
+    [...posUrls.slice(0, 3), ...negUrls.slice(0, 3)].forEach(src => {
+            try {
+                const a = new Audio(src);
+                a.muted = true;
+                a.play().then(() => {
+                    // Stop quickly; goal is to satisfy gesture requirement
+                    setTimeout(() => { try { a.pause(); a.src = ''; } catch(_){} }, 60);
+                }).catch(() => {});
+            } catch(_) {}
+        });
+        __audioUnlocked = true;
+        hideSoundPrompt();
+        console.log('Audio unlocked');
+    } catch (e) {
+        // Ignore
+    }
+}
+
+function ensureSoundPrompt() {
+    if (document.getElementById('sound-unlock-prompt') || !window.POSITIVE_PANEL_SOUNDS.length) return;
+    const prompt = document.createElement('div');
+    prompt.id = 'sound-unlock-prompt';
+    prompt.textContent = 'Tap to enable sound';
+    prompt.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 16px;
+        background: rgba(0,0,0,0.7);
+        color: #fff;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 10001;
+        pointer-events: auto;
+    `;
+    prompt.addEventListener('click', () => enableAudio(true));
+    document.body.appendChild(prompt);
+}
+
+function hideSoundPrompt() {
+    const el = document.getElementById('sound-unlock-prompt');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+// Decaying shake effect applied to an element
+function startElementShake(element, cfg = {}) {
+    const frequency = cfg.frequency ?? 12;    // Hz
+    const depth = cfg.depth ?? 24;            // px
+    const duration = cfg.duration ?? 1500;    // ms
+    const start = performance.now();
+
+    // Cancel any previous shake by keeping a token
+    const token = Math.random().toString(36).slice(2);
+    element.dataset.shakeToken = token;
+
+    function frame(now) {
+        // Abort if another shake started
+        if (element.dataset.shakeToken !== token) {
+            element.style.transform = '';
+            return;
+        }
+
+        const elapsed = now - start;
+        const t = Math.min(elapsed / duration, 1);
+        const amp = depth * (1 - t); // linear decay to 0 by end
+        const angle = 2 * Math.PI * frequency * (elapsed / 1000);
+
+        // Slightly different axes to feel more organic
+        const dx = Math.sin(angle) * amp;
+        const dy = Math.cos(angle * 1.3) * amp * 0.8;
+
+        element.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        if (t < 1) {
+            requestAnimationFrame(frame);
+        } else {
+            element.style.transform = '';
+            // Clear token when done
+            if (element.dataset.shakeToken === token) {
+                delete element.dataset.shakeToken;
+            }
+        }
+    }
+    requestAnimationFrame(frame);
+}
+
+// Simple one-way droop: translate Y from 0 to cfg.drop over cfg.duration with ease-out, then hold
+function startElementDroop(element, cfg = {}) {
+    const drop = cfg.drop ?? 32;        // px
+    const duration = cfg.duration ?? 600; // ms
+    const start = performance.now();
+    const token = Math.random().toString(36).slice(2);
+    element.dataset.droopToken = token;
+
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+
+    function frame(now) {
+        if (element.dataset.droopToken !== token) return;
+        const elapsed = now - start;
+        const t = Math.min(elapsed / duration, 1);
+        const y = drop * easeOutCubic(t);
+        element.style.transform = `translate(0px, ${y}px)`;
+        if (t < 1) {
+            requestAnimationFrame(frame);
+        }
+    }
+    requestAnimationFrame(frame);
+}
+
+// Light indicators cumulatively (1..throwCount). When throwCount is 0: none lit.
+function setCumulativeBallIndicators(throwCount) {
+    for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`ball${i}Indicator`);
+        if (!indicator) continue;
+        if (i <= throwCount) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
+    }
+}
+
 // Function to hide/show bottom border
 function toggleBottomBorder(show = true) {
     const bottomBorder = document.getElementById('bottomTextBorder');
@@ -1151,59 +1639,9 @@ function updateScoreboardModal() {
     }
     
     // Update team stats
-    const modalTotalScore = document.getElementById('modalTotalScore');
-    if (modalTotalScore) {
-        modalTotalScore.textContent = (currentTeam.totalScore || 0).toLocaleString();
-    }
-    
     const modalHolesCompleted = document.getElementById('modalHolesCompleted');
     if (modalHolesCompleted) {
         modalHolesCompleted.textContent = `${currentTeam.holesCompleted || 0}/12`;
-    }
-    
-    const modalCurrentHole = document.getElementById('modalCurrentHole');
-    if (modalCurrentHole) {
-        modalCurrentHole.textContent = holeNumber;
-    }
-    
-    // Calculate additional stats
-    if (currentTeam.players && currentTeam.players.length > 0) {
-        // Calculate average score per hole
-        let totalHoles = 0;
-        let totalScoreSum = 0;
-        
-        currentTeam.players.forEach(player => {
-            if (player.scores) {
-                Object.values(player.scores).forEach(holeScore => {
-                    if (holeScore && holeScore.total !== undefined) {
-                        totalHoles++;
-                        totalScoreSum += holeScore.total;
-                    }
-                });
-            }
-        });
-        
-        const averageScore = totalHoles > 0 ? Math.round(totalScoreSum / totalHoles) : 0;
-        
-        // Update additional stat display
-        const modalStats = document.querySelector('.modal-team-stats');
-        if (modalStats && modalStats.children.length > 3) {
-            // Remove any existing extra stats
-            while (modalStats.children.length > 3) {
-                modalStats.removeChild(modalStats.lastChild);
-            }
-        }
-        
-        // Add average score stat
-        if (modalStats && totalHoles > 0) {
-            const avgStat = document.createElement('div');
-            avgStat.className = 'modal-stat';
-            avgStat.innerHTML = `
-                <span class="label">Average Score</span>
-                <span class="value">${averageScore}</span>
-            `;
-            modalStats.appendChild(avgStat);
-        }
     }
     
     // Generate scorecard table
@@ -1232,90 +1670,112 @@ function generateModalScorecard() {
         'UpAndOver': 'Up And Over',
         'Lopside': 'Lopside'
     };
-    
+
     // Create table
     const table = document.createElement('table');
-    table.className = 'modal-scorecard-table';
-    
-    // Create header
+    table.className = 'scorecard-table';
+    table.setAttribute('role', 'table');
+    table.setAttribute('aria-describedby', 'modalTeamName');
+
+    // Caption (visually hidden for accessibility)
+    const caption = document.createElement('caption');
+    caption.className = 'visually-hidden';
+    caption.textContent = 'Per-player hole scores and totals';
+    table.appendChild(caption);
+
+    // Create header using DOM methods instead of innerHTML
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    
+
     // Player name header
     const playerHeader = document.createElement('th');
+    playerHeader.className = 'player-name-header';
     playerHeader.textContent = 'Player';
     headerRow.appendChild(playerHeader);
-    
+
     // Hole headers
     holeOrder.forEach((holeId, index) => {
         const th = document.createElement('th');
-        th.textContent = `${index + 1}`;
-        th.title = holeNames[holeId] || holeId;
+        th.className = 'hole-header';
+        th.textContent = holeNames[holeId] || holeId;
         headerRow.appendChild(th);
     });
-    
+
     // Total header
     const totalHeader = document.createElement('th');
+    totalHeader.className = 'total-header';
     totalHeader.textContent = 'Total';
     headerRow.appendChild(totalHeader);
-    
+
     thead.appendChild(headerRow);
     table.appendChild(thead);
-    
-    // Create body
+
+    // Create body rows
     const tbody = document.createElement('tbody');
-    
     currentTeam.players.forEach(player => {
-        const row = document.createElement('tr');
-        
-        // Player name cell
-        const nameCell = document.createElement('td');
-        nameCell.textContent = player.name || 'Player';
-        row.appendChild(nameCell);
-        
-        // Score cells
         let playerTotal = 0;
+        const row = document.createElement('tr');
+
+        // Player name cell
+        const nameCell = document.createElement('th');
+        nameCell.className = 'player-name-cell';
+        nameCell.setAttribute('scope', 'row');
+        nameCell.textContent = player.name;
+        row.appendChild(nameCell);
+
+        // Score cells
         holeOrder.forEach(holeId => {
-            const td = document.createElement('td');
-            const score = player.scores && player.scores[holeId] ? player.scores[holeId].total : null;
-            
-            if (score !== null && score !== undefined) {
-                td.textContent = score;
-                playerTotal += score;
-                
-                // Add score styling
-                if (score > 0) {
-                    td.classList.add('modal-score-positive');
-                } else if (score < 0) {
-                    td.classList.add('modal-score-negative');
-                } else {
-                    td.classList.add('modal-score-zero');
-                }
-            } else {
-                td.textContent = '-';
-                td.classList.add('modal-score-incomplete');
-            }
-            
-            row.appendChild(td);
+            const score = player.scores && player.scores[holeId];
+            const scoreValue = score ? score.total : '-';
+            const scoreClass = score ? (score.total > 0 ? 'positive-score' : score.total < 0 ? 'negative-score' : 'zero-score') : 'no-score';
+
+            const scoreCell = document.createElement('td');
+            scoreCell.className = `score-cell ${scoreClass}`;
+            scoreCell.textContent = scoreValue;
+            scoreCell.dataset.holeId = holeId;
+            row.appendChild(scoreCell);
         });
-        
+
         // Total cell
+        playerTotal = Object.values(player.scores).reduce((sum, holeScore) => sum + (holeScore.total || 0), 0);
+        const totalClass = playerTotal > 0 ? 'positive-score' : playerTotal < 0 ? 'negative-score' : 'zero-score';
         const totalCell = document.createElement('td');
+        totalCell.className = `total-cell ${totalClass}`;
         totalCell.textContent = playerTotal;
-        if (playerTotal > 0) {
-            totalCell.classList.add('modal-score-positive');
-        } else if (playerTotal < 0) {
-            totalCell.classList.add('modal-score-negative');
-        } else {
-            totalCell.classList.add('modal-score-zero');
-        }
         row.appendChild(totalCell);
-        
+
         tbody.appendChild(row);
     });
-    
+
     table.appendChild(tbody);
-    
+
+    // Highlight best/worst per column (excluding '-' and zero baseline). Done after full table built.
+    try {
+        const bodyRows = Array.from(tbody.querySelectorAll('tr'));
+        const holeCount = holeOrder.length;
+        for (let colIndex = 0; colIndex < holeCount; colIndex++) {
+            let values = [];
+            bodyRows.forEach(r => {
+                const cell = r.querySelectorAll('td,th')[colIndex+1]; // +1 offset due to name header th
+                if (!cell || cell.classList.contains('total-cell')) return;
+                const raw = cell.textContent.trim();
+                const num = parseInt(raw, 10);
+                if (!isNaN(num)) {
+                    values.push({ num, cell });
+                }
+            });
+            if (values.length) {
+                const max = Math.max(...values.map(v => v.num));
+                const min = Math.min(...values.map(v => v.num));
+                values.forEach(v => {
+                    if (v.num === max && max > 0) v.cell.classList.add('best-score');
+                    if (v.num === min && min < 0) v.cell.classList.add('worst-score');
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('Highlighting failed', e);
+    }
     // Replace existing table
     container.innerHTML = '';
     container.appendChild(table);
@@ -1403,9 +1863,16 @@ document.addEventListener('keydown', function(e) {
         console.log('🔄 RFID input buffer cleared');
     }
     
-    // Test mode fallback (press "1" + Enter)
+    // Test mode fallback (press "1" + Enter or "F" + Enter)
     if (e.key === '1' && !rfidInput) {
         rfidInput = '1';
+    } else if (e.key.toLowerCase() === 'f' && !rfidInput) {
+        rfidInput = '3744990468'; // Bruce & Sam's team - has real Firebase data
+    } else if (e.key.toLowerCase() === 'd' && !rfidInput && currentTeam) {
+        // Debug: manually trigger ball score display update
+        console.log('🔧 Debug: Manually triggering updateBallScoreDisplay()');
+        updateBallScoreDisplay();
+        return;
     }
 });
 
@@ -1423,6 +1890,10 @@ async function handleRFIDScan(rfidCode) {
             simulateTestRFIDTap();
         }, 1000); // Show loading for a moment
         return;
+    } else if (rfidCode === '3744990468') {
+        console.log('🔥 Firebase test mode: Loading real team from Firebase');
+        showLoadingState('Loading real Firebase team...');
+        // This will actually scan the real RFID card and get live Firebase data
     }
     
     try {
@@ -1579,6 +2050,7 @@ function showTapCountIndicator(count) {
 // Simulate a test RFID tap for easy testing
 function simulateTestRFIDTap() {
     // Create mock team data that would normally come from the server
+    // This mimics real Firebase data structure with throws array
     const testTeam = {
         rfid: '1234567890',
         name: 'Test Team Alpha',
@@ -1592,7 +2064,7 @@ function simulateTestRFIDTap() {
                 scores: {
                     'Plinko': { total: 200, throws: [100, 50, 50] },
                     'SpinningTop': { total: 150, throws: [75, 75] },
-                    'Haphazard': { total: -50, throws: [-25, -25] },
+                    'Haphazard': { total: -50, throws: [-100, 50] },
                     'Roundhouse': { total: 100, throws: [50, 25, 25] },
                     'HillHop': { total: 175, throws: [100, 75] },
                     'SkiJump': { total: 75, throws: [75] },
@@ -1651,8 +2123,11 @@ function simulateTestRFIDTap() {
         bottomBorder.classList.add('show');
     }
     
-    // Activate the first ball indicator (pink)
-    activateBallIndicator(1);
+    // Start with no indicators lit (Ball1 state)
+    resetBallIndicators();
+    
+    // Update ball score indicators with current player's Plinko scores
+    updateBallScoreDisplay();
     
     // Show scoreboard button
     updateScoreboardButtonVisibility();
@@ -1662,6 +2137,200 @@ function simulateTestRFIDTap() {
     updateStatus(`${testTeam.name} Playing`, 'playing');
     
     console.log('🎮 Test team loaded successfully!');
+}
+
+// Function to update ball score display next to ball indicators
+function updateBallScoreDisplay() {
+    console.log('🎯 === BALL SCORE DISPLAY DEBUG START ===');
+    
+    if (!currentTeam || !currentTeam.players || currentTeam.players.length === 0) {
+        console.log('❌ No team or players available for ball score display');
+        console.log('currentTeam:', currentTeam);
+        return;
+    }
+    
+    // Get the current hole name
+    const holeNames = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+    const currentHoleId = holeNames[holeNumber - 1];
+    
+    console.log(`🎯 Looking for ball scores on hole: ${currentHoleId} (hole ${holeNumber})`);
+    console.log(`🎮 Current team full data:`, JSON.stringify(currentTeam, null, 2));
+    
+    // Find the current active player (this could be determined by game state)
+    // For now, we'll use the first player, but this should be dynamic based on whose turn it is
+    let currentPlayer = null;
+    
+    // Check if we have players in the expected format (array)
+    if (Array.isArray(currentTeam.players)) {
+        currentPlayer = currentTeam.players[0];
+        console.log(`👤 Using array format - Current player:`, JSON.stringify(currentPlayer, null, 2));
+    } 
+    // Check if we have players in Firebase format (object with player IDs as keys)
+    else if (typeof currentTeam.players === 'object') {
+        const playerIds = Object.keys(currentTeam.players);
+        console.log(`🔑 Found ${playerIds.length} player IDs:`, playerIds);
+        if (playerIds.length > 0) {
+            const playerId = playerIds[0]; // Use first player for now
+            currentPlayer = {
+                id: playerId,
+                name: currentTeam.players[playerId].displayName || playerId,
+                // Convert Firebase scorePerHole format to our expected scores format
+                scores: currentTeam.players[playerId].scorePerHole || {}
+            };
+            console.log(`👤 Using Firebase format - Converted player:`, JSON.stringify(currentPlayer, null, 2));
+            console.log(`📊 Raw Firebase player data:`, JSON.stringify(currentTeam.players[playerId], null, 2));
+        }
+    }
+    
+    if (!currentPlayer) {
+        console.log('❌ No current player found');
+        return;
+    }
+    
+    // Get the throws for this hole from the player's scorePerHole data
+    let throws = [];
+    
+    // Check if player has scores for the current hole
+    if (currentPlayer.scores && currentPlayer.scores[currentHoleId]) {
+        const holeData = currentPlayer.scores[currentHoleId];
+        console.log(`📊 Raw hole data for ${currentHoleId}:`, JSON.stringify(holeData, null, 2));
+        
+        // Let's also check ALL the keys in holeData to see what's actually there
+        console.log(`🔍 All keys in holeData:`, Object.keys(holeData));
+        console.log(`🔍 holeData values:`, Object.values(holeData));
+        
+        // Check for weird labeling like -1, 0, 1 that you mentioned
+        console.log(`🎯 Checking for numbered keys (-1, 0, 1, etc.):`);
+        for (let i = -1; i <= 5; i++) {
+            if (holeData[i] !== undefined) {
+                console.log(`  Key "${i}": ${holeData[i]}`);
+            }
+        }
+        
+        // Handle different Firebase formats for throws
+        if (holeData.throws && Array.isArray(holeData.throws)) {
+            // Format: throws: [50, -50, 25]
+            throws = holeData.throws;
+            console.log('📦 Found throws array format:', throws);
+        } else if (typeof holeData === 'object') {
+            // Firebase format: throw1: 50, throw2: -50, throw3: 25
+            const throwValues = [];
+            for (let i = 1; i <= 3; i++) {
+                const throwKey = `throw${i}`;
+                console.log(`🔍 Checking for ${throwKey}:`, holeData[throwKey]);
+                if (holeData[throwKey] !== undefined && holeData[throwKey] !== null) {
+                    throwValues.push(holeData[throwKey]);
+                }
+            }
+            if (throwValues.length > 0) {
+                throws = throwValues;
+                console.log('🔥 Found Firebase throw1/throw2/throw3 format:', throws);
+            } else {
+                // Maybe the scores are stored as numbered keys like -1, 0, 1?
+                console.log('🔍 Trying numbered keys like -1, 0, 1, 2...');
+                const numberedThrows = [];
+                for (let i = -1; i <= 5; i++) {
+                    if (holeData[i] !== undefined && holeData[i] !== null) {
+                        numberedThrows.push(holeData[i]);
+                        console.log(`✅ Found throw at key "${i}": ${holeData[i]}`);
+                    }
+                }
+                if (numberedThrows.length > 0) {
+                    throws = numberedThrows;
+                    console.log('🔥 Found numbered key format:', throws);
+                } else {
+                    console.log('❌ No throw1/throw2/throw3 values found');
+                    console.log('🔍 Available keys in holeData:', Object.keys(holeData));
+                }
+            }
+        } else if (Array.isArray(holeData)) {
+            // Direct array format
+            throws = holeData;
+            console.log('📋 Found direct array format:', throws);
+        }
+    } else {
+        console.log(`❌ No score data found for hole ${currentHoleId}`);
+        console.log(`📊 Available holes for player:`, currentPlayer.scores ? Object.keys(currentPlayer.scores) : 'No scores object');
+    }
+    
+    console.log(`🎯 Final throws array for display:`, throws);
+    
+    // Check if we have any throw data at all
+    const hasThrowData = throws.length > 0 && throws.some(t => t !== undefined && t !== null);
+    
+    if (!hasThrowData) {
+        console.log('⚠️ No individual throw data available - hiding ball score display');
+        // Hide the entire ball score display container when no throw data is available
+        const ballScoreDisplay = document.querySelector('.ball-score-display');
+        if (ballScoreDisplay) {
+            ballScoreDisplay.style.display = 'none';
+        }
+        
+        // Clear all ball score displays
+        for (let i = 1; i <= 3; i++) {
+            const ballScoreElement = document.getElementById(`ballScore${i}`);
+            if (ballScoreElement) {
+                ballScoreElement.textContent = '';
+                ballScoreElement.classList.remove('visible', 'positive', 'negative', 'zero');
+            }
+        }
+        
+        console.log('🎯 === BALL SCORE DISPLAY DEBUG END (No Data) ===');
+        return;
+    }
+    
+    // Show the ball score display container since we have data
+    const ballScoreDisplay = document.querySelector('.ball-score-display');
+    if (ballScoreDisplay) {
+        ballScoreDisplay.style.display = 'flex';
+    }
+    
+    // Clear all ball score displays first
+    for (let i = 1; i <= 3; i++) {
+        const ballScoreElement = document.getElementById(`ballScore${i}`);
+        if (ballScoreElement) {
+            ballScoreElement.textContent = '';
+            ballScoreElement.classList.remove('visible', 'positive', 'negative', 'zero');
+            console.log(`🗑️ Cleared ball ${i} score element`);
+        } else {
+            console.log(`❌ Could not find ballScore${i} element`);
+        }
+    }
+    
+    // Update each ball score element with the throws
+    for (let i = 1; i <= 3; i++) {
+        const ballScoreElement = document.getElementById(`ballScore${i}`);
+        if (!ballScoreElement) {
+            console.log(`❌ Ball score element ${i} not found`);
+            continue;
+        }
+        
+        // If there's a score for this throw, display it
+        if (throws[i - 1] !== undefined && throws[i - 1] !== null) {
+            const score = throws[i - 1];
+            
+            // Set the score text with proper formatting
+            ballScoreElement.textContent = score > 0 ? `+${score}` : `${score}`;
+            
+            // Add appropriate color class
+            if (score > 0) {
+                ballScoreElement.classList.add('positive');
+            } else if (score < 0) {
+                ballScoreElement.classList.add('negative');
+            } else {
+                ballScoreElement.classList.add('zero');
+            }
+            
+            // Make it visible with animation
+            ballScoreElement.classList.add('visible');
+            
+            console.log(`🏀 Ball ${i} score: ${score} (formatted: ${ballScoreElement.textContent})`);
+        } else {
+            console.log(`🏀 Ball ${i}: No throw data (throws[${i-1}] = ${throws[i - 1]})`);
+        }
+    }
+    
+    console.log('🎯 === BALL SCORE DISPLAY DEBUG END ===');
 }
 </script>
 

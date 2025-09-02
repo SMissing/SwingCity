@@ -1,4 +1,12 @@
+@font-face {
+    font-family: 'Lato Medium';
+    src: url('/fonts/Lato-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
 /* SwingCity V2 Crazy Golf System Styles - Minimal Professional Dark */
+
+/* Using Google Fonts: Lato (loaded in HTML) */
 
 :root {
     /* Professional Dark Theme */
@@ -31,12 +39,16 @@
     /* UI Colors - Subtle */
     --border-color: #404040;
     --shadow-color: rgba(0, 0, 0, 0.3);
+    /* Leaderboard Hole Palette */
+    --hole-pink: #ff3fae;
+    --hole-blue: #2196f3;
+    --hole-yellow: #ffd54f;
 }
 
 /* ==================== GENERAL STYLES ==================== */
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Lato', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-light);
     min-height: 100vh;
@@ -127,6 +139,7 @@ body {
 
 .fullscreen-active {
     -ms-overflow-style: none;  /* IE and Edge */
+    /* Note: scrollbar-width is not supported in older browsers, but it's safe to keep for Firefox */
     scrollbar-width: none;  /* Firefox */
 }
 
@@ -152,6 +165,8 @@ body {
 /* Mobile specific optimizations */
 @media screen and (max-width: 1024px) {
     .tablet-container {
+        /* Note: -webkit-overflow-scrolling is deprecated and not widely supported anymore */
+        /* Keeping for legacy iOS support but not critical */
         -webkit-overflow-scrolling: touch;
     }
     
@@ -1086,12 +1101,16 @@ input:focus, select:focus, textarea:focus {
 
 .leaderboard-header {
     text-align: center;
-    margin-bottom: 30px;
-    padding: 30px;
-    background: var(--bg-card);
-    border-radius: 15px;
-    border: 2px solid var(--primary-color);
+    margin: 20px 0 10px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
+
+/* Remove previously added decorative gradient */
+.leaderboard-header::before { display: none !important; }
 
 .leaderboard-header h1 {
     color: var(--text-light);
@@ -1107,11 +1126,7 @@ input:focus, select:focus, textarea:focus {
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
-.leaderboard-header .subtitle {
-    color: var(--text-muted);
-    font-size: 1.2rem;
-    margin: 0;
-}
+/* Subtitle removed */
 
 .leaderboard-state {
     display: none;
@@ -1182,36 +1197,7 @@ input:focus, select:focus, textarea:focus {
     color: var(--text-muted);
 }
 
-/* Team Scores Display */
-.team-header {
-    background: var(--bg-card);
-    padding: 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    border: 2px solid var(--success-color);
-}
-
-.team-header h2 {
-    color: var(--text-light);
-    margin: 0 0 15px 0;
-    font-size: 2.5rem;
-}
-
-.team-stats {
-    display: flex;
-    gap: 30px;
-    flex-wrap: wrap;
-}
-
-.team-stats .stat {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-}
-
-.team-stats .stat strong {
-    color: var(--text-light);
-    font-size: 1.3rem;
-}
+/* Team header removed (team name, total, holes completed) */
 
 /* Players Grid */
 .players-grid {
@@ -1287,17 +1273,29 @@ input:focus, select:focus, textarea:focus {
 
 .scorecard-table .hole-header {
     height: 80px;
-    font-size: 0.8rem;
     text-align: center;
     vertical-align: middle;
     padding: 15px 5px;
-    display: table-cell !important; /* Force table cell display */
-    width: 70px !important; /* Fixed width for hole columns */
+    display: table-cell !important;
+    width: 70px !important;
     min-width: 70px !important;
     max-width: 70px !important;
-    white-space: nowrap; /* Prevent text wrapping */
-    writing-mode: horizontal-tb !important; /* Ensure horizontal text */
+    white-space: nowrap;
+    overflow: hidden;
+    writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
+}
+
+.scorecard-table .hole-header > span {
+    display: block;
+    width: 100%;
+    font-size: min(max(1pt, 1.5vw), 1rem);
+    line-height: 1.1;
+    font-weight: 600;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
 }
 
 .total-header {
@@ -2143,9 +2141,19 @@ input:focus, select:focus, textarea:focus {
 }
 
 .bottom-team-border .player-item .player-name {
-    font-size: clamp(0.9rem, 2.5vw, 1.5rem);
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
     font-weight: 500;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    margin: 0;
+    font-family: 'Lato Medium', 'Lato', Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1.1;
 }
+
 
 /* Bottom Team Display Responsive */
 .bottom-team-border .player-item {
@@ -2153,6 +2161,10 @@ input:focus, select:focus, textarea:focus {
     flex: 1;
     max-width: 200px;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 /* Top Action Buttons (Scoreboard, Fullscreen) */
@@ -2173,6 +2185,7 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -2217,10 +2230,10 @@ input:focus, select:focus, textarea:focus {
 /* 4-tap sequence indication for team status bar */
 .status-indicator {
     transition: all 0.1s ease;
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
     cursor: pointer;
 }
 
@@ -2280,3 +2293,126 @@ input:focus, select:focus, textarea:focus {
     -ms-user-select: text;
     user-select: text;
 }
+
+/* ==========================================================
+     LEADERBOARD ENHANCED STYLES (Aug 2025 refinement pass)
+     - Non-destructive overrides & additions
+     - Accessibility, responsiveness, visual clarity
+     ========================================================== */
+
+/* Utility */
+.visually-hidden { /* Keep for a11y captions / descriptions */
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0 0 0 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+}
+
+/* State fade-in animation */
+@keyframes fadeInState { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+.leaderboard-state.active { animation: fadeInState .35s ease; }
+
+/* Header polish */
+.leaderboard-header { position: relative; overflow: hidden; }
+.leaderboard-header::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 70% 30%, rgba(138,43,226,0.25), transparent 70%);
+        pointer-events: none;
+}
+
+/* RFID prompt subtle glow */
+.rfid-prompt { box-shadow: 0 0 0 2px rgba(255,140,0,0.15), 0 10px 30px -10px rgba(0,0,0,0.6); }
+.rfid-prompt .manual-input:focus { box-shadow: 0 0 0 2px var(--primary-color); }
+
+/* Loading spinner unify (override bootstrap if present) */
+.loading-container .spinner { width:70px; height:70px; border-width:6px; }
+
+/* Team header gradient */
+.team-header { background: linear-gradient(135deg, var(--bg-card), var(--bg-darker)); position: relative; }
+.team-header::after { content:''; position:absolute; inset:0; background: linear-gradient(90deg, rgba(40,167,69,0.15), transparent 60%); pointer-events:none; }
+
+/* Scorecard refinements */
+.scorecard-table { border: 2px solid var(--border-color); }
+.scorecard-table caption { text-align:left; padding: 0 0 10px; font-size: .85rem; color: var(--text-muted); }
+.scorecard-table thead th { letter-spacing: .5px; }
+.scorecard-table thead th.hole-header { position: relative; }
+.scorecard-table thead th.hole-header::after { /* underline accent */
+        content: '';
+        position: absolute; left: 8px; right: 8px; bottom: 6px;
+        height: 3px; border-radius: 2px;
+        background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+        opacity: 0.3;
+}
+
+/* Dynamic best-score highlight */
+.scorecard-table td.best-score { background: linear-gradient(135deg, rgba(40,167,69,0.25), rgba(40,167,69,0.05)); box-shadow: inset 0 0 0 1px rgba(40,167,69,0.4); }
+.scorecard-table td.worst-score { background: linear-gradient(135deg, rgba(220,53,69,0.25), rgba(220,53,69,0.05)); box-shadow: inset 0 0 0 1px rgba(220,53,69,0.4); }
+
+/* Improve readability with subtle row hover & focus within */
+.scorecard-table tbody tr { transition: background .25s ease; }
+.scorecard-table tbody tr:focus-within { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+
+/* Scroll container improvements */
+.players-grid { scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--bg-dark); }
+.players-grid::-webkit-scrollbar { height: 10px; }
+.players-grid::-webkit-scrollbar-track { background: var(--bg-darker); }
+.players-grid::-webkit-scrollbar-thumb { background: linear-gradient(var(--primary-color), var(--accent-color)); border-radius: 8px; }
+
+/* Action bar enhancements */
+.leaderboard-actions { display:flex; flex-wrap:wrap; gap:15px; justify-content:center; border:2px solid var(--border-color); background: linear-gradient(135deg, var(--bg-card), var(--bg-darker)); }
+.leaderboard-actions .btn { min-width:140px; font-weight:600; position:relative; }
+.leaderboard-actions .btn:focus-visible { outline:2px solid var(--accent-color); outline-offset:2px; }
+
+/* Button focus & hover unify */
+.btn:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+
+/* Print enhancements: compress spacing & high contrast */
+@media print {
+    body.leaderboard-body { background: #fff; color:#000; }
+    .leaderboard-header, .leaderboard-actions, .rfid-prompt, .error-container { box-shadow:none; border:none; background:#fff; }
+    .scorecard-table { box-shadow:none; background:#fff; }
+    .scorecard-table thead th { background:#111 !important; color:#fff !important; }
+    .scorecard-table td, .scorecard-table th { color:#000 !important; }
+    .positive-score { color:#0a6e2f !important; }
+    .negative-score { color:#a31326 !important; }
+    .team-header { border:none; background:#fff; }
+    .team-header::after { display:none; }
+}
+
+/* Mobile fine tuning overrides */
+@media (max-width: 600px) {
+    .leaderboard-header h1 { font-size: 2.2rem; }
+    .team-header h2 { font-size: 1.9rem; }
+    .leaderboard-actions .btn { flex:1 1 45%; }
+}
+
+    /* Alternating hole header colors (groups of 3: Pink, Blue, Yellow) */
+    .scorecard-table thead tr > th.hole-header:nth-child(3n+2) { /* 1st in cycle (Plinko etc.) */
+        background: var(--hole-pink) !important;
+        color: #fff !important;
+    }
+    .scorecard-table thead tr > th.hole-header:nth-child(3n+3) { /* 2nd in cycle */
+        background: var(--hole-blue) !important;
+        color: #fff !important;
+    }
+    .scorecard-table thead tr > th.hole-header:nth-child(3n+4) { /* 3rd in cycle */
+        background: var(--hole-yellow) !important;
+        color: #222 !important;
+    }
+
+    /* Maintain accent underline visibility against brighter backgrounds */
+    .scorecard-table thead th.hole-header::after { opacity: .45; }
+
+    /* Dark grey Player & Total headers override */
+    .scorecard-table thead th.player-name-header,
+    .scorecard-table thead th.total-header {
+        background: #242424 !important; /* Darker grey */
+        color: var(--text-light) !important;
+    }
+

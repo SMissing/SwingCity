@@ -1,0 +1,8 @@
+version: 1.0.0
+files:
+  - url: SwingCity-V2-Launcher-1.0.0-arm64.dmg
+    sha512: 7rcDYii70n2Eq02HhHShGTqiXJBlsXj6JcpBh3ilSkPh4dHqSRz4FL1yypYMHuYDXDtDrrwhEn+v1nAZFCLBQQ==
+    size: 351393006
+path: SwingCity-V2-Launcher-1.0.0-arm64.dmg
+sha512: 7rcDYii70n2Eq02HhHShGTqiXJBlsXj6JcpBh3ilSkPh4dHqSRz4FL1yypYMHuYDXDtDrrwhEn+v1nAZFCLBQQ==
+releaseDate: '2025-08-07T03:26:24.816Z'

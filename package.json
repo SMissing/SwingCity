@@ -2,11 +2,13 @@
   "name": "swingcity-v2",
   "version": "1.0.0",
   "description": "SwingCity V2 - Interactive Crazy Golf Scoring System",
-  "main": "server.js",
+  "main": "launcher/main.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "electron .",
     "dev": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --mac --x64 --arm64"
   },
   "keywords": [
     "crazy-golf",
@@ -29,11 +31,31 @@
     "firebase-admin": "^11.10.1",
     "node-fetch": "^2.7.0",
     "node-osc": "^10.0.0",
+    "nodemailer": "^7.0.5",
     "serialport": "^12.0.0",
     "socket.io": "^4.7.2",
     "winston": "^3.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "electron": "^30.0.0",
+  "electron-builder": "26.0.20"
+  },
+  "build": {
+    "appId": "com.swingcity.launcher",
+    "productName": "SwingCity V2 Launcher",
+    "files": [
+      "launcher/**/*",
+      "public/**/*",
+      "server.js",
+      "services/**/*",
+      "config/**/*"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.utilities"
+    }
   }
 }

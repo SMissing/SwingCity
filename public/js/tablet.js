@@ -16,16 +16,14 @@ class TabletInterface {
 
     init() {
         console.log(`🎯 Initializing tablet for hole: ${this.holeId}`);
-        
+        // Create the score panel overlay
+        this.createScorePanel();
         // Initialize socket connection
         this.initSocket();
-        
         // Set up UI event listeners
         this.setupEventListeners();
-        
         // Start connection status updates
         this.updateConnectionStatus();
-        
         // Show waiting state initially
         this.showGameState('waiting');
     }
@@ -33,12 +31,18 @@ class TabletInterface {
     initSocket() {
         // Connect to Socket.io server
         this.socket = io();
-        
+        // Debug: log all socket events
+        const origOn = this.socket.on;
+        this.socket.on = (event, handler) => {
+            origOn.call(this.socket, event, (...args) => {
+                console.log(`[SOCKET EVENT]`, event, ...args);
+                handler(...args);
+            });
+        };
         this.socket.on('connect', () => {
             console.log('✅ Connected to server');
             this.connectionRetries = 0;
             this.updateConnectionStatus(true);
-            
             // Register this tablet with the server
             this.socket.emit('tablet-register', {
                 holeId: this.holeId,
@@ -56,11 +60,8 @@ class TabletInterface {
         this.socket.on('game-started', (gameData) => {
             console.log('🎮 Game started:', gameData);
             this.currentGame = gameData;
-            
-            // Ensure we have the team name
             const teamName = gameData.teamName || gameData.name || 'Team';
             console.log(`🎮 Team loaded: ${teamName} with ${gameData.players?.length || 0} players`);
-            
             this.showGameState('playing');
             this.updateGameDisplay();
         });
@@ -68,9 +69,120 @@ class TabletInterface {
         this.socket.on('score-update', (gameData) => {
             console.log('🎯 Score update:', gameData);
             this.currentGame = gameData;
-            this.updateScoreDisplay();
-            this.showScoreWaiting(false);
+            const currentPlayer = gameData.players[gameData.currentPlayerIndex];
+            let lastScore = null;
+            let throwCount = 0;
+            if (currentPlayer && currentPlayer.scores && currentPlayer.scores[this.holeId]) {
+                const throws = currentPlayer.scores[this.holeId].throws;
+                throwCount = throws.length;
+                if (throwCount > 0) {
+                    lastScore = throws[throwCount - 1];
+                }
+            }
+            // Show the score panel if a new score was added
+            if (lastScore !== null && lastScore !== undefined) {
+                this.showScorePanel(lastScore, () => {
+                    // Update ball indicator and throw display
+                    this.updateGameDisplay();
+                    this.updateBallIndicator(throwCount);
+                    this.updateThrowScoreDisplay(throwCount, lastScore);
+                    this.showScoreWaiting(false);
+                    // If throwCount >= 3, mark player as finished
+                    if (throwCount >= 3) {
+                        this.showPlayerFinished();
+                    }
+                });
+            } else {
+                this.updateGameDisplay();
+                this.showScoreWaiting(false);
+            }
         });
+    updateBallIndicator(throwCount) {
+        // Reset all ball indicators
+        for (let i = 1; i <= 3; i++) {
+            const indicator = document.getElementById(`ball${i}Indicator`);
+            if (indicator) {
+                indicator.classList.remove('active', 'completed');
+                if (i < throwCount) {
+                    indicator.classList.add('completed');
+                } else if (i === throwCount) {
+                    indicator.classList.add('active');
+                }
+            }
+        }
+    }
+
+    updateThrowScoreDisplay(throwCount, score) {
+        // Update the score next to the last ball thrown
+        const ballScoreElement = document.getElementById(`ballScore${throwCount}`);
+        if (ballScoreElement) {
+            ballScoreElement.textContent = (score > 0 ? '+' : '') + score;
+        }
+    }
+
+    showPlayerFinished() {
+        // Optionally show a message or effect that the player is finished
+        // For now, just log
+        console.log('🏁 Player finished all throws for this hole!');
+    }
+
+    // (showScorePanel already handles yellow/red panel logic)
+    createScorePanel() {
+        // Create the panel element if it doesn't exist
+        if (document.getElementById('scorePanel')) return;
+        const panel = document.createElement('div');
+        panel.id = 'scorePanel';
+        panel.style.cssText = `
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background-repeat: repeat;
+            background-size: cover;
+        `;
+        const scoreText = document.createElement('div');
+        scoreText.id = 'scorePanelText';
+        scoreText.style.cssText = `
+            font-size: 7vw;
+            font-weight: bold;
+            padding: 2vw 6vw;
+            border-radius: 2vw;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+            margin-bottom: 2vw;
+        `;
+        panel.appendChild(scoreText);
+        document.body.appendChild(panel);
+    }
+
+    showScorePanel(score, onDone) {
+        const panel = document.getElementById('scorePanel');
+        const scoreText = document.getElementById('scorePanelText');
+        if (!panel || !scoreText) return;
+
+        // Style panel and text based on score
+        if (score >= 0) {
+            panel.style.background = "#ffe066 url('/public/images/background-png/Stripes.PNG') repeat";
+            scoreText.style.color = '#fff';
+            scoreText.style.background = 'rgba(255, 224, 102, 0.95)';
+            scoreText.style.textShadow = '0 2px 8px #bfa600';
+        } else {
+            panel.style.background = "#ff69b4 url('/public/images/background-png/Stripes.PNG') repeat";
+            scoreText.style.color = '#111';
+            scoreText.style.background = 'rgba(255, 105, 180, 0.95)';
+            scoreText.style.textShadow = '0 2px 8px #b4005a';
+        }
+        scoreText.textContent = (score > 0 ? '+' : '') + score;
+
+        panel.style.display = 'flex';
+        // Hide after 3 seconds, then call onDone
+        setTimeout(() => {
+            panel.style.display = 'none';
+            if (typeof onDone === 'function') onDone();
+        }, 3000);
+    }
 
         this.socket.on('next-player', (gameData) => {
             console.log('👤 Next player:', gameData);
@@ -92,10 +204,8 @@ class TabletInterface {
             if (holeState && holeState.status === 'playing') {
                 console.log('🎮 Existing game found - restoring game state');
                 this.currentGame = holeState;
-                
                 const teamName = holeState.teamName || holeState.name || 'Team';
                 console.log(`🎮 Restoring team: ${teamName}`);
-                
                 this.showGameState('playing');
                 this.updateGameDisplay();
             } else if (!holeState) {
@@ -129,19 +239,9 @@ class TabletInterface {
             }
         });
 
-        this.socket.on('player-score-update', (updatedPlayerData) => {
-            console.log('🎯 Individual player score update:', updatedPlayerData);
-            if (this.currentGame && updatedPlayerData) {
-                // Find the player in currentGame and update their score
-                const playerIdx = this.currentGame.players.findIndex(p => p.id === updatedPlayerData.id);
-                if (playerIdx !== -1) {
-                    this.currentGame.players[playerIdx] = updatedPlayerData;
-                    this.updatePlayersList();
-                    this.updateScoreDisplay();
-                    this.showNotification(`${updatedPlayerData.name}'s score updated`);
-                }
-            }
-        });
+    // Remove player-score-update handler; score-update now updates the full UI
+
+    // (Removed OSC debug socket listener)
     }
 
     attemptReconnection() {
@@ -449,26 +549,25 @@ class TabletInterface {
         const currentPlayer = this.currentGame.players[this.currentGame.currentPlayerIndex];
         if (!currentPlayer) return;
 
-        const throwsDisplayElement = document.getElementById('throws-display');
-        const holeTotalElement = document.getElementById('hole-total');
-        
-        if (throwsDisplayElement) {
-            throwsDisplayElement.innerHTML = '';
-            
-            const holeScores = currentPlayer.scores[this.holeId];
-            if (holeScores && holeScores.throws) {
-                holeScores.throws.forEach((score, index) => {
-                    const throwElement = document.createElement('div');
-                    throwElement.className = `throw-score ${score >= 0 ? 'positive' : 'negative'}`;
-                    throwElement.textContent = score > 0 ? `+${score}` : score;
-                    throwsDisplayElement.appendChild(throwElement);
-                });
-            }
+        // Update the center score (currentPlayerScore)
+        const scoreElement = document.getElementById('currentPlayerScore');
+        if (scoreElement) {
+            const total = this.getPlayerHoleTotal(currentPlayer);
+            scoreElement.textContent = total;
         }
 
-        if (holeTotalElement) {
-            const total = this.getPlayerHoleTotal(currentPlayer);
-            holeTotalElement.textContent = total;
+        // Update ball score display (ballScore1, ballScore2, ballScore3)
+        const holeScores = currentPlayer.scores[this.holeId];
+        for (let i = 1; i <= 3; i++) {
+            const ballScoreElement = document.getElementById(`ballScore${i}`);
+            if (ballScoreElement) {
+                let scoreText = '';
+                if (holeScores && holeScores.throws && holeScores.throws[i-1] !== undefined) {
+                    const score = holeScores.throws[i-1];
+                    scoreText = score > 0 ? `+${score}` : `${score}`;
+                }
+                ballScoreElement.textContent = scoreText;
+            }
         }
     }
 
