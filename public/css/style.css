@@ -1091,6 +1091,26 @@ input:focus, select:focus, textarea:focus {
 .leaderboard-body {
     background: var(--bg-dark);
     color: var(--text-light);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Chevron background pattern for leaderboard */
+.leaderboard-body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url('/images/background-png/chevron.svg');
+    background-repeat: repeat;
+    background-size: 100vw auto; /* Scale with screen width */
+    transform: rotate(90deg);
+    transform-origin: center center;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .leaderboard-container {
