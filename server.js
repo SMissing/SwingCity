@@ -179,7 +179,7 @@ app.get('/api/team/:rfid', async (req, res) => {
 
 // Get leaderboard data
 app.get('/api/leaderboard', async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || 25;
   
   try {
     const leaderboard = await firebaseService.getLeaderboard(limit);
@@ -199,7 +199,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
 // Get top high scores (players who completed all 12 holes)
 app.get('/api/highscores', async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || 25;
   
   try {
     const highScores = await firebaseService.getTopHighScores(limit);

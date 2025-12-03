@@ -607,7 +607,7 @@ async function loadAllTeams() {
 // Load high scores from API
 async function loadHighScores() {
     try {
-        const response = await fetch('/api/highscores?limit=10');
+        const response = await fetch('/api/highscores?limit=25');
         if (!response.ok) throw new Error('Failed to fetch high scores');
         const data = await response.json();
         highScores = data.highScores || [];
