@@ -1108,7 +1108,7 @@ input:focus, select:focus, textarea:focus {
     background-size: 400px 400px;
     background-repeat: repeat;
     background-position: center top;
-    opacity: 0.2;
+    opacity: 0.1;
     z-index: 0;
     pointer-events: none;
     filter: invert(1);
