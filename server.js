@@ -153,6 +153,20 @@ app.get('/api/team/:rfid', async (req, res) => {
     teamData.totalScore = firebaseService.calculateTeamTotal(teamData.players);
     teamData.holesCompleted = firebaseService.calculateHolesCompleted(teamData.players);
     
+    // Update high scores for this team's players in the background
+    if (teamData.players && teamData.players.length > 0) {
+      Promise.all(teamData.players.map(player => 
+        firebaseService.updatePlayerHighScore(player, rfid)
+      )).then(results => {
+        const updated = results.filter(r => r.success).length;
+        if (updated > 0) {
+          io.emit('highScoreUpdated', { rfid, source: 'team-fetch' });
+        }
+      }).catch(err => {
+        console.error('Background high score update failed:', err.message);
+      });
+    }
+    
     res.json(teamData);
   } catch (error) {
     console.error('Error fetching team data:', error.message);
@@ -390,6 +404,15 @@ app.post('/api/teams', async (req, res) => {
 app.get('/api/teams', async (req, res) => {
   try {
     const teams = await firebaseService.getAllTeams();
+    
+    // Sync high scores in the background (don't block response)
+    firebaseService.syncAllPlayersToHighScores().then(() => {
+      // Emit high score update event so leaderboards refresh
+      io.emit('highScoreUpdated', { source: 'sync' });
+    }).catch(err => {
+      console.error('Background high score sync failed:', err.message);
+    });
+    
     res.json({ teams, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error('Error fetching teams:', error);
