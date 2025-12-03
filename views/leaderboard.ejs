@@ -7,6 +7,67 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* Cycling leaderboard specific styles */
+        .team-display {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .team-display.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .cycle-indicator {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        .cycle-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        .cycle-dot.active {
+            background: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+        }
+        .no-teams-message {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .no-teams-message h2 {
+            color: rgba(255,255,255,0.8);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .no-teams-message p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1.2rem;
+        }
+        .loading-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .countdown-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            transition: width 1s linear;
+            z-index: 101;
+        }
+    </style>
 </head>
 <body class="leaderboard-body">
 
@@ -54,11 +115,9 @@
                     } else {
                         exitFullscreen();
                     }
-                    // Wait for 4 more clicks to toggle again
                     logoClickCount = 0;
                 }
             });
-            // Remove fullscreen class on exit
             document.addEventListener('fullscreenchange', function() {
                 if (!isFullscreen()) document.body.classList.remove('fullscreen-active');
             });
@@ -66,79 +125,64 @@
         </script>
     </div>
 
-    <!-- RFID Input State -->
-    <div class="leaderboard-state active" id="rfidInputState">
-        <div class="rfid-prompt">
-            <div class="rfid-icon">�</div>
-            <h2>Ready for RFID Scan</h2>
-            <p>Tap your team card on the reader to view scores</p>
-            <div class="input-fallback">
-                <p class="small-text">Or manually enter RFID:</p>
-                <input type="text" id="manualRfid" placeholder="Enter RFID number" class="manual-input">
-                <button onclick="lookupTeam()" class="btn btn-primary btn-sm">Lookup Team</button>
-            </div>
+    <!-- Loading State -->
+    <div class="leaderboard-state active" id="loadingState">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <h2 class="loading-pulse">Loading Leaderboard...</h2>
         </div>
     </div>
 
-    <!-- Loading State -->
-    <div class="leaderboard-state" id="loadingState">
-        <div class="loading-container">
-            <div class="spinner"></div>
-            <h2>Loading Team Data...</h2>
-            <p>Please wait</p>
+    <!-- No Teams State -->
+    <div class="leaderboard-state" id="noTeamsState">
+        <div class="no-teams-message">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🏌️</div>
+            <h2>No Active Teams</h2>
+            <p>Waiting for teams to start playing...</p>
         </div>
     </div>
 
     <!-- Team Scores Display -->
     <div class="leaderboard-state" id="scoresState">
-        <div class="scores-container">
-            <div class="players-grid" id="playersGrid">
-                <!-- Players will be populated by JavaScript -->
+        <div class="team-display" id="teamDisplay">
+            <div class="scores-container">
+                <div class="players-grid" id="playersGrid">
+                    <!-- Players will be populated by JavaScript -->
+                </div>
             </div>
         </div>
-
-                <div class="leaderboard-actions">
-                        <button onclick="resetView()" class="btn btn-secondary">New Scan</button>
-                        <button onclick="openEmailModal()" class="btn btn-primary">Send Email</button>
-                        <a href="/admin" class="btn btn-info">Admin</a>
-                </div>
-
-                <!-- Email Modal -->
-                <div id="emailModal" class="modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
-                    <div class="modal-content" style="background:#232323; color:#fff; border-radius:12px; padding:32px 24px; min-width:320px; max-width:90vw; box-shadow:0 8px 32px #000a; position:relative;">
-                        <button onclick="closeEmailModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
-                        <h3 style="margin-top:0;">Send Scores by Email</h3>
-                        <form id="emailForm" onsubmit="sendScoresEmail(event)">
-                            <label for="emailInput">Recipient Email:</label>
-                            <input id="emailInput" name="email" type="email" required placeholder="you@email.com" style="width:100%; padding:10px; border-radius:6px; border:1px solid #444; margin:12px 0 20px; font-size:1rem;">
-                            <button type="submit" class="btn btn-primary" style="width:100%;">Send</button>
-                            <div id="emailStatus" style="margin-top:12px; font-size:0.95rem;"></div>
-                        </form>
-                    </div>
-                </div>
     </div>
 
-    <!-- Error State -->
-    <div class="leaderboard-state" id="errorState">
-        <div class="error-container">
-            <div class="error-icon">⚠️</div>
-            <h2>Team Not Found</h2>
-            <p id="errorMessage">The RFID card was not recognized.</p>
-            <button onclick="resetView()" class="btn btn-primary">Try Again</button>
-        </div>
-    </div>
+    <!-- Cycle Indicator -->
+    <div class="cycle-indicator" id="cycleIndicator"></div>
+    
+    <!-- Countdown bar for scanned team -->
+    <div class="countdown-bar" id="countdownBar" style="width: 0%;"></div>
 </div>
 
 <!-- Hidden RFID input to capture keyboard scanner input -->
 <input type="text" id="hiddenRfidInput" style="position: absolute; left: -9999px; opacity: 0;" tabindex="-1">
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Global variables
-let currentTeam = null;
+let allTeams = [];
+let teamScores = [];
+let currentTeamIndex = 0;
+let cycleInterval = null;
 let socket = null;
 let scanTimeout = null;
+
+// Scanned team state
+let scannedTeamData = null;
+let scannedTeamTimeout = null;
+let countdownInterval = null;
+let countdownRemaining = 0;
+
+// Configuration
+const CYCLE_DURATION = 8000; // 8 seconds per team in cycling mode
+const SCANNED_DISPLAY_DURATION = 60000; // 60 seconds for scanned team
+const REFRESH_INTERVAL = 60000; // Refresh team list every 60 seconds
 
 // Hole ID to display name mapping
 const HOLE_NAMES = {
@@ -161,51 +205,10 @@ const HOLE_NAMES = {
 document.addEventListener('DOMContentLoaded', function() {
     initializeSocket();
     setupRFIDCapture();
-    resetView();
+    loadAllTeams();
     
-    // Auto test with sample data for debugging (remove in production)
-    if (window.location.search.includes('test=true')) {
-        setTimeout(() => {
-            const testData = {
-                teamName: "Test Team",
-                totalScore: 1250,
-                holesCompleted: 8,
-                players: [
-                    {
-                        name: "Alice",
-                        scores: {
-                            "Plinko": { total: 150 },
-                            "SpinningTop": { total: 75 },
-                            "Haphazard": { total: -25 },
-                            "Roundhouse": { total: 100 },
-                            "HillHop": { total: 200 },
-                            "SkiJump": { total: -50 },
-                            "Mastermind": { total: 125 },
-                            "Igloo": { total: 175 },
-                            "Octagon": { total: 100 },
-                            "LoopDeLoop": { total: 150 },
-                            "UpAndOver": { total: 75 },
-                            "Lopside": { total: 50 }
-                        }
-                    },
-                    {
-                        name: "Bob",
-                        scores: {
-                            "Plinko": { total: 100 },
-                            "SpinningTop": { total: 125 },
-                            "Haphazard": { total: 50 },
-                            "Roundhouse": { total: 75 },
-                            "HillHop": { total: 150 },
-                            "SkiJump": { total: -75 },
-                            "Mastermind": { total: 100 },
-                            "Igloo": { total: 200 }
-                        }
-                    }
-                ]
-            };
-            displayTeamScores(testData);
-        }, 1000);
-    }
+    // Periodically refresh team list
+    setInterval(loadAllTeams, REFRESH_INTERVAL);
 });
 
 function initializeSocket() {
@@ -218,6 +221,11 @@ function initializeSocket() {
     socket.on('disconnect', function() {
         console.log('Leaderboard disconnected from server');
     });
+    
+    // Listen for score updates to refresh display
+    socket.on('scoreUpdate', function() {
+        loadAllTeams();
+    });
 }
 
 function setupRFIDCapture() {
@@ -226,18 +234,13 @@ function setupRFIDCapture() {
     // Keep focus on hidden input to capture RFID scanner output
     hiddenInput.focus();
 
-    // Refocus if user clicks elsewhere, but NOT if modal is open
+    // Refocus if user clicks elsewhere
     document.addEventListener('click', function() {
-        const modal = document.getElementById('emailModal');
-        if (!modal || modal.style.display === 'none') {
-            setTimeout(() => hiddenInput.focus(), 100);
-        }
+        setTimeout(() => hiddenInput.focus(), 100);
     });
 
-    // Handle RFID input ONLY if modal is not open
+    // Handle RFID input
     hiddenInput.addEventListener('input', function(e) {
-        const modal = document.getElementById('emailModal');
-        if (modal && modal.style.display !== 'none') return;
         const value = e.target.value.trim();
 
         // Clear any existing timeout
@@ -256,8 +259,6 @@ function setupRFIDCapture() {
 
     // Handle Enter key (some RFID scanners append this)
     hiddenInput.addEventListener('keypress', function(e) {
-        const modal = document.getElementById('emailModal');
-        if (modal && modal.style.display !== 'none') return;
         if (e.key === 'Enter') {
             const value = e.target.value.trim();
             if (value.length >= 8) {
@@ -270,9 +271,8 @@ function setupRFIDCapture() {
 
 function processRFIDScan(rfid) {
     console.log('RFID Scanned:', rfid);
-    showState('loading');
     
-    // Fetch team data
+    // Fetch team data for the scanned card
     fetch(`/api/team/${rfid}`)
         .then(response => {
             if (!response.ok) {
@@ -281,82 +281,224 @@ function processRFIDScan(rfid) {
             return response.json();
         })
         .then(teamData => {
-            displayTeamScores(teamData);
+            displayScannedTeam(teamData);
         })
         .catch(error => {
             console.error('Error fetching team data:', error);
-            showError('Team not found or server error');
+            // Continue cycling if team not found
         });
 }
 
-function lookupTeam() {
-    const manualInput = document.getElementById('manualRfid');
-    const rfid = manualInput.value.trim();
+function displayScannedTeam(teamData) {
+    // Stop cycling
+    stopCycling();
     
-    if (!rfid) {
-        alert('Please enter an RFID number');
-        return;
+    // Clear any existing scanned team timeout
+    if (scannedTeamTimeout) {
+        clearTimeout(scannedTeamTimeout);
+    }
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
     }
     
-    if (rfid.length < 8) {
-        alert('RFID number too short');
-        return;
-    }
+    // Store scanned team data
+    scannedTeamData = teamData;
     
-    processRFIDScan(rfid);
-    manualInput.value = '';
-}
-
-function displayTeamScores(teamData) {
-    currentTeam = teamData;
+    // Hide cycle indicator, show countdown bar
+    document.getElementById('cycleIndicator').style.display = 'none';
     
-    // Create scorecard table
-    const playersGrid = document.getElementById('playersGrid');
-    playersGrid.innerHTML = '';
-    
-    const scorecardTable = createScorecardTable(teamData.players);
-    playersGrid.appendChild(scorecardTable);
-    
+    // Display the team
+    displayTeam(teamData, true);
     showState('scores');
     
-    // Auto-reset after 5 minutes of inactivity
-    setTimeout(() => {
-        if (getCurrentState() === 'scores') {
-            resetView();
+    // Start countdown bar
+    countdownRemaining = SCANNED_DISPLAY_DURATION;
+    updateCountdownBar();
+    countdownInterval = setInterval(() => {
+        countdownRemaining -= 1000;
+        updateCountdownBar();
+        if (countdownRemaining <= 0) {
+            clearInterval(countdownInterval);
         }
-    }, 300000);
+    }, 1000);
+    
+    // Set timeout to resume cycling
+    scannedTeamTimeout = setTimeout(() => {
+        scannedTeamData = null;
+        document.getElementById('countdownBar').style.width = '0%';
+        document.getElementById('cycleIndicator').style.display = 'flex';
+        
+        // Resume cycling
+        if (teamScores.length > 0) {
+            startCycling();
+            displayCurrentTeam();
+        }
+    }, SCANNED_DISPLAY_DURATION);
+}
+
+function updateCountdownBar() {
+    const percentage = (countdownRemaining / SCANNED_DISPLAY_DURATION) * 100;
+    document.getElementById('countdownBar').style.width = percentage + '%';
+}
+
+async function loadAllTeams() {
+    try {
+        // Don't show loading if we're displaying a scanned team
+        if (!scannedTeamData) {
+            showState('loading');
+        }
+        
+        // Fetch all teams
+        const teamsResponse = await fetch('/api/teams');
+        if (!teamsResponse.ok) throw new Error('Failed to fetch teams');
+        const teamsData = await teamsResponse.json();
+        
+        allTeams = teamsData.teams || [];
+        
+        if (allTeams.length === 0) {
+            if (!scannedTeamData) {
+                showState('noTeams');
+                stopCycling();
+            }
+            return;
+        }
+        
+        // Fetch scores for each team
+        teamScores = [];
+        for (const team of allTeams) {
+            try {
+                const scoreResponse = await fetch(`/api/team/${team.rfid}`);
+                if (scoreResponse.ok) {
+                    const scoreData = await scoreResponse.json();
+                    teamScores.push(scoreData);
+                }
+            } catch (err) {
+                console.warn(`Failed to fetch scores for team ${team.rfid}:`, err);
+            }
+        }
+        
+        // Filter out teams with no score data
+        teamScores = teamScores.filter(t => t && t.players && t.players.length > 0);
+        
+        if (teamScores.length === 0) {
+            if (!scannedTeamData) {
+                showState('noTeams');
+                stopCycling();
+            }
+            return;
+        }
+        
+        // Sort by total score (highest first)
+        teamScores.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+        
+        // Update cycle indicator dots
+        updateCycleIndicator();
+        
+        // Only start cycling if not showing a scanned team
+        if (!scannedTeamData) {
+            if (!cycleInterval) {
+                currentTeamIndex = 0;
+                displayCurrentTeam();
+                startCycling();
+            }
+            showState('scores');
+        }
+        
+    } catch (error) {
+        console.error('Error loading teams:', error);
+        if (!scannedTeamData) {
+            showState('noTeams');
+        }
+    }
+}
+
+function updateCycleIndicator() {
+    const indicator = document.getElementById('cycleIndicator');
+    indicator.innerHTML = '';
+    
+    // Only show dots if more than one team and not showing scanned team
+    if (teamScores.length <= 1 || scannedTeamData) return;
+    
+    teamScores.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'cycle-dot' + (index === currentTeamIndex ? ' active' : '');
+        indicator.appendChild(dot);
+    });
+}
+
+function displayCurrentTeam() {
+    if (teamScores.length === 0) return;
+    
+    const teamData = teamScores[currentTeamIndex];
+    displayTeam(teamData, false);
+    
+    // Update cycle indicator
+    document.querySelectorAll('.cycle-dot').forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentTeamIndex);
+    });
+}
+
+function displayTeam(teamData, isScanned) {
+    const teamDisplay = document.getElementById('teamDisplay');
+    
+    // Fade out
+    teamDisplay.classList.remove('visible');
+    
+    setTimeout(() => {
+        // Create scorecard table
+        const playersGrid = document.getElementById('playersGrid');
+        playersGrid.innerHTML = '';
+        
+        if (teamData.players && teamData.players.length > 0) {
+            const scorecardTable = createScorecardTable(teamData.players);
+            playersGrid.appendChild(scorecardTable);
+        }
+        
+        // Fade in
+        teamDisplay.classList.add('visible');
+    }, 300);
+}
+
+function startCycling() {
+    if (cycleInterval) clearInterval(cycleInterval);
+    
+    cycleInterval = setInterval(() => {
+        if (teamScores.length <= 1 || scannedTeamData) return;
+        
+        currentTeamIndex = (currentTeamIndex + 1) % teamScores.length;
+        displayCurrentTeam();
+    }, CYCLE_DURATION);
+}
+
+function stopCycling() {
+    if (cycleInterval) {
+        clearInterval(cycleInterval);
+        cycleInterval = null;
+    }
 }
 
 function createScorecardTable(players) {
-    console.log('Creating scorecard table for players:', players);
-    
     const table = document.createElement('table');
     table.className = 'scorecard-table';
     table.setAttribute('role', 'table');
-    table.setAttribute('aria-describedby', 'teamName');
 
-    // Caption (visually hidden for accessibility)
     const caption = document.createElement('caption');
     caption.className = 'visually-hidden';
     caption.textContent = 'Per-player hole scores and totals';
     table.appendChild(caption);
     
-    // Define hole order (matches actual database holes)
     const holeOrder = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
     
-    // Create header using DOM methods instead of innerHTML
+    // Create header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     
-    // Player name header
     const playerHeader = document.createElement('th');
     playerHeader.className = 'player-name-header';
     playerHeader.textContent = 'Player';
     headerRow.appendChild(playerHeader);
-    console.log('Added player header');
     
-    // Hole headers
-    holeOrder.forEach((holeId, index) => {
+    holeOrder.forEach((holeId) => {
         const holeName = HOLE_NAMES[holeId] || holeId;
         const th = document.createElement('th');
         th.className = 'hole-header';
@@ -364,41 +506,33 @@ function createScorecardTable(players) {
         span.textContent = holeName;
         th.appendChild(span);
         headerRow.appendChild(th);
-        console.log(`Added hole header ${index + 1}: ${holeName}`);
     });
     
-    // Total header
     const totalHeader = document.createElement('th');
     totalHeader.className = 'total-header';
     totalHeader.textContent = 'Total';
     headerRow.appendChild(totalHeader);
-    console.log('Added total header');
     
     thead.appendChild(headerRow);
     table.appendChild(thead);
     
-    console.log('Header row children:', headerRow.children.length);
-    
     // Create body rows
     const tbody = document.createElement('tbody');
     players.forEach(player => {
-        const playerTotal = Object.values(player.scores).reduce((sum, holeScore) => {
+        const playerTotal = Object.values(player.scores || {}).reduce((sum, holeScore) => {
             return sum + (holeScore.total || 0);
         }, 0);
         
         const row = document.createElement('tr');
         
-        // Player name cell
-    const nameCell = document.createElement('th');
-    nameCell.className = 'player-name-cell';
-    nameCell.setAttribute('scope', 'row');
-    nameCell.textContent = player.name;
-    row.appendChild(nameCell);
+        const nameCell = document.createElement('th');
+        nameCell.className = 'player-name-cell';
+        nameCell.setAttribute('scope', 'row');
+        nameCell.textContent = player.name;
+        row.appendChild(nameCell);
         
-        // Score cells
-        const perHoleCells = [];
         holeOrder.forEach(holeId => {
-            const score = player.scores[holeId];
+            const score = player.scores ? player.scores[holeId] : null;
             const scoreValue = score ? score.total : '-';
             const scoreClass = score ? (score.total > 0 ? 'positive-score' : score.total < 0 ? 'negative-score' : 'zero-score') : 'no-score';
 
@@ -407,10 +541,8 @@ function createScorecardTable(players) {
             scoreCell.textContent = scoreValue;
             scoreCell.dataset.holeId = holeId;
             row.appendChild(scoreCell);
-            perHoleCells.push(scoreCell);
         });
         
-        // Total cell
         const totalClass = playerTotal > 0 ? 'positive-score' : playerTotal < 0 ? 'negative-score' : 'zero-score';
         const totalCell = document.createElement('td');
         totalCell.className = `total-cell ${totalClass}`;
@@ -422,14 +554,14 @@ function createScorecardTable(players) {
     
     table.appendChild(tbody);
 
-    // Highlight best/worst per column (excluding '-' and zero baseline). Done after full table built.
+    // Highlight best/worst per column
     try {
         const bodyRows = Array.from(tbody.querySelectorAll('tr'));
         const holeCount = holeOrder.length;
         for (let colIndex = 0; colIndex < holeCount; colIndex++) {
             let values = [];
             bodyRows.forEach(r => {
-                const cell = r.querySelectorAll('td,th')[colIndex+1]; // +1 offset due to name header th
+                const cell = r.querySelectorAll('td,th')[colIndex+1];
                 if (!cell || cell.classList.contains('total-cell')) return;
                 const raw = cell.textContent.trim();
                 const num = parseInt(raw, 10);
@@ -449,196 +581,24 @@ function createScorecardTable(players) {
     } catch (e) {
         console.warn('Highlighting failed', e);
     }
+    
     return table;
 }
 
 function showState(stateName) {
-    // Hide all states
     document.querySelectorAll('.leaderboard-state').forEach(state => {
         state.classList.remove('active');
     });
     
-    // Show requested state
     const stateElement = document.getElementById(stateName + 'State');
     if (stateElement) {
         stateElement.classList.add('active');
     }
     
-    // Ensure hidden input stays focused
+    // Ensure hidden input stays focused for RFID capture
     setTimeout(() => {
         document.getElementById('hiddenRfidInput').focus();
     }, 100);
-}
-
-function getCurrentState() {
-    const activeState = document.querySelector('.leaderboard-state.active');
-    if (activeState) {
-        return activeState.id.replace('State', '');
-    }
-    return 'rfidInput';
-}
-
-function showError(message) {
-    document.getElementById('errorMessage').textContent = message;
-    showState('error');
-}
-
-function resetView() {
-    currentTeam = null;
-    showState('rfidInput');
-    
-    // Clear manual input
-    document.getElementById('manualRfid').value = '';
-}
-
-function printScores() {
-    if (!currentTeam) return;
-    
-    // Create a printable version
-    const printWindow = window.open('', '_blank');
-    const printContent = generatePrintContent(currentTeam);
-    
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.print();
-}
-
-function generatePrintContent(teamData) {
-    let playersHTML = '';
-    
-    teamData.players.forEach(player => {
-        const playerTotal = Object.values(player.scores).reduce((sum, holeScore) => {
-            return sum + (holeScore.total || 0);
-        }, 0);
-        
-        let scoresHTML = '';
-        Object.entries(player.scores).forEach(([holeId, holeScore]) => {
-            const holeNumber = Object.keys(window.HOLES || {}).indexOf(holeId) + 1 || '?';
-            scoresHTML += `
-                <tr>
-                    <td>Hole ${holeNumber}</td>
-                    <td>${holeScore.total}</td>
-                    <td>${holeScore.throws.length}</td>
-                </tr>
-            `;
-        });
-        
-        playersHTML += `
-            <div class="player-section">
-                <h3>${player.name} - ${playerTotal.toLocaleString()} points</h3>
-                <table border="1" cellpadding="5" cellspacing="0">
-                    <thead>
-                        <tr><th>Hole</th><th>Score</th><th>Throws</th></tr>
-                    </thead>
-                    <tbody>
-                        ${scoresHTML}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    });
-    
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>SwingCity Scores - ${teamData.teamName}</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .header { text-align: center; margin-bottom: 30px; }
-                .player-section { margin-bottom: 30px; }
-                table { width: 100%; }
-                th { background: #f0f0f0; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>🏆 SwingCity Scores</h1>
-                <h2>${teamData.teamName}</h2>
-                <p>Total Score: ${teamData.totalScore.toLocaleString()} | Holes Completed: ${teamData.holesCompleted}/12</p>
-                <p>Generated: ${new Date().toLocaleString()}</p>
-            </div>
-            ${playersHTML}
-        </body>
-        </html>
-    `;
-}
-
-
-// Email Modal logic
-function openEmailModal() {
-    document.getElementById('emailModal').style.display = 'flex';
-    document.getElementById('emailInput').focus();
-    document.getElementById('emailStatus').textContent = '';
-}
-function closeEmailModal() {
-    document.getElementById('emailModal').style.display = 'none';
-}
-
-async function sendScoresEmail(e) {
-    e.preventDefault();
-    const email = document.getElementById('emailInput').value.trim();
-    const status = document.getElementById('emailStatus');
-    status.textContent = 'Capturing scores...';
-
-    // Hide action buttons before capture
-    const actions = document.querySelector('.leaderboard-actions');
-    actions.style.visibility = 'hidden';
-
-    // Use html2canvas to capture the scores area as an image (excluding buttons)
-    let imgData;
-    try {
-        if (window.html2canvas) {
-            const scoresState = document.getElementById('scoresState');
-            const canvas = await window.html2canvas(scoresState, {backgroundColor: null, ignoreElements: el => el.classList.contains('leaderboard-actions')});
-            imgData = canvas.toDataURL('image/png');
-        } else {
-            status.textContent = 'Image capture library not loaded.';
-            actions.style.visibility = '';
-            return;
-        }
-    } catch (err) {
-        status.textContent = 'Failed to capture image.';
-        actions.style.visibility = '';
-        return;
-    }
-    actions.style.visibility = '';
-
-    status.textContent = 'Sending email...';
-    try {
-        const resp = await fetch('/api/send-scores-email', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email, image: imgData })
-        });
-        if (resp.ok) {
-            status.textContent = 'Email sent!';
-            setTimeout(closeEmailModal, 1500);
-        } else {
-            status.textContent = 'Failed to send email.';
-        }
-    } catch (err) {
-        status.textContent = 'Error sending email.';
-    }
-}
-
-// Modal close on background click
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('emailModal');
-    if (modal && e.target === modal) closeEmailModal();
-});
-
-// Handle manual input enter key
-document.getElementById('manualRfid').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        lookupTeam();
-    }
-});
-// Load html2canvas dynamically if not present
-if (!window.html2canvas) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-    document.head.appendChild(script);
 }
 </script>
 
