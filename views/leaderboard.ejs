@@ -8,6 +8,27 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
+        /* Prevent page scrolling - this is for TV display */
+        html, body {
+            overflow: hidden !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+        }
+        .leaderboard-body {
+            overflow: hidden !important;
+        }
+        .leaderboard-container {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .leaderboard-state {
+            flex: 1;
+            overflow: hidden;
+        }
+
         /* Cycling leaderboard specific styles */
         .team-display {
             opacity: 0;
@@ -66,6 +87,143 @@
             background: linear-gradient(90deg, #4ade80, #22c55e);
             transition: width 1s linear;
             z-index: 101;
+        }
+
+        /* High Score Board Styles */
+        #highScoresState {
+            position: absolute;
+            top: 250px; /* Below the logo header */
+            left: 0;
+            right: 0;
+            bottom: 50px; /* Above the cycle indicators */
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 1rem 2rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #highScoresState.active {
+            pointer-events: auto;
+            opacity: 1;
+        }
+        .highscore-display {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .highscore-display.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .highscore-table-container {
+            background: rgba(0,0,0,0.6);
+            border-radius: 16px;
+            padding: 0;
+            border: 2px solid rgba(255,215,0,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 60px rgba(255,215,0,0.1);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        .highscore-table-scroll {
+            height: 100%;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .highscore-table-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .highscore-table-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        .highscore-table-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,215,0,0.5);
+            border-radius: 4px;
+        }
+        .highscore-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 1.4rem;
+        }
+        .highscore-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .highscore-table thead th {
+            padding: 1.2rem 1.5rem;
+            text-align: left;
+            font-weight: 700;
+            color: #ffd700;
+            background: #1a1a1a;
+            border-bottom: 3px solid rgba(255,215,0,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 1.2rem;
+        }
+        .highscore-table .rank-header { width: 120px; text-align: center; }
+        .highscore-table .name-header { text-align: left; }
+        .highscore-table .score-header { width: 180px; text-align: right; }
+        .highscore-table tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255,215,0,0.1);
+        }
+        .highscore-table tbody tr:hover {
+            background: rgba(255,215,0,0.08);
+        }
+        .highscore-table tbody td {
+            padding: 1rem 1.5rem;
+            color: rgba(255,255,255,0.95);
+            border-bottom: 1px solid rgba(255,215,0,0.1);
+        }
+        .highscore-table .rank-cell {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.6rem;
+        }
+        .highscore-table .rank-1 { color: #ffd700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
+        .highscore-table .rank-2 { color: #e0e0e0; text-shadow: 0 0 12px rgba(224,224,224,0.5); }
+        .highscore-table .rank-3 { color: #cd7f32; text-shadow: 0 0 12px rgba(205,127,50,0.5); }
+        .highscore-table .name-cell {
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+        .highscore-table .score-cell {
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #4ade80;
+        }
+        .highscore-table tbody tr.top-3 {
+            background: linear-gradient(90deg, rgba(255,215,0,0.12) 0%, transparent 100%);
+        }
+        .highscore-table tbody tr.rank-1-row {
+            background: linear-gradient(90deg, rgba(255,215,0,0.2) 0%, rgba(255,215,0,0.05) 100%);
+        }
+        .highscore-empty {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255,255,255,0.5);
+            font-size: 1.2rem;
+        }
+
+        /* Cycle indicator for high score mode */
+        .cycle-dot.highscore-dot {
+            background: rgba(255,215,0,0.3);
+        }
+        .cycle-dot.highscore-dot.active {
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
         }
     </style>
 </head>
@@ -153,6 +311,28 @@
         </div>
     </div>
 
+    <!-- High Scores Display -->
+    <div class="leaderboard-state" id="highScoresState">
+        <div class="highscore-display" id="highScoreDisplay">
+            <div class="highscore-table-container">
+                <div class="highscore-table-scroll" id="highScoreScroll">
+                    <table class="highscore-table" id="highScoreTable">
+                        <thead>
+                            <tr>
+                                <th class="rank-header">Rank</th>
+                                <th class="name-header">Player</th>
+                                <th class="score-header">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="highScoreBody">
+                            <!-- High scores will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Cycle Indicator -->
     <div class="cycle-indicator" id="cycleIndicator"></div>
     
@@ -168,7 +348,9 @@
 // Global variables
 let allTeams = [];
 let teamScores = [];
+let highScores = [];
 let currentTeamIndex = 0;
+let currentDisplayMode = 'team'; // 'team' or 'highscore'
 let cycleInterval = null;
 let socket = null;
 let scanTimeout = null;
@@ -181,8 +363,15 @@ let countdownRemaining = 0;
 
 // Configuration
 const CYCLE_DURATION = 8000; // 8 seconds per team in cycling mode
+const HIGHSCORE_TOP_WAIT = 5000; // 5 seconds wait at top of high scores
+const HIGHSCORE_BOTTOM_WAIT = 2000; // 2 seconds wait at bottom of high scores
+const HIGHSCORE_SCROLL_SPEED = 50; // pixels per second for scrolling
 const SCANNED_DISPLAY_DURATION = 60000; // 60 seconds for scanned team
 const REFRESH_INTERVAL = 60000; // Refresh team list every 60 seconds
+
+// High score scroll state
+let highScoreScrollInterval = null;
+let highScoreScrollTimeout = null;
 
 // Hole ID to display name mapping
 const HOLE_NAMES = {
@@ -205,11 +394,16 @@ const HOLE_NAMES = {
 document.addEventListener('DOMContentLoaded', function() {
     initializeSocket();
     setupRFIDCapture();
-    loadAllTeams();
+    loadAllData();
     
-    // Periodically refresh team list
-    setInterval(loadAllTeams, REFRESH_INTERVAL);
+    // Periodically refresh all data
+    setInterval(loadAllData, REFRESH_INTERVAL);
 });
+
+// Load both teams and high scores
+async function loadAllData() {
+    await Promise.all([loadAllTeams(), loadHighScores()]);
+}
 
 function initializeSocket() {
     socket = io();
@@ -225,6 +419,12 @@ function initializeSocket() {
     // Listen for score updates to refresh display
     socket.on('scoreUpdate', function() {
         loadAllTeams();
+    });
+    
+    // Listen for high score updates to refresh high scores
+    socket.on('highScoreUpdated', function(data) {
+        console.log('🏆 High score updated!', data);
+        loadHighScores();
     });
 }
 
@@ -324,15 +524,7 @@ function displayScannedTeam(teamData) {
     
     // Set timeout to resume cycling
     scannedTeamTimeout = setTimeout(() => {
-        scannedTeamData = null;
-        document.getElementById('countdownBar').style.width = '0%';
-        document.getElementById('cycleIndicator').style.display = 'flex';
-        
-        // Resume cycling
-        if (teamScores.length > 0) {
-            startCycling();
-            displayCurrentTeam();
-        }
+        resumeCycling();
     }, SCANNED_DISPLAY_DURATION);
 }
 
@@ -398,10 +590,10 @@ async function loadAllTeams() {
         if (!scannedTeamData) {
             if (!cycleInterval) {
                 currentTeamIndex = 0;
+                currentDisplayMode = 'team';
                 displayCurrentTeam();
                 startCycling();
             }
-            showState('scores');
         }
         
     } catch (error) {
@@ -412,18 +604,41 @@ async function loadAllTeams() {
     }
 }
 
+// Load high scores from API
+async function loadHighScores() {
+    try {
+        const response = await fetch('/api/highscores?limit=10');
+        if (!response.ok) throw new Error('Failed to fetch high scores');
+        const data = await response.json();
+        highScores = data.highScores || [];
+        console.log(`Loaded ${highScores.length} high scores`);
+    } catch (error) {
+        console.error('Error loading high scores:', error);
+        highScores = [];
+    }
+}
+
 function updateCycleIndicator() {
     const indicator = document.getElementById('cycleIndicator');
     indicator.innerHTML = '';
     
-    // Only show dots if more than one team and not showing scanned team
-    if (teamScores.length <= 1 || scannedTeamData) return;
+    // Don't show if scanned team is displayed
+    if (scannedTeamData) return;
     
-    teamScores.forEach((_, index) => {
+    // Calculate total items (teams + high score displays after each team)
+    const totalItems = teamScores.length * 2; // Each team followed by high scores
+    
+    if (totalItems <= 2) return; // Need more than one cycle item
+    
+    for (let i = 0; i < totalItems; i++) {
         const dot = document.createElement('div');
-        dot.className = 'cycle-dot' + (index === currentTeamIndex ? ' active' : '');
+        const isHighScoreDot = i % 2 === 1; // Odd indices are high score displays
+        const isActive = (i === currentTeamIndex * 2 && currentDisplayMode === 'team') ||
+                        (i === currentTeamIndex * 2 + 1 && currentDisplayMode === 'highscore');
+        
+        dot.className = 'cycle-dot' + (isHighScoreDot ? ' highscore-dot' : '') + (isActive ? ' active' : '');
         indicator.appendChild(dot);
-    });
+    }
 }
 
 function displayCurrentTeam() {
@@ -431,11 +646,162 @@ function displayCurrentTeam() {
     
     const teamData = teamScores[currentTeamIndex];
     displayTeam(teamData, false);
+    showState('scores');
+    currentDisplayMode = 'team';
     
     // Update cycle indicator
-    document.querySelectorAll('.cycle-dot').forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentTeamIndex);
-    });
+    updateCycleIndicator();
+}
+
+function displayHighScores() {
+    showState('highScores');
+    currentDisplayMode = 'highscore';
+    
+    // Clear any existing scroll timers
+    clearHighScoreScrollTimers();
+    
+    const highScoreDisplay = document.getElementById('highScoreDisplay');
+    const highScoreBody = document.getElementById('highScoreBody');
+    const scrollContainer = document.getElementById('highScoreScroll');
+    
+    // Fade out first
+    highScoreDisplay.classList.remove('visible');
+    
+    setTimeout(() => {
+        // Clear existing content
+        highScoreBody.innerHTML = '';
+        
+        // Reset scroll position to top
+        if (scrollContainer) {
+            scrollContainer.scrollTop = 0;
+        }
+        
+        if (highScores.length === 0) {
+            // Show empty state
+            highScoreBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="highscore-empty">
+                        <div>No scores yet</div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            // Populate high scores
+            highScores.forEach((score, index) => {
+                const rank = index + 1;
+                const row = document.createElement('tr');
+                
+                // Add special classes for top 3
+                if (rank <= 3) row.classList.add('top-3');
+                if (rank === 1) row.classList.add('rank-1-row');
+                
+                // Get rank display (medal for top 3)
+                let rankDisplay = rank;
+                if (rank === 1) rankDisplay = '🥇';
+                else if (rank === 2) rankDisplay = '🥈';
+                else if (rank === 3) rankDisplay = '🥉';
+                
+                row.innerHTML = `
+                    <td class="rank-cell rank-${rank}">${rankDisplay}</td>
+                    <td class="name-cell">${escapeHtml(score.playerName)}</td>
+                    <td class="score-cell">${score.totalScore.toLocaleString()}</td>
+                `;
+                
+                highScoreBody.appendChild(row);
+            });
+        }
+        
+        // Fade in
+        highScoreDisplay.classList.add('visible');
+        
+        // Start auto-scroll after showing
+        setTimeout(() => {
+            startHighScoreAutoScroll();
+        }, 300);
+    }, 300);
+    
+    // Update cycle indicator
+    updateCycleIndicator();
+}
+
+function clearHighScoreScrollTimers() {
+    if (highScoreScrollInterval) {
+        clearInterval(highScoreScrollInterval);
+        highScoreScrollInterval = null;
+    }
+    if (highScoreScrollTimeout) {
+        clearTimeout(highScoreScrollTimeout);
+        highScoreScrollTimeout = null;
+    }
+}
+
+function startHighScoreAutoScroll() {
+    const scrollContainer = document.getElementById('highScoreScroll');
+    if (!scrollContainer) return;
+    
+    const scrollHeight = scrollContainer.scrollHeight;
+    const clientHeight = scrollContainer.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
+    
+    // If content fits without scrolling, just wait and move on
+    if (maxScroll <= 0) {
+        highScoreScrollTimeout = setTimeout(() => {
+            onHighScoreScrollComplete();
+        }, HIGHSCORE_TOP_WAIT + HIGHSCORE_BOTTOM_WAIT);
+        return;
+    }
+    
+    // Wait at top for 5 seconds
+    highScoreScrollTimeout = setTimeout(() => {
+        // Calculate scroll duration based on distance and speed
+        const scrollDuration = (maxScroll / HIGHSCORE_SCROLL_SPEED) * 1000;
+        const scrollStep = maxScroll / (scrollDuration / 16); // 60fps
+        
+        let currentScroll = 0;
+        
+        // Start smooth scrolling
+        highScoreScrollInterval = setInterval(() => {
+            currentScroll += scrollStep;
+            
+            if (currentScroll >= maxScroll) {
+                scrollContainer.scrollTop = maxScroll;
+                clearInterval(highScoreScrollInterval);
+                highScoreScrollInterval = null;
+                
+                // Wait at bottom for 2 seconds, then move to next
+                highScoreScrollTimeout = setTimeout(() => {
+                    onHighScoreScrollComplete();
+                }, HIGHSCORE_BOTTOM_WAIT);
+            } else {
+                scrollContainer.scrollTop = currentScroll;
+            }
+        }, 16);
+    }, HIGHSCORE_TOP_WAIT);
+}
+
+function onHighScoreScrollComplete() {
+    if (scannedTeamData) return;
+    
+    // Fade out the high score display first
+    const highScoreDisplay = document.getElementById('highScoreDisplay');
+    highScoreDisplay.classList.remove('visible');
+    
+    // Wait for fade out, then switch to team
+    setTimeout(() => {
+        // Move to next team
+        currentTeamIndex = (currentTeamIndex + 1) % teamScores.length;
+        displayCurrentTeam();
+        
+        // Schedule next cycle
+        scheduleNextCycle();
+    }, 500);
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function displayTeam(teamData, isScanned) {
@@ -460,21 +826,36 @@ function displayTeam(teamData, isScanned) {
 }
 
 function startCycling() {
-    if (cycleInterval) clearInterval(cycleInterval);
+    if (cycleInterval) clearTimeout(cycleInterval);
     
-    cycleInterval = setInterval(() => {
-        if (teamScores.length <= 1 || scannedTeamData) return;
-        
-        currentTeamIndex = (currentTeamIndex + 1) % teamScores.length;
-        displayCurrentTeam();
-    }, CYCLE_DURATION);
+    // Start with team display
+    currentDisplayMode = 'team';
+    
+    // Use a custom cycling approach with setTimeout for different durations
+    scheduleNextCycle();
+}
+
+function scheduleNextCycle() {
+    if (scannedTeamData) return; // Stop if showing scanned team
+    
+    // Only schedule for team display - high scores handles its own timing via scroll
+    if (currentDisplayMode === 'team') {
+        cycleInterval = setTimeout(() => {
+            if (scannedTeamData) return;
+            
+            // After team, show high scores (which handles its own cycle completion)
+            displayHighScores();
+        }, CYCLE_DURATION);
+    }
+    // High scores mode: timing is handled by startHighScoreAutoScroll -> onHighScoreScrollComplete
 }
 
 function stopCycling() {
     if (cycleInterval) {
-        clearInterval(cycleInterval);
+        clearTimeout(cycleInterval);
         cycleInterval = null;
     }
+    clearHighScoreScrollTimers();
 }
 
 function createScorecardTable(players) {
@@ -599,6 +980,20 @@ function showState(stateName) {
     setTimeout(() => {
         document.getElementById('hiddenRfidInput').focus();
     }, 100);
+}
+
+// Resume cycling after RFID scan display ends
+function resumeCycling() {
+    scannedTeamData = null;
+    document.getElementById('countdownBar').style.width = '0%';
+    document.getElementById('cycleIndicator').style.display = 'flex';
+    
+    // Resume cycling from where we left off
+    if (teamScores.length > 0) {
+        currentDisplayMode = 'team';
+        displayCurrentTeam();
+        startCycling();
+    }
 }
 </script>
 

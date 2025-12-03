@@ -183,6 +183,63 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// Get top high scores (players who completed all 12 holes)
+app.get('/api/highscores', async (req, res) => {
+  const limit = parseInt(req.query.limit) || 10;
+  
+  try {
+    const highScores = await firebaseService.getTopHighScores(limit);
+    res.json({
+      highScores: highScores,
+      timestamp: new Date().toISOString(),
+      total: highScores.length
+    });
+  } catch (error) {
+    console.error('Error fetching high scores:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch high scores',
+      message: error.message 
+    });
+  }
+});
+
+// Save a high score manually (for admin use)
+app.post('/api/highscores', async (req, res) => {
+  const { playerId, playerName, totalScore, rfid } = req.body;
+  
+  if (!playerId || !playerName || totalScore === undefined) {
+    return res.status(400).json({ 
+      error: 'Invalid data', 
+      message: 'playerId, playerName, and totalScore are required' 
+    });
+  }
+
+  try {
+    const result = await firebaseService.saveHighScore(playerId, playerName, totalScore, rfid);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error saving high score:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to save high score',
+      message: error.message 
+    });
+  }
+});
+
+// Sync all players to high scores (admin endpoint)
+app.post('/api/highscores/sync', async (req, res) => {
+  try {
+    const result = await firebaseService.syncAllPlayersToHighScores();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error syncing high scores:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to sync high scores',
+      message: error.message 
+    });
+  }
+});
+
 // Get top 3 players from a team for podium display
 app.get('/api/podium/:rfid', async (req, res) => {
   const { rfid } = req.params;
@@ -848,13 +905,35 @@ function checkPlayerComplete(gameSession, holeId) {
   }
 }
 
-function completeHole(gameSession, holeId) {
+async function completeHole(gameSession, holeId) {
   console.log(`🏁 Hole ${holeId} completed for team ${gameSession.rfid}`);
   
   // Save final game session to Firebase
   firebaseService.saveGameSession(gameSession).catch(error => {
     console.error('Failed to save game session:', error.message);
   });
+  
+  // Update high scores for all players in this team
+  try {
+    // Get fresh team data from Firebase
+    const teamData = await firebaseService.getTeamByRFID(gameSession.rfid);
+    if (teamData && teamData.players) {
+      for (const player of teamData.players) {
+        const result = await firebaseService.updatePlayerHighScore(player, gameSession.rfid);
+        if (result.success) {
+          console.log(`🏆 High score updated for ${player.name}`);
+          // Broadcast high score update
+          io.emit('highScoreUpdated', {
+            playerName: player.name,
+            playerId: player.id,
+            rfid: gameSession.rfid
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error updating high scores:', error.message);
+  }
   
   // Clean up game state
   gameState.activeGames.delete(gameSession.rfid);
@@ -916,6 +995,17 @@ async function startServer() {
     } catch (error) {
       firebaseStatus = { connected: false, error: error.message };
   console.log('⚠️ Firebase REST connection failed, running in fallback mode');
+    }
+    
+    // Auto-sync all players to high scores on startup
+    if (firebaseStatus.connected) {
+      try {
+        console.log('🔄 Auto-syncing player high scores...');
+        const syncResult = await firebaseService.syncAllPlayersToHighScores();
+        console.log(`✅ High scores synced: ${syncResult.synced || 0} new, ${syncResult.updated || 0} updated`);
+      } catch (syncError) {
+        console.error('⚠️ High score sync failed:', syncError.message);
+      }
     }
     
     // Start the server

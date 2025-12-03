@@ -575,6 +575,186 @@ class FirebaseRestService {
     }
   }
 
+  // ==================== HIGH SCORE OPERATIONS ====================
+
+  // Save or update a high score for a player (using email/ID as unique key)
+  async saveHighScore(playerId, playerName, totalScore, rfid = null) {
+    if (this.mockMode) {
+      console.log('🔄 MOCK: Would save high score:', { playerId, playerName, totalScore });
+      return { success: true };
+    }
+
+    try {
+      // Sanitize the player ID for use as a Firebase key (replace . and @ with _)
+      const sanitizedId = playerId.replace(/\./g, '_').replace(/@/g, '_');
+      
+      // Check if this player already has a high score entry
+      const existingResponse = await fetch(`${this.baseUrl}/highScores/${sanitizedId}.json`);
+      const existingData = existingResponse.ok ? await existingResponse.json() : null;
+      
+      // If player exists and score is the same, no update needed
+      if (existingData && existingData.totalScore === totalScore) {
+        return { success: true, updated: false, message: 'Score unchanged' };
+      }
+      
+      const highScoreData = {
+        playerId: playerId,
+        playerName: playerName,
+        totalScore: totalScore,
+        lastUpdated: new Date().toISOString(),
+        rfid: rfid
+      };
+
+      // Use PUT with sanitized ID as key for deduplication
+      const response = await fetch(`${this.baseUrl}/highScores/${sanitizedId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(highScoreData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const action = existingData ? 'updated' : 'saved';
+      console.log(`🏆 High score ${action}: ${playerName} - ${totalScore} points`);
+      return { success: true, updated: !!existingData };
+    } catch (error) {
+      console.error('❌ Error saving high score:', error.message);
+      throw error;
+    }
+  }
+
+  // Get top high scores
+  async getTopHighScores(limit = 10) {
+    if (this.mockMode) {
+      return this.getMockHighScores(limit);
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/highScores.json`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const highScores = [];
+
+      if (data && typeof data === 'object') {
+        for (const [id, scoreData] of Object.entries(data)) {
+          highScores.push({
+            id: id,
+            playerId: scoreData.playerId,
+            playerName: scoreData.playerName,
+            totalScore: scoreData.totalScore,
+            lastUpdated: scoreData.lastUpdated,
+            rfid: scoreData.rfid
+          });
+        }
+      }
+
+      // Sort by total score (highest first) and take top entries
+      highScores.sort((a, b) => b.totalScore - a.totalScore);
+      return highScores.slice(0, limit);
+    } catch (error) {
+      console.error('❌ Error getting high scores:', error.message);
+      return [];
+    }
+  }
+
+  // Sync all players from all teams to high scores (auto-populate)
+  async syncAllPlayersToHighScores() {
+    if (this.mockMode) {
+      console.log('🔄 MOCK: Would sync all players to high scores');
+      return { success: true, synced: 0 };
+    }
+
+    try {
+      console.log('🔄 Syncing all players to high scores...');
+      
+      // Get all teams/RFID cards
+      const response = await fetch(`${this.baseUrl}/rfidCards.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const rfidCards = await response.json();
+      
+      if (!rfidCards || typeof rfidCards !== 'object') {
+        console.log('No teams found to sync');
+        return { success: true, synced: 0 };
+      }
+
+      let syncedCount = 0;
+      let updatedCount = 0;
+
+      // Iterate through all teams
+      for (const [rfid, cardData] of Object.entries(rfidCards)) {
+        if (!cardData.players || typeof cardData.players !== 'object') continue;
+
+        // Iterate through all players in this team
+        for (const [playerId, playerData] of Object.entries(cardData.players)) {
+          // Calculate total score for this player
+          let totalScore = 0;
+          
+          if (playerData.scorePerHole && typeof playerData.scorePerHole === 'object') {
+            for (const [holeName, holeScores] of Object.entries(playerData.scorePerHole)) {
+              if (holeScores && typeof holeScores === 'object') {
+                totalScore += holeScores.total || 0;
+              } else if (typeof holeScores === 'number') {
+                totalScore += holeScores;
+              }
+            }
+          }
+          
+          // Also check totalScoreForThisVisit if available
+          if (playerData.totalScoreForThisVisit && totalScore === 0) {
+            totalScore = playerData.totalScoreForThisVisit;
+          }
+
+          const playerName = playerData.displayName || playerId.split('@')[0].split('_')[0];
+          
+          // Save/update the high score
+          const result = await this.saveHighScore(playerId, playerName, totalScore, rfid);
+          
+          if (result.success) {
+            if (result.updated) {
+              updatedCount++;
+            } else {
+              syncedCount++;
+            }
+          }
+        }
+      }
+
+      console.log(`✅ High scores sync complete: ${syncedCount} new, ${updatedCount} updated`);
+      return { success: true, synced: syncedCount, updated: updatedCount };
+    } catch (error) {
+      console.error('❌ Error syncing high scores:', error.message);
+      throw error;
+    }
+  }
+
+  // Update a single player's high score (called after score changes)
+  async updatePlayerHighScore(player, rfid = null) {
+    const totalScore = this.calculatePlayerTotal(player);
+    return await this.saveHighScore(player.id, player.name, totalScore, rfid);
+  }
+
+  // Mock high scores for testing
+  getMockHighScores(limit = 10) {
+    const names = ['Alex Champion', 'Jordan Winner', 'Casey Pro', 'Morgan Ace', 'Riley Star', 
+                   'Taylor Swift', 'Sam Master', 'Drew Legend', 'Jamie King', 'Quinn MVP'];
+    
+    return names.slice(0, limit).map((name, index) => ({
+      id: `mock_${index}`,
+      playerName: name,
+      totalScore: Math.floor(Math.random() * 500) + 800 - (index * 30),
+      lastUpdated: new Date().toISOString()
+    })).sort((a, b) => b.totalScore - a.totalScore);
+  }
+
   // ==================== UTILITY FUNCTIONS ====================
 
   // Calculate total score for a team
