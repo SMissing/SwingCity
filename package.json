@@ -29,6 +29,7 @@
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "firebase-admin": "^11.10.1",
+    "iconify-icon": "^3.0.2",
     "node-fetch": "^2.7.0",
     "node-osc": "^10.0.0",
     "nodemailer": "^7.0.5",
@@ -37,9 +38,9 @@
     "winston": "^3.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
     "electron": "^30.0.0",
-  "electron-builder": "26.0.20"
+    "electron-builder": "26.0.20",
+    "nodemon": "^3.0.1"
   },
   "build": {
     "appId": "com.swingcity.launcher",

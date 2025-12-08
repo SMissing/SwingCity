@@ -4,177 +4,1905 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Creator - SwingCity</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/pin-lock.css">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-input: #1a1a24;
+            --bg-tab: #0d0d12;
+            --accent-green: #00ff88;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-orange: #f59e0b;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-muted: #4b5563;
+            --text-dark: #374151;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(0, 255, 136, 0.5);
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 30% 20%, rgba(0, 255, 136, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border-color: var(--accent-green);
+        }
+
+        .back-btn iconify-icon { font-size: 1.4rem; }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .header-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .create-team-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 3rem 4rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .create-team-btn:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-green);
+            box-shadow: 0 20px 40px -20px rgba(0, 255, 136, 0.3);
+        }
+
+        .create-team-btn iconify-icon {
+            font-size: 4rem;
+            color: var(--accent-green);
+            opacity: 0.9;
+        }
+
+        .create-team-btn span {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: center;
+            padding-top: 2rem;
+        }
+
+        .view-teams-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-teams-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-header h2 iconify-icon {
+            color: var(--accent-green);
+        }
+
+        .close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        /* Steps */
+        .step { display: none; }
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .step-dot.completed { background: var(--accent-green); }
+
+        /* RFID Step */
+        .rfid-prompt {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .rfid-prompt iconify-icon {
+            font-size: 4rem;
+            color: var(--accent-blue);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .rfid-prompt h3 {
+            font-size: 1.2rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .rfid-prompt p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .rfid-input {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 0.1em;
+            transition: border-color 0.2s ease;
+        }
+
+        .rfid-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .rfid-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: normal;
+        }
+
+        /* Player Count Step */
+        .player-count-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .player-count-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.5rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .player-count-btn:hover {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .player-count-btn.selected {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .player-count-btn .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .player-count-btn .label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Player Names Step */
+        .player-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .player-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .player-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .player-name-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .player-name-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .player-name-input::placeholder { color: var(--text-muted); }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            border: none;
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Test Team Link */
+        .test-team-link {
+            margin-top: 1.5rem;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .test-team-link:hover {
+            color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .test-team-link iconify-icon {
+            font-size: 1rem;
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .success-state iconify-icon {
+            font-size: 4rem;
+            color: var(--success);
+        }
+
+        .success-state h3 {
+            font-size: 1.3rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .success-state p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .success-state .team-info {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--bg-input);
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .success-state .team-info .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .success-state .team-info .value {
+            font-size: 1rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+
+        /* Teams List Modal - With side panel */
+        .teams-modal .modal-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .teams-modal .modal {
+            max-width: 500px;
+            flex-shrink: 0;
+        }
+
+        .teams-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .team-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .team-item:last-child { margin-bottom: 0; }
+
+        .team-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent-blue);
+        }
+
+        .team-item.selected {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .team-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .team-item-info .team-name-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .team-item-info h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .team-item-info .created-date {
+            font-size: 0.8rem;
+            color: var(--text-dark);
+        }
+
+        .team-item-info .team-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .team-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .team-item-actions button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .team-item-actions button:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .team-item-actions button.delete:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        /* Side Panel - Player Preview */
+        .side-panel {
+            width: 280px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.25rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-10px);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .side-panel.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .side-panel-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .side-panel-player {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .side-panel-player:last-child { border-bottom: none; }
+
+        .side-panel-player .name {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .side-panel-player .score {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .side-panel-hint {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .no-teams {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .no-teams iconify-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        /* Edit Modal - Tabbed Interface */
+        .edit-modal .modal {
+            max-width: 550px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .edit-modal .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            margin-bottom: 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        /* Player Tabs - Folder Divider Style */
+        .player-tabs {
+            display: flex;
+            background: var(--bg-tab);
+            padding: 0 1rem;
+            gap: 0.25rem;
+            overflow-x: auto;
+        }
+
+        .player-tab {
+            position: relative;
+            padding: 0.875rem 1.25rem;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 12px 12px 0 0;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            margin-top: 0.5rem;
+        }
+
+        .player-tab:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .player-tab.active {
+            background: var(--bg-card);
+            color: var(--accent-green);
+            z-index: 1;
+        }
+
+        .player-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--bg-card);
+        }
+
+        .player-tab .tab-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        .player-tab.active .tab-number {
+            background: var(--accent-green);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .player-name-edit {
+            margin-bottom: 1.5rem;
+        }
+
+        .player-name-edit label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-name-edit input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .player-name-edit input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .holes-section-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .holes-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 0 0.75rem 0.5rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .holes-header span:first-child {
+            flex: 1;
+        }
+
+        .holes-header .score-label {
+            width: 60px;
+            text-align: center;
+        }
+
+        .holes-header .done-label {
+            width: 36px;
+            text-align: center;
+        }
+
+        .holes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .hole-score-item {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 0.75rem;
+            background: var(--bg-input);
+            border-radius: 10px;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .hole-score-item.completed {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .hole-score-item .hole-name {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hole-score-item.completed .hole-name {
+            color: var(--accent-green);
+        }
+
+        .hole-score-item input[type="number"] {
+            width: 60px;
+            padding: 0.4rem 0.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--accent-green);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .hole-score-item input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+        }
+
+        /* Completed Checkbox */
+        .completed-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .completed-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .completed-toggle .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .completed-toggle .slider::before {
+            content: '';
+            position: absolute;
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .completed-toggle input:checked + .slider {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .completed-toggle input:checked + .slider::before {
+            transform: translateX(16px);
+            background: var(--bg-dark);
+        }
+
+        .completed-toggle input:focus + .slider {
+            box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.3);
+        }
+
+        .player-total {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .player-total .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .player-total .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Edit Modal Footer */
+        .edit-modal-footer {
+            padding: 1rem 1.5rem;
+            background: var(--bg-tab);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        .toast iconify-icon { font-size: 1.3rem; }
+        .toast.success iconify-icon { color: var(--success); }
+        .toast.error iconify-icon { color: var(--danger); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .teams-modal .modal-wrapper {
+                flex-direction: column;
+            }
+            .side-panel {
+                width: 100%;
+                order: -1;
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .container { padding: 1.5rem 1rem; }
+            .create-team-btn { padding: 2rem 3rem; }
+            .create-team-btn iconify-icon { font-size: 3rem; }
+            .player-count-grid { grid-template-columns: repeat(2, 1fr); }
+            .holes-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
-<body class="admin-body">
+<body>
+    <%- include('partials/pin-lock') %>
 
-<div class="admin-dashboard">
-    <div class="dashboard-header">
-        <img src="/images/swingcity-logo.png" alt="SwingCity" class="admin-logo">
-        <h1>🎯 Team Creator & Manager</h1>
-        <div class="header-actions">
-            <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
-            <a href="/leaderboard" class="btn btn-info">View Leaderboard</a>
+    <div id="pageContent" style="display: none;">
+    <div class="bg-pattern"></div>
+
+    <div class="container">
+        <header class="header">
+            <a href="/" class="back-btn">
+                <iconify-icon icon="ph:arrow-left-bold"></iconify-icon>
+            </a>
+            <div class="header-content">
+                <h1>Team Creator</h1>
+                <p>Set up teams for the golf experience</p>
         </div>
-    </div>
+        </header>
 
-    <!-- Team Creation Form -->
-    <div class="team-creator-section">
-        <div class="creator-card">
-            <div class="card-header">
-                <h2>🆕 Create New Team</h2>
-                <p>Associate players with an RFID card to create a new team</p>
-            </div>
+        <main class="main-content">
+            <button class="create-team-btn" onclick="openCreateModal()">
+                <iconify-icon icon="ph:plus-circle-bold"></iconify-icon>
+                <span>Create New Team</span>
+            </button>
+        </main>
             
-            <form id="teamCreatorForm" class="team-form">
-                <div class="form-group">
-                    <label for="rfid">RFID Card Number:</label>
-                    <div class="rfid-input-group">
-                        <input type="text" id="rfid" name="rfid" class="form-control" placeholder="Tap RFID card or enter manually" required>
-                        <button type="button" class="btn btn-outline-primary" id="scanRfidBtn">📱 Scan RFID</button>
-                    </div>
-                    <small class="form-text">The RFID card that will be used to identify this team</small>
+        <footer class="footer">
+            <button class="view-teams-btn" onclick="openTeamsModal()">
+                <iconify-icon icon="ph:list-bullets-bold"></iconify-icon>
+                View Existing Teams
+            </button>
+        </footer>
                 </div>
 
-                <div class="form-group">
-                    <label for="teamName">Team Name:</label>
-                    <input type="text" id="teamName" name="teamName" class="form-control" placeholder="Enter team name" required>
-                    <small class="form-text">A friendly name for the team (e.g., "The Hole-in-Ones")</small>
+    <!-- Create Team Modal -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><iconify-icon icon="ph:users-three-bold"></iconify-icon> New Team</h2>
+                <button class="close-btn" onclick="closeCreateModal()">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                </button>
                 </div>
 
-                <div class="players-section">
-                    <div class="section-header">
-                        <h3>👥 Team Players</h3>
-                        <button type="button" class="btn btn-success btn-sm" id="addPlayerBtn">+ Add Player</button>
+            <div class="step-indicator">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
                     </div>
                     
-                    <div id="playersContainer">
-                        <!-- Player forms will be added dynamically -->
+            <div class="step active" data-step="1">
+                <div class="rfid-prompt">
+                    <iconify-icon icon="ph:contactless-payment-bold"></iconify-icon>
+                    <h3>Tap RFID Card</h3>
+                    <p>Place the team's card on the reader</p>
+                    <input type="text" class="rfid-input" id="rfidInput" placeholder="Waiting for card..." autocomplete="off" autofocus>
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="clearFormBtn">Clear Form</button>
-                    <button type="submit" class="btn btn-primary btn-lg">🎯 Create Team</button>
+            <div class="step" data-step="2">
+                <h3 style="text-align: center; margin-bottom: 0.5rem;">How many players?</h3>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">Select the number of players</p>
+                
+                <div class="player-count-grid">
+                    <button class="player-count-btn" data-count="1"><span class="number">1</span><span class="label">Player</span></button>
+                    <button class="player-count-btn" data-count="2"><span class="number">2</span><span class="label">Players</span></button>
+                    <button class="player-count-btn" data-count="3"><span class="number">3</span><span class="label">Players</span></button>
+                    <button class="player-count-btn" data-count="4"><span class="number">4</span><span class="label">Players</span></button>
+                    <button class="player-count-btn" data-count="5"><span class="number">5</span><span class="label">Players</span></button>
+                    <button class="player-count-btn" data-count="6"><span class="number">6</span><span class="label">Players</span></button>
                 </div>
-            </form>
+
+                <div class="btn-row">
+                    <button class="btn btn-secondary" onclick="goToStep(1)"><iconify-icon icon="ph:arrow-left-bold"></iconify-icon> Back</button>
+                    <button class="btn btn-primary" id="playerCountNext" onclick="goToStep(3)" disabled>Continue <iconify-icon icon="ph:arrow-right-bold"></iconify-icon></button>
+                </div>
+                
+                <div class="test-team-link" onclick="createTestTeam()">
+                    <iconify-icon icon="ph:flask-bold"></iconify-icon> Quick: Create test team with 6 random players
+                </div>
+            </div>
+
+            <div class="step" data-step="3">
+                <h3 style="text-align: center; margin-bottom: 0.5rem;">Enter Player Names</h3>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">Name each player</p>
+                <div class="player-inputs" id="playerInputs"></div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" onclick="goToStep(2)"><iconify-icon icon="ph:arrow-left-bold"></iconify-icon> Back</button>
+                    <button class="btn btn-primary" id="createTeamBtn" onclick="createTeam()"><iconify-icon icon="ph:check-circle-bold"></iconify-icon> Create Team</button>
+            </div>
+                </div>
+                
+            <div class="step" data-step="success">
+                <div class="success-state">
+                    <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+                    <h3>Team Created!</h3>
+                    <p>The team is ready to play</p>
+                    <div class="team-info"><div class="label">RFID Card</div><div class="value" id="successRfid">-</div></div>
+                    <div class="team-info"><div class="label">Players</div><div class="value" id="successPlayers">-</div></div>
+                    <div class="btn-row">
+                        <button class="btn btn-primary" onclick="resetAndCreateAnother()" style="flex: 1;"><iconify-icon icon="ph:plus-bold"></iconify-icon> Create Another</button>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Existing Teams List -->
-    <div class="teams-list-section">
-        <div class="list-card">
-            <div class="card-header">
-                <h2>📋 Existing Teams</h2>
-                <button class="btn btn-outline-primary" id="refreshTeamsBtn">🔄 Refresh</button>
+    <!-- View Teams Modal with Side Panel -->
+    <div class="modal-overlay teams-modal" id="teamsModal">
+        <div class="modal-wrapper">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2><iconify-icon icon="ph:list-bullets-bold"></iconify-icon> Existing Teams</h2>
+                    <button class="close-btn" onclick="closeTeamsModal()">
+                        <iconify-icon icon="ph:x-bold"></iconify-icon>
+                    </button>
+            </div>
+                <div class="teams-list" id="teamsList">
+                    <div style="text-align: center; padding: 2rem;">
+                        <div class="spinner" style="margin: 0 auto;"></div>
+                        <p style="margin-top: 1rem; color: var(--text-secondary);">Loading teams...</p>
+            </div>
+            </div>
+        </div>
+            <div class="side-panel" id="sidePanel">
+                <div class="side-panel-title">Players</div>
+                <div id="sidePanelContent"></div>
+                <div class="side-panel-hint">
+                    <iconify-icon icon="ph:cursor-click-bold"></iconify-icon> Click team to edit scores
+    </div>
+</div>
+            </div>
+            </div>
+
+    <!-- Edit Team Modal - Tabbed Interface -->
+    <div class="modal-overlay edit-modal" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><iconify-icon icon="ph:pencil-simple-bold" style="color: var(--accent-orange);"></iconify-icon> Edit Scores</h2>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                </button>
             </div>
             
-            <div class="teams-container">
-                <div id="teamsLoadingIndicator" class="loading-indicator">
-                    <div class="spinner"></div>
-                    <p>Loading teams...</p>
-                </div>
-                
-                <div id="teamsTable" class="teams-table" style="display: none;">
-                    <!-- Teams will be loaded dynamically -->
-                </div>
-                
-                <div id="noTeamsMessage" class="no-data-message" style="display: none;">
-                    <div class="no-data-icon">📭</div>
-                    <h3>No Teams Found</h3>
-                    <p>Create your first team using the form above</p>
-                </div>
-            </div>
+            <div class="player-tabs" id="playerTabs"></div>
+            
+            <div class="tab-content" id="tabContent"></div>
+            
+            <div class="edit-modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" id="saveEditBtn" onclick="saveTeamEdit()">
+                    <iconify-icon icon="ph:floppy-disk-bold"></iconify-icon> Save Changes
+                </button>
         </div>
     </div>
 </div>
 
-<!-- Hidden RFID Scanner -->
-<input type="text" id="hiddenRfidInput" style="position: absolute; left: -9999px; opacity: 0;" tabindex="-1">
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+        <span id="toastMessage">Success!</span>
+            </div>
 
-<!-- Success/Error Modals -->
-<div class="modal fade" id="successModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">✅ Success!</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage">Operation completed successfully!</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
+    <script>
+        // Constants
+        const HOLES = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+        
+        // State
+        let currentStep = 1;
+        let teamData = { rfid: '', playerCount: 0, playerNames: [] };
+        let editingTeam = null;
+        let teamsCache = [];
+        let hoveredTeamRfid = null;
+        let activePlayerTab = 0;
 
-<div class="modal fade" id="errorModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">❌ Error</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="errorMessage">An error occurred. Please try again.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
+        // Test names for quick team creation
+        const TEST_FIRST_NAMES = ['Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Quinn', 'Avery', 'Parker', 'Sage', 'River', 'Skyler', 'Jamie', 'Drew', 'Blake', 'Reese', 'Charlie', 'Finley', 'Hayden', 'Rowan'];
+        const TEST_LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Young', 'King'];
 
-<!-- Confirm Delete Modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">⚠️ Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this team?</p>
-                <div class="alert alert-warning">
-                    <strong>Warning:</strong> This action cannot be undone. All team data and scores will be permanently deleted.
+        // Utilities
+        function generateUniqueEmail(playerName, index) {
+            const timestamp = Date.now();
+            const randomStr = Math.random().toString(36).substring(2, 8);
+            const nameSlug = playerName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10) || 'player';
+            return `${nameSlug}_${timestamp}_${randomStr}@swingcity.local`;
+        }
+
+        function getRandomName() {
+            const first = TEST_FIRST_NAMES[Math.floor(Math.random() * TEST_FIRST_NAMES.length)];
+            const last = TEST_LAST_NAMES[Math.floor(Math.random() * TEST_LAST_NAMES.length)];
+            return `${first} ${last}`;
+        }
+
+        // Create test team with 6 random players
+        async function createTestTeam() {
+            // Generate 6 random player names
+            const testNames = [];
+            for (let i = 0; i < 6; i++) {
+                testNames.push(getRandomName());
+            }
+
+            // Build players array
+            const players = testNames.map((name, index) => ({
+                name: name,
+                email: generateUniqueEmail(name, index)
+            }));
+
+            // Show loading state
+            const createBtn = document.querySelector('.test-team-link');
+            const originalContent = createBtn.innerHTML;
+            createBtn.innerHTML = '<div class="spinner" style="width: 16px; height: 16px;"></div> Creating test team...';
+            createBtn.style.pointerEvents = 'none';
+
+            try {
+                const response = await fetch('/api/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rfid: teamData.rfid,
+                        teamName: testNames[0], // Use first player's name as team name
+                        players: players
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('successRfid').textContent = teamData.rfid;
+                    document.getElementById('successPlayers').textContent = testNames.join(', ');
+                    currentStep = 'success';
+                    updateStepDisplay();
+                    showToast('Test team created with 6 players!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to create team');
+                }
+            } catch (error) {
+                console.error('Error creating test team:', error);
+                showToast(error.message || 'Failed to create test team', 'error');
+                createBtn.innerHTML = originalContent;
+                createBtn.style.pointerEvents = '';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 86400000) {
+                const hours = Math.floor(diff / 3600000);
+                if (hours < 1) {
+                    const mins = Math.floor(diff / 60000);
+                    return mins < 1 ? 'Just now' : `${mins}m ago`;
+                }
+                return `${hours}h ago`;
+            }
+            
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getTeamDisplayName(team) {
+            if (team.players && team.players.length > 0) return team.players[0].name || 'Unknown';
+            return team.teamName || 'Unknown';
+        }
+
+        function calculatePlayerTotal(player) {
+            if (!player.scores) return 0;
+            let total = 0;
+            for (const hole in player.scores) {
+                if (player.scores[hole] && typeof player.scores[hole].total === 'number') {
+                    total += player.scores[hole].total;
+                }
+            }
+            return total;
+        }
+
+        function getHoleScore(player, holeName) {
+            if (!player.scores || !player.scores[holeName]) return 0;
+            return player.scores[holeName].total || 0;
+        }
+
+        function getHoleCompleted(holeName) {
+            if (!editingTeam || !editingTeam.holesCompleted) return false;
+            return editingTeam.holesCompleted[holeName] === true;
+        }
+
+        function toggleHoleCompleted(holeName, isCompleted, playerIndex) {
+            if (!editingTeam) return;
+            
+            if (!editingTeam.holesCompleted) {
+                editingTeam.holesCompleted = {};
+            }
+            
+            editingTeam.holesCompleted[holeName] = isCompleted;
+            
+            // Update visual state for all player tabs (since holesCompleted is team-wide)
+            editingTeam.players.forEach((player, idx) => {
+                const holeItem = document.getElementById(`holeItem_${idx}_${holeName}`);
+                if (holeItem) {
+                    holeItem.classList.toggle('completed', isCompleted);
+                    // Also update the checkbox in other tabs
+                    const checkbox = holeItem.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = isCompleted;
+                }
+            });
+        }
+
+        // Modal Controls
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+            resetModal();
+            setTimeout(() => document.getElementById('rfidInput').focus(), 100);
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+            resetModal();
+        }
+
+        function openTeamsModal() {
+            document.getElementById('teamsModal').classList.add('active');
+            loadTeams();
+        }
+
+        function closeTeamsModal() {
+            document.getElementById('teamsModal').classList.remove('active');
+            document.getElementById('sidePanel').classList.remove('visible');
+            hoveredTeamRfid = null;
+        }
+
+        function openEditModal(rfid) {
+            const team = teamsCache.find(t => t.rfid === rfid);
+            if (!team) {
+                showToast('Team not found', 'error');
+                return;
+            }
+            
+            editingTeam = JSON.parse(JSON.stringify(team)); // Deep clone
+            activePlayerTab = 0;
+            renderEditTabs();
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingTeam = null;
+        }
+
+        function resetModal() {
+            currentStep = 1;
+            teamData = { rfid: '', playerCount: 0, playerNames: [] };
+            document.getElementById('rfidInput').value = '';
+            document.querySelectorAll('.player-count-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('playerCountNext').disabled = true;
+            updateStepDisplay();
+        }
+
+        function resetAndCreateAnother() {
+            resetModal();
+            setTimeout(() => document.getElementById('rfidInput').focus(), 100);
+        }
+
+        // Step Navigation
+        function goToStep(step) {
+            currentStep = step;
+            updateStepDisplay();
+            if (step === 3) {
+                renderPlayerInputs();
+                setTimeout(() => {
+                    const firstInput = document.querySelector('.player-name-input');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
+        }
+
+        function updateStepDisplay() {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            const activeStep = document.querySelector(`.step[data-step="${currentStep}"]`);
+            if (activeStep) activeStep.classList.add('active');
+
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index + 1 === currentStep) dot.classList.add('active');
+                else if (index + 1 < currentStep) dot.classList.add('completed');
+            });
+        }
+
+        // RFID Input
+        document.getElementById('rfidInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const rfid = this.value.trim();
+                if (rfid.length >= 4) {
+                    teamData.rfid = rfid;
+                    goToStep(2);
+                } else {
+                    showToast('Please scan a valid RFID card', 'error');
+                }
+            }
+        });
+
+        // Player Count Selection
+        document.querySelectorAll('.player-count-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                teamData.playerCount = parseInt(this.dataset.count);
+                document.getElementById('playerCountNext').disabled = false;
+            });
+        });
+
+        // Render Player Inputs
+        function renderPlayerInputs() {
+            const container = document.getElementById('playerInputs');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= teamData.playerCount; i++) {
+                const group = document.createElement('div');
+                group.className = 'player-input-group';
+                group.innerHTML = `
+                    <div class="player-number">${i}</div>
+                    <input type="text" class="player-name-input" placeholder="Player ${i} name" data-index="${i - 1}" autocomplete="off">
+                `;
+                container.appendChild(group);
+            }
+
+            container.querySelectorAll('.player-name-input').forEach((input, index, inputs) => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (index < inputs.length - 1) inputs[index + 1].focus();
+                        else createTeam();
+                    }
+                });
+            });
+        }
+
+        // Render Edit Tabs
+        function renderEditTabs() {
+            const tabsContainer = document.getElementById('playerTabs');
+            const contentContainer = document.getElementById('tabContent');
+            
+            if (!editingTeam || !editingTeam.players) return;
+
+            // Render tabs
+            tabsContainer.innerHTML = editingTeam.players.map((player, index) => `
+                <button class="player-tab ${index === activePlayerTab ? 'active' : ''}" onclick="switchPlayerTab(${index})">
+                    <span class="tab-number">${index + 1}</span>
+                    ${player.name || 'Player ' + (index + 1)}
+                </button>
+            `).join('');
+
+            // Render tab content
+            contentContainer.innerHTML = editingTeam.players.map((player, index) => {
+                const total = calculatePlayerTotal(player);
+                const holesHtml = HOLES.map(hole => {
+                    const score = getHoleScore(player, hole);
+                    const isCompleted = getHoleCompleted(hole);
+                    return `
+                        <div class="hole-score-item ${isCompleted ? 'completed' : ''}" id="holeItem_${index}_${hole}">
+                            <span class="hole-name">${hole}</span>
+                            <input type="number" 
+                                   value="${score}" 
+                                   data-player="${index}" 
+                                   data-hole="${hole}"
+                                   onchange="updateHoleScore(${index}, '${hole}', this.value)"
+                                   placeholder="0">
+                            <label class="completed-toggle" title="Mark as completed">
+                                <input type="checkbox" 
+                                       ${isCompleted ? 'checked' : ''}
+                                       onchange="toggleHoleCompleted('${hole}', this.checked, ${index})">
+                                <span class="slider"></span>
+                            </label>
                 </div>
-                <div id="deleteTeamInfo"></div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="tab-pane ${index === activePlayerTab ? 'active' : ''}" data-player="${index}">
+                        <div class="player-name-edit">
+                            <label>Player Name</label>
+                            <input type="text" value="${player.name || ''}" onchange="updatePlayerName(${index}, this.value)">
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Team</button>
+                        
+                        <div class="holes-section-title">Hole Scores & Completion</div>
+                        <div class="holes-header">
+                            <span>Hole</span>
+                            <span class="score-label">Score</span>
+                            <span class="done-label">Done</span>
             </div>
+                        <div class="holes-grid">${holesHtml}</div>
+                        
+                        <div class="player-total">
+                            <span class="label">Total Score</span>
+                            <span class="value" id="playerTotal${index}">${total} pts</span>
         </div>
     </div>
-</div>
+                `;
+            }).join('');
+        }
 
-<!-- Edit Team Modal -->
-<div class="modal fade" id="editTeamModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">✏️ Edit Team</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        function switchPlayerTab(index) {
+            activePlayerTab = index;
+            
+            document.querySelectorAll('.player-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            
+            document.querySelectorAll('.tab-pane').forEach((pane, i) => {
+                pane.classList.toggle('active', i === index);
+            });
+        }
+
+        function updatePlayerName(playerIndex, newName) {
+            if (editingTeam && editingTeam.players[playerIndex]) {
+                editingTeam.players[playerIndex].name = newName;
+                // Update tab label
+                const tab = document.querySelectorAll('.player-tab')[playerIndex];
+                if (tab) {
+                    tab.innerHTML = `<span class="tab-number">${playerIndex + 1}</span>${newName || 'Player ' + (playerIndex + 1)}`;
+                }
+            }
+        }
+
+        function updateHoleScore(playerIndex, holeName, value) {
+            if (!editingTeam || !editingTeam.players[playerIndex]) return;
+            
+            const player = editingTeam.players[playerIndex];
+            if (!player.scores) player.scores = {};
+            if (!player.scores[holeName]) player.scores[holeName] = { throws: [], total: 0 };
+            
+            player.scores[holeName].total = parseInt(value) || 0;
+            
+            // Update total display
+            const total = calculatePlayerTotal(player);
+            const totalEl = document.getElementById(`playerTotal${playerIndex}`);
+            if (totalEl) totalEl.textContent = total + ' pts';
+        }
+
+        // Create Team
+        async function createTeam() {
+            const inputs = document.querySelectorAll('.player-name-input');
+            const names = [];
+            let hasEmpty = false;
+
+            inputs.forEach(input => {
+                const name = input.value.trim();
+                if (!name) {
+                    hasEmpty = true;
+                    input.style.borderColor = 'var(--danger)';
+                } else {
+                    input.style.borderColor = '';
+                    names.push(name);
+                }
+            });
+
+            if (hasEmpty) {
+                showToast('Please enter all player names', 'error');
+                return;
+            }
+
+            teamData.playerNames = names;
+
+            const createBtn = document.getElementById('createTeamBtn');
+            const originalContent = createBtn.innerHTML;
+            createBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px;"></div> Creating...';
+            createBtn.disabled = true;
+
+            try {
+                const players = teamData.playerNames.map((name, index) => ({
+                    name: name,
+                    email: generateUniqueEmail(name, index)
+                }));
+
+                const response = await fetch('/api/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rfid: teamData.rfid,
+                        teamName: teamData.playerNames[0] || 'Team',
+                        players: players
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('successRfid').textContent = teamData.rfid;
+                    document.getElementById('successPlayers').textContent = teamData.playerNames.join(', ');
+                    currentStep = 'success';
+                    updateStepDisplay();
+                    showToast('Team created successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to create team');
+                }
+            } catch (error) {
+                console.error('Error creating team:', error);
+                showToast(error.message || 'Failed to create team', 'error');
+                createBtn.innerHTML = originalContent;
+                createBtn.disabled = false;
+            }
+        }
+
+        // Load Teams
+        async function loadTeams() {
+            const container = document.getElementById('teamsList');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">Loading teams...</p>
+</div>
+            `;
+
+            try {
+                const response = await fetch('/api/teams');
+                const data = await response.json();
+
+                if (data.teams && data.teams.length > 0) {
+                    const fullTeams = await Promise.all(
+                        data.teams.map(async (team) => {
+                            try {
+                                const teamResponse = await fetch(`/api/team/${team.rfid}`);
+                                const teamData = await teamResponse.json();
+                                return { ...team, ...teamData };
+                            } catch (e) {
+                                return team;
+                            }
+                        })
+                    );
+
+                    fullTeams.sort((a, b) => {
+                        const dateA = new Date(a.created || a.lastUpdated || 0);
+                        const dateB = new Date(b.created || b.lastUpdated || 0);
+                        return dateB - dateA;
+                    });
+
+                    teamsCache = fullTeams;
+
+                    container.innerHTML = fullTeams.map(team => {
+                        const displayName = getTeamDisplayName(team);
+                        const playerCount = team.players ? team.players.length : 0;
+                        const createdDate = formatDate(team.created || team.lastUpdated);
+
+                        return `
+                            <div class="team-item" 
+                                 data-rfid="${team.rfid}"
+                                 onclick="openEditModal('${team.rfid}')"
+                                 onmouseenter="showSidePanel('${team.rfid}')"
+                                 onmouseleave="hideSidePanel()">
+                                <div class="team-item-info">
+                                    <div class="team-name-row">
+                                        <h4>${displayName}</h4>
+                                        <span class="created-date">${createdDate}</span>
             </div>
-            <div class="modal-body">
-                <div id="editTeamContent">
-                    <!-- Team edit form will be loaded here -->
+                                    <p class="team-meta">${playerCount} player${playerCount !== 1 ? 's' : ''} • ${team.rfid.slice(-8)}</p>
                 </div>
+                                <div class="team-item-actions">
+                                    <button onclick="event.stopPropagation(); deleteTeam('${team.rfid}')" class="delete" title="Delete Team">
+                                        <iconify-icon icon="ph:trash-bold"></iconify-icon>
+                                    </button>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveTeamChangesBtn">💾 Save Changes</button>
             </div>
+                        `;
+                    }).join('');
+                } else {
+                    teamsCache = [];
+                    container.innerHTML = `
+                        <div class="no-teams">
+                            <iconify-icon icon="ph:users-three-bold"></iconify-icon>
+                            <p>No teams created yet</p>
         </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading teams:', error);
+                container.innerHTML = `
+                    <div class="no-teams">
+                        <iconify-icon icon="ph:warning-bold" style="color: var(--danger);"></iconify-icon>
+                        <p>Failed to load teams</p>
     </div>
+                `;
+            }
+        }
+
+        // Side Panel
+        function showSidePanel(rfid) {
+            const team = teamsCache.find(t => t.rfid === rfid);
+            if (!team) return;
+
+            hoveredTeamRfid = rfid;
+            const panel = document.getElementById('sidePanel');
+            const content = document.getElementById('sidePanelContent');
+
+            if (team.players && team.players.length > 0) {
+                content.innerHTML = team.players.map(player => {
+                    const total = calculatePlayerTotal(player);
+                    return `
+                        <div class="side-panel-player">
+                            <span class="name">${player.name || 'Unknown'}</span>
+                            <span class="score">${total} pts</span>
 </div>
+                    `;
+                }).join('');
+            } else {
+                content.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem;">No players</div>';
+            }
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/team-creator.js"></script>
+            panel.classList.add('visible');
 
+            // Highlight the hovered team
+            document.querySelectorAll('.team-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.rfid === rfid);
+            });
+        }
+
+        function hideSidePanel() {
+            hoveredTeamRfid = null;
+            document.getElementById('sidePanel').classList.remove('visible');
+            document.querySelectorAll('.team-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+
+        // Save Team Edit
+        async function saveTeamEdit() {
+            if (!editingTeam) return;
+
+            const saveBtn = document.getElementById('saveEditBtn');
+            const originalContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px;"></div> Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                const players = editingTeam.players.map(player => ({
+                    id: player.id,
+                    name: player.name,
+                    scores: player.scores || {}
+                }));
+
+                const response = await fetch(`/api/teams/${editingTeam.rfid}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teamName: players[0]?.name || editingTeam.teamName,
+                        players: players,
+                        holesCompleted: editingTeam.holesCompleted || {}
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Team updated successfully!', 'success');
+                    closeEditModal();
+                    loadTeams();
+                } else {
+                    throw new Error(data.message || 'Failed to update team');
+                }
+            } catch (error) {
+                console.error('Error updating team:', error);
+                showToast(error.message || 'Failed to update team', 'error');
+            } finally {
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
+            }
+        }
+
+        // Delete Team
+        async function deleteTeam(rfid) {
+            if (!confirm('Are you sure you want to delete this team?')) return;
+
+            try {
+                const response = await fetch(`/api/teams/${rfid}`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Team deleted', 'success');
+                    loadTeams();
+                } else {
+                    throw new Error(data.message || 'Failed to delete team');
+                }
+            } catch (error) {
+                console.error('Error deleting team:', error);
+                showToast('Failed to delete team', 'error');
+            }
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('iconify-icon');
+            const text = document.getElementById('toastMessage');
+
+            toast.className = 'toast ' + type;
+            icon.setAttribute('icon', type === 'success' ? 'ph:check-circle-bold' : 'ph:x-circle-bold');
+            text.textContent = message;
+
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this || e.target.classList.contains('modal-wrapper')) {
+                    this.classList.remove('active');
+                    if (this.id === 'createModal') resetModal();
+                    if (this.id === 'editModal') editingTeam = null;
+                    if (this.id === 'teamsModal') {
+                        document.getElementById('sidePanel').classList.remove('visible');
+                        hoveredTeamRfid = null;
+                    }
+                }
+            });
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                    if (modal.id === 'createModal') resetModal();
+                    if (modal.id === 'editModal') editingTeam = null;
+                });
+            }
+        });
+    </script>
+    </div><!-- end pageContent -->
+    <script src="/js/pin-lock.js"></script>
 </body>
 </html>

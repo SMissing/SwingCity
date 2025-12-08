@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Scores - SwingCity</title>
+    <link rel="stylesheet" href="/css/pin-lock.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0c0a09;
+            --bg-warm: #1c1917;
+            --gold-primary: #d4a854;
+            --gold-light: #f5d78e;
+            --gold-dark: #a67c32;
+            --cream: #faf7f2;
+            --cream-muted: #e7e5e4;
+            --text-primary: #fafaf9;
+            --text-muted: #a8a29e;
+            --border-gold: rgba(212, 168, 84, 0.2);
+        }
+
+        html, body {
+            height: 100vh;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Warm gradient background */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 100% 80% at 50% 0%, rgba(212, 168, 84, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 100% 100%, rgba(168, 124, 50, 0.05) 0%, transparent 40%),
+                linear-gradient(180deg, var(--bg-dark) 0%, #151311 50%, var(--bg-dark) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Subtle decorative accents */
+        .decor-line {
+            position: fixed;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .decor-line.top { top: 0; left: 10%; right: 10%; height: 1px; }
+        .decor-line.bottom { bottom: 0; left: 10%; right: 10%; height: 1px; }
+
+        /* Large X and O decorations - champagne bubble style */
+        .bg-shapes {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .bg-shape {
+            position: absolute;
+            font-weight: 900;
+            color: var(--gold-primary);
+            opacity: 0.04;
+            line-height: 1;
+        }
+
+        /* Bubble-like floating animations */
+        @keyframes drift1 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(15px, -20px) rotate(90deg); }
+            50% { transform: translate(-10px, -10px) rotate(180deg); }
+            75% { transform: translate(20px, 10px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        @keyframes drift2 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-20px, 15px) rotate(-90deg); }
+            50% { transform: translate(10px, -15px) rotate(-180deg); }
+            75% { transform: translate(-15px, -5px) rotate(-270deg); }
+            100% { transform: translate(0, 0) rotate(-360deg); }
+        }
+
+        @keyframes drift3 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(25px, -25px) rotate(120deg); }
+            66% { transform: translate(-20px, 15px) rotate(240deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        @keyframes drift4 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-10px, -30px) rotate(-72deg); }
+            40% { transform: translate(20px, -15px) rotate(-144deg); }
+            60% { transform: translate(-15px, 10px) rotate(-216deg); }
+            80% { transform: translate(10px, 20px) rotate(-288deg); }
+            100% { transform: translate(0, 0) rotate(-360deg); }
+        }
+
+        /* Scattered positions with smooth drift animations */
+        .bg-shape:nth-child(1) { top: 5%; left: 8%; font-size: 11rem; animation: drift1 35s linear infinite; }
+        .bg-shape:nth-child(2) { top: 8%; left: 38%; font-size: 8rem; animation: drift2 40s linear infinite; animation-delay: -5s; }
+        .bg-shape:nth-child(3) { top: 3%; right: 22%; font-size: 9rem; animation: drift3 38s linear infinite; animation-delay: -10s; }
+        .bg-shape:nth-child(4) { top: 10%; right: 6%; font-size: 10rem; animation: drift4 42s linear infinite; animation-delay: -15s; }
+        .bg-shape:nth-child(5) { top: 22%; left: 4%; font-size: 7rem; animation: drift2 36s linear infinite; animation-delay: -8s; }
+        .bg-shape:nth-child(6) { top: 18%; left: 28%; font-size: 12rem; animation: drift1 45s linear infinite; animation-delay: -20s; }
+        .bg-shape:nth-child(7) { top: 25%; right: 35%; font-size: 6rem; animation: drift4 32s linear infinite; animation-delay: -3s; }
+        .bg-shape:nth-child(8) { top: 20%; right: 8%; font-size: 8rem; animation: drift3 38s linear infinite; animation-delay: -12s; }
+        .bg-shape:nth-child(9) { top: 40%; left: 6%; font-size: 9rem; animation: drift3 40s linear infinite; animation-delay: -18s; }
+        .bg-shape:nth-child(10) { top: 38%; left: 42%; font-size: 7rem; animation: drift1 34s linear infinite; animation-delay: -7s; }
+        .bg-shape:nth-child(11) { top: 35%; right: 18%; font-size: 10rem; animation: drift2 44s linear infinite; animation-delay: -25s; }
+        .bg-shape:nth-child(12) { top: 42%; right: 5%; font-size: 8rem; animation: drift4 36s linear infinite; animation-delay: -2s; }
+        .bg-shape:nth-child(13) { top: 55%; left: 3%; font-size: 10rem; animation: drift4 42s linear infinite; animation-delay: -30s; }
+        .bg-shape:nth-child(14) { top: 52%; left: 32%; font-size: 6rem; animation: drift2 30s linear infinite; animation-delay: -14s; }
+        .bg-shape:nth-child(15) { top: 58%; right: 28%; font-size: 9rem; animation: drift1 38s linear infinite; animation-delay: -22s; }
+        .bg-shape:nth-child(16) { top: 50%; right: 7%; font-size: 7rem; animation: drift3 35s linear infinite; animation-delay: -9s; }
+        .bg-shape:nth-child(17) { top: 70%; left: 7%; font-size: 8rem; animation: drift1 40s linear infinite; animation-delay: -16s; }
+        .bg-shape:nth-child(18) { top: 68%; left: 38%; font-size: 11rem; animation: drift4 46s linear infinite; animation-delay: -28s; }
+        .bg-shape:nth-child(19) { top: 72%; right: 22%; font-size: 7rem; animation: drift2 33s linear infinite; animation-delay: -4s; }
+        .bg-shape:nth-child(20) { top: 65%; right: 5%; font-size: 9rem; animation: drift3 39s linear infinite; animation-delay: -11s; }
+        .bg-shape:nth-child(21) { top: 85%; left: 12%; font-size: 6rem; animation: drift2 32s linear infinite; animation-delay: -19s; }
+        .bg-shape:nth-child(22) { top: 82%; left: 48%; font-size: 8rem; animation: drift1 37s linear infinite; animation-delay: -6s; }
+        .bg-shape:nth-child(23) { top: 88%; right: 32%; font-size: 10rem; animation: drift4 41s linear infinite; animation-delay: -23s; }
+        .bg-shape:nth-child(24) { top: 90%; right: 10%; font-size: 7rem; animation: drift3 34s linear infinite; animation-delay: -13s; }
+
+        /* Corner accents */
+        .corner-accent {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border: 1px solid var(--gold-primary);
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .corner-accent.tl { top: 1rem; left: 1rem; border-right: none; border-bottom: none; }
+        .corner-accent.tr { top: 1rem; right: 1rem; border-left: none; border-bottom: none; }
+        .corner-accent.bl { bottom: 1rem; left: 1rem; border-right: none; border-top: none; }
+        .corner-accent.br { bottom: 1rem; right: 1rem; border-left: none; border-top: none; }
+
+        /* Main Container */
+        .page-container {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem 5rem;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .page-logo {
+            height: 70px;
+            width: auto;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .page-logo:hover {
+            opacity: 0.8;
+        }
+
+        .page-title-section h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 400;
+            color: var(--gold-light);
+            letter-spacing: 0.08em;
+        }
+
+        .page-title-section p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 0.15rem;
+        }
+
+        /* Time Period Tabs */
+        .time-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.03em;
+        }
+
+        .time-tab:hover {
+            color: var(--gold-light);
+            border-color: var(--border-gold);
+        }
+
+        .time-tab.active {
+            color: var(--bg-dark);
+            background: var(--gold-primary);
+            border-color: var(--gold-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 3rem;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Podium Section - Left Side */
+        .podium-section {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1rem 0;
+        }
+
+        .podium-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            color: var(--gold-primary);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .podium-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .podium-entry {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            background: rgba(28, 25, 23, 0.6);
+            border: 1px solid var(--border-gold);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .podium-entry:hover {
+            background: rgba(28, 25, 23, 0.8);
+            border-color: rgba(212, 168, 84, 0.4);
+        }
+
+        .podium-entry.first {
+            background: linear-gradient(135deg, rgba(212, 168, 84, 0.15) 0%, rgba(28, 25, 23, 0.8) 100%);
+            border-color: rgba(212, 168, 84, 0.4);
+        }
+
+        .podium-rank {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .podium-rank.gold {
+            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
+            color: var(--bg-dark);
+        }
+
+        .podium-rank.silver {
+            background: linear-gradient(135deg, #e8e8e8 0%, #a0a0a0 100%);
+            color: var(--bg-dark);
+        }
+
+        .podium-rank.bronze {
+            background: linear-gradient(135deg, #cd9b6a 0%, #8b6040 100%);
+            color: var(--bg-dark);
+        }
+
+        .podium-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .podium-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .podium-entry.first .podium-name {
+            color: var(--gold-light);
+        }
+
+        .podium-score {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .podium-score span {
+            color: var(--gold-primary);
+            font-weight: 600;
+        }
+
+        /* Scores List Section - Right Side */
+        .scores-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .scores-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-gold);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+
+        .scores-header h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            color: var(--gold-primary);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .scores-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .scores-count span {
+            color: var(--gold-primary);
+        }
+
+        .scores-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .scores-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scores-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scores-list::-webkit-scrollbar-thumb {
+            background: var(--gold-dark);
+            border-radius: 2px;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s ease;
+        }
+
+        .score-row:hover {
+            background: rgba(212, 168, 84, 0.03);
+        }
+
+        .score-rank {
+            width: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .score-name {
+            flex: 1;
+            font-size: 1rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 1rem;
+        }
+
+        .score-points {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gold-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Loading State */
+        .loading-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--border-gold);
+            border-top-color: var(--gold-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Footer */
+        .page-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 1.5rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--border-gold);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .footer-value {
+            color: var(--gold-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .page-container {
+                padding: 1.5rem 2rem;
+            }
+            .main-content {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .podium-section {
+                width: 100%;
+                padding: 0;
+            }
+            .podium-container {
+                flex-direction: row;
+                gap: 0.75rem;
+            }
+            .podium-entry {
+                flex: 1;
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+            .podium-info {
+                width: 100%;
+            }
+            .corner-accent {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            .time-tabs {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .time-tab {
+                flex: 1;
+                text-align: center;
+                padding: 0.4rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            .podium-container {
+                flex-direction: column;
+            }
+            .podium-entry {
+                flex-direction: row;
+            }
+            .page-footer {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<%- include('partials/pin-lock') %>
+
+<div id="pageContent" style="display: none;">
+    <div class="bg-gradient"></div>
+    
+    <!-- Large X and O background shapes -->
+    <div class="bg-shapes">
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+        <span class="bg-shape">○</span>
+        <span class="bg-shape">✕</span>
+    </div>
+    
+    <div class="decor-line top"></div>
+    <div class="decor-line bottom"></div>
+    <div class="corner-accent tl"></div>
+    <div class="corner-accent tr"></div>
+    <div class="corner-accent bl"></div>
+    <div class="corner-accent br"></div>
+
+    <div class="page-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="logo-section">
+                <img src="/images/swingcity-main-logo.png" alt="SwingCity" class="page-logo" id="logo">
+                <div class="page-title-section">
+                    <h1 id="pageTitle">High Scores</h1>
+                    <p id="pageSubtitle">All-Time Leaders</p>
+                </div>
+            </div>
+
+            <div class="time-tabs">
+                <button class="time-tab active" data-period="all" onclick="setTimePeriod('all')">All Time</button>
+                <button class="time-tab" data-period="monthly" onclick="setTimePeriod('monthly')">Monthly</button>
+                <button class="time-tab" data-period="weekly" onclick="setTimePeriod('weekly')">Weekly</button>
+                <button class="time-tab" data-period="daily" onclick="setTimePeriod('daily')">Today</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Loading State -->
+            <div class="loading-container" id="loadingState">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading scores...</div>
+            </div>
+
+            <!-- Podium Section -->
+            <div class="podium-section" id="podiumSection" style="display: none;">
+                <div class="podium-title">Top Players</div>
+                <div class="podium-container" id="podiumContainer"></div>
+            </div>
+
+            <!-- Scores List -->
+            <div class="scores-section" id="scoresSection" style="display: none;">
+                <div class="scores-header">
+                    <h2>Rankings</h2>
+                    <div class="scores-count">Showing <span id="showingCount">0</span> players</div>
+                </div>
+                <div class="scores-list" id="scoresList"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-item">
+                <span id="playerLabel">Total Players:</span>
+                <span class="footer-value" id="totalPlayers">0</span>
+            </div>
+            <div class="footer-item">
+                <div class="live-dot"></div>
+                <span>Live</span>
+            </div>
+            <div class="footer-item">
+                <span>Updated:</span>
+                <span class="footer-value" id="lastUpdated">--:--</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="/js/pin-lock.js"></script>
+<script>
+let allHighScores = [];
+let filteredHighScores = [];
+let socket = null;
+let currentPeriod = 'all';
+
+const REFRESH_INTERVAL = 30000;
+
+const PERIOD_CONFIG = {
+    all: { title: 'High Scores', subtitle: 'All-Time Leaders', label: 'Total Players:', empty: 'No scores yet' },
+    monthly: { title: 'Monthly Scores', subtitle: 'This Month\'s Leaders', label: 'This Month:', empty: 'No scores this month' },
+    weekly: { title: 'Weekly Scores', subtitle: 'This Week\'s Leaders', label: 'This Week:', empty: 'No scores this week' },
+    daily: { title: "Today's Scores", subtitle: "Today's Leaders", label: 'Today:', empty: 'No scores today' }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    loadHighScores();
+    setupFullscreenToggle();
+    setInterval(loadHighScores, REFRESH_INTERVAL);
+});
+
+function initializeSocket() {
+    socket = io();
+    socket.on('highScoreUpdated', () => loadHighScores());
+}
+
+function setTimePeriod(period) {
+    currentPeriod = period;
+    
+    document.querySelectorAll('.time-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.period === period);
+    });
+    
+    const config = PERIOD_CONFIG[period];
+    document.getElementById('pageTitle').textContent = config.title;
+    document.getElementById('pageSubtitle').textContent = config.subtitle;
+    document.getElementById('playerLabel').textContent = config.label;
+    
+    filterScoresByPeriod();
+    renderScores();
+    updateFooter();
+}
+
+function filterScoresByPeriod() {
+    const now = new Date();
+    
+    switch (currentPeriod) {
+        case 'daily':
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfDay);
+            break;
+        case 'weekly':
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfWeek);
+            break;
+        case 'monthly':
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfMonth);
+            break;
+        default:
+            filteredHighScores = [...allHighScores];
+    }
+    
+    filteredHighScores.sort((a, b) => b.totalScore - a.totalScore);
+}
+
+async function loadHighScores() {
+    try {
+        const response = await fetch('/api/highscores?limit=500');
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        allHighScores = data.highScores || [];
+        
+        filterScoresByPeriod();
+        renderScores();
+        updateFooter();
+        showContent();
+    } catch (error) {
+        console.error('Error loading high scores:', error);
+    }
+}
+
+function renderScores() {
+    const podiumContainer = document.getElementById('podiumContainer');
+    const scoresList = document.getElementById('scoresList');
+    const config = PERIOD_CONFIG[currentPeriod];
+    
+    podiumContainer.innerHTML = '';
+    scoresList.innerHTML = '';
+    
+    if (filteredHighScores.length === 0) {
+        podiumContainer.innerHTML = `<div class="empty-state"><p>${config.empty}</p></div>`;
+        return;
+    }
+    
+    // Render top 3 in podium
+    const top3 = filteredHighScores.slice(0, 3);
+    const rankStyles = ['gold', 'silver', 'bronze'];
+    
+    top3.forEach((score, i) => {
+        const entry = document.createElement('div');
+        entry.className = `podium-entry${i === 0 ? ' first' : ''}`;
+        entry.innerHTML = `
+            <div class="podium-rank ${rankStyles[i]}">${i + 1}</div>
+            <div class="podium-info">
+                <div class="podium-name">${escapeHtml(score.playerName)}</div>
+                <div class="podium-score"><span>${score.totalScore.toLocaleString()}</span> points</div>
+            </div>
+        `;
+        podiumContainer.appendChild(entry);
+    });
+    
+    // Render remaining scores (4+)
+    const remaining = filteredHighScores.slice(3);
+    document.getElementById('showingCount').textContent = filteredHighScores.length;
+    
+    remaining.forEach((score, i) => {
+        const row = document.createElement('div');
+        row.className = 'score-row';
+        row.innerHTML = `
+            <div class="score-rank">${i + 4}</div>
+            <div class="score-name">${escapeHtml(score.playerName)}</div>
+            <div class="score-points">${score.totalScore.toLocaleString()}</div>
+        `;
+        scoresList.appendChild(row);
+    });
+}
+
+function updateFooter() {
+    document.getElementById('totalPlayers').textContent = filteredHighScores.length;
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function showContent() {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('podiumSection').style.display = 'flex';
+    document.getElementById('scoresSection').style.display = 'flex';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function setupFullscreenToggle() {
+    let clicks = 0, timer = null, singleTimer = null;
+    document.getElementById('logo').addEventListener('click', () => {
+        clicks++;
+        clearTimeout(timer);
+        clearTimeout(singleTimer);
+        timer = setTimeout(() => clicks = 0, 2000);
+        
+        if (clicks === 4) {
+            // 4x click = fullscreen toggle
+            const isFs = document.fullscreenElement;
+            if (!isFs) document.documentElement.requestFullscreen?.();
+            else document.exitFullscreen?.();
+            clicks = 0;
+        } else if (clicks === 1) {
+            // Single click = go home (with delay to check for multi-click)
+            singleTimer = setTimeout(() => {
+                if (clicks === 1) {
+                    window.location.href = '/';
+                }
+            }, 300);
+        }
+    });
+}
+</script>
+</div>
+</body>
+</html>

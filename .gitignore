@@ -99,3 +99,6 @@ ehthumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Downloads (APK files too large for GitHub)
+public/Downloads/

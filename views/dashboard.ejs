@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwingCity - Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/pin-lock.css">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --accent-green: #00ff88;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-gold: #fbbf24;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Subtle animated background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.02) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .logo {
+            width: 280px;
+            max-width: 80%;
+            height: auto;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.2));
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        /* Navigation Grid */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            flex: 1;
+            align-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .nav-card {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--card-accent) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-card:hover::before {
+            opacity: 0.08;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--card-accent);
+            box-shadow: 0 20px 40px -20px var(--card-accent);
+        }
+
+        .nav-card.teams { --card-accent: var(--accent-green); }
+        .nav-card.leaderboard { --card-accent: var(--accent-blue); }
+        .nav-card.highscores { --card-accent: var(--accent-gold); }
+        .nav-card.podium { --card-accent: var(--accent-purple); }
+        .nav-card.appinstall { 
+            --card-accent: #f97316;
+        }
+        
+        .nav-card.training { 
+            --card-accent: #ec4899;
+        }
+
+        .nav-icon {
+            position: relative;
+            z-index: 1;
+            font-size: 3rem;
+            line-height: 1;
+            color: var(--card-accent);
+            opacity: 0.85;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .nav-card:hover .nav-icon {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .nav-title {
+            position: relative;
+            z-index: 1;
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-desc {
+            position: relative;
+            z-index: 1;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Status indicator */
+        .status-bar {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .nav-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .nav-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .nav-icon {
+                font-size: 2.5rem;
+            }
+
+            .nav-title {
+                font-size: 1.2rem;
+            }
+
+            .logo {
+                width: 220px;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.75rem;
+            }
+        }
+
+        /* Subtle entrance animation */
+        .nav-card {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .nav-card:nth-child(1) { animation-delay: 0.1s; }
+        .nav-card:nth-child(2) { animation-delay: 0.2s; }
+        .nav-card:nth-child(3) { animation-delay: 0.3s; }
+        .nav-card:nth-child(4) { animation-delay: 0.4s; }
+        .nav-card:nth-child(5) { animation-delay: 0.5s; }
+        .nav-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/pin-lock') %>
+
+    <div id="pageContent" style="display: none;">
+        <div class="bg-pattern"></div>
+        
+        <div class="container">
+            <header class="header">
+                <img src="/images/swingcity-main-logo.png" alt="SwingCity" class="logo">
+                <p class="tagline">Interactive Arcade Golf</p>
+            </header>
+
+            <nav class="nav-grid">
+                <a href="/teams" class="nav-card teams">
+                    <iconify-icon icon="ph:users-three-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">Teams</span>
+                    <span class="nav-desc">Create and manage player teams</span>
+                </a>
+
+                <a href="/leaderboard" class="nav-card leaderboard">
+                    <iconify-icon icon="ph:chart-bar-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">Leaderboard</span>
+                    <span class="nav-desc">Live scores and rankings</span>
+                </a>
+
+                <a href="/highscores" class="nav-card highscores">
+                    <iconify-icon icon="ph:trophy-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">High Scores</span>
+                    <span class="nav-desc">All-time best players</span>
+                </a>
+
+                <a href="/podium" class="nav-card podium">
+                    <iconify-icon icon="ph:medal-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">Podium</span>
+                    <span class="nav-desc">Winner celebration display</span>
+                </a>
+
+                <a href="/download" class="nav-card appinstall">
+                    <iconify-icon icon="ph:device-tablet-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">App Install</span>
+                    <span class="nav-desc">Download tablet app updates</span>
+                </a>
+
+                <a href="/training" class="nav-card training">
+                    <iconify-icon icon="ph:graduation-cap-bold" class="nav-icon"></iconify-icon>
+                    <span class="nav-title">Training</span>
+                    <span class="nav-desc">Staff & management guides</span>
+                </a>
+            </nav>
+
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="serverStatus"></span>
+                    <span id="serverStatusText">Checking server...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot" id="firebaseStatus"></span>
+                    <span id="firebaseStatusText">Checking database...</span>
+                </div>
+            </div>
+
+            <footer class="footer">
+                SwingCity © <%= new Date().getFullYear() %>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/js/pin-lock.js"></script>
+    <script>
+        // ==================== HEALTH CHECK ====================
+        async function checkHealth() {
+            const serverDot = document.getElementById('serverStatus');
+            const serverText = document.getElementById('serverStatusText');
+            const firebaseDot = document.getElementById('firebaseStatus');
+            const firebaseText = document.getElementById('firebaseStatusText');
+
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+
+                serverDot.classList.remove('offline');
+                serverText.textContent = 'Server Online';
+
+                if (data.firebase && data.firebase.connected) {
+                    firebaseDot.classList.remove('offline');
+                    firebaseText.textContent = 'Database Connected';
+                } else {
+                    firebaseDot.classList.add('offline');
+                    firebaseText.textContent = 'Database Offline';
+                }
+            } catch (error) {
+                serverDot.classList.add('offline');
+                serverText.textContent = 'Server Offline';
+                firebaseDot.classList.add('offline');
+                firebaseText.textContent = 'Database Unknown';
+            }
+        }
+
+        // Start health check when PIN is unlocked
+        window.addEventListener('pinUnlocked', checkHealth);
+
+        // Also check if already authenticated on page load
+        if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
+            checkHealth();
+        }
+
+        // Recheck every 30 seconds (only when authenticated)
+        setInterval(() => {
+            if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
+                checkHealth();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

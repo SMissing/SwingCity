@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Download - SwingCity</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/pin-lock.css">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --accent-green: #00ff88;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-orange: #f97316;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Subtle animated background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.02) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border-color: var(--accent-orange);
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        /* Main Download Card */
+        .download-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-purple));
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 8px 32px rgba(249, 115, 22, 0.3);
+        }
+
+        .app-info h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-version {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--accent-orange);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn iconify-icon {
+            font-size: 1.5rem;
+        }
+
+        .loading-files {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-files iconify-icon.spin {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .no-files-message {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            color: var(--text-secondary);
+        }
+
+        .no-files-message iconify-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* File List Styles */
+        .files-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .file-icon.android {
+            background: linear-gradient(135deg, #3ddc84, #00a956);
+            color: white;
+        }
+
+        .file-icon.archive {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+        }
+
+        .file-icon.document {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .file-icon.image {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .file-icon.file {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            word-break: break-word;
+        }
+
+        .file-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .file-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .file-meta iconify-icon {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .download-file-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .download-file-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .download-file-btn iconify-icon {
+            font-size: 1.1rem;
+        }
+
+        .files-count {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        /* Info Sections */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .info-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        .info-card h3 iconify-icon {
+            font-size: 1.25rem;
+        }
+
+        .info-card p, .info-card li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .info-card li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+        }
+
+        /* Instructions Card */
+        .instructions-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .instructions-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-purple);
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--accent-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .step-content h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Update Notice */
+        .update-notice {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .update-notice iconify-icon {
+            font-size: 1.25rem;
+            color: var(--accent-green);
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .update-notice p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .update-notice strong {
+            color: var(--accent-green);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        /* Animations */
+        .download-card, .info-card, .instructions-card {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .download-card { animation-delay: 0.1s; }
+        .info-card:nth-child(1) { animation-delay: 0.2s; }
+        .info-card:nth-child(2) { animation-delay: 0.3s; }
+        .instructions-card { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+
+            .download-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .app-icon {
+                width: 64px;
+                height: 64px;
+                font-size: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/pin-lock') %>
+
+    <div id="pageContent" style="display: none;">
+        <div class="bg-pattern"></div>
+        
+        <div class="container">
+            <header class="header">
+                <a href="/" class="back-btn">
+                    <iconify-icon icon="ph:arrow-left-bold"></iconify-icon>
+                </a>
+                <h1 class="page-title">App Download</h1>
+            </header>
+
+            <div class="download-card">
+                <div class="app-header">
+                    <div class="app-icon">
+                        <iconify-icon icon="ph:device-tablet-bold"></iconify-icon>
+                    </div>
+                    <div class="app-info">
+                        <h2>SwingCity Tablet App</h2>
+                        <span class="app-version" id="appVersion">
+                            <iconify-icon icon="ph:tag-bold"></iconify-icon>
+                            Checking version...
+                        </span>
+                    </div>
+                </div>
+
+                <div id="downloadSection">
+                    <!-- Will be populated by JavaScript -->
+                    <div class="loading-files">
+                        <iconify-icon icon="ph:spinner" class="spin"></iconify-icon>
+                        <p>Loading available files...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="update-notice">
+                <iconify-icon icon="ph:info-bold"></iconify-icon>
+                <p><strong>Remote Updates:</strong> Upload files to the server's <code>/public/downloads/</code> folder to make them available here. Tablets can then download and install updates directly from this page.</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>
+                        <iconify-icon icon="ph:device-mobile-bold"></iconify-icon>
+                        Requirements
+                    </h3>
+                    <ul>
+                        <li>Android 8.0 (Oreo) or higher</li>
+                        <li>At least 100MB free storage</li>
+                        <li>Wi-Fi connection to local network</li>
+                        <li>Allow installation from unknown sources</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>
+                        <iconify-icon icon="ph:star-bold"></iconify-icon>
+                        Features
+                    </h3>
+                    <ul>
+                        <li>RFID card scanning for teams</li>
+                        <li>Score entry with real-time sync</li>
+                        <li>Hole-by-hole gameplay tracking</li>
+                        <li>Auto-connect to SwingCity server</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="instructions-card">
+                <h3>
+                    <iconify-icon icon="ph:list-numbers-bold"></iconify-icon>
+                    Installation Steps
+                </h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <h4>Enable Unknown Sources</h4>
+                        <p>Go to Settings → Security → Enable "Install from unknown sources" or "Install unknown apps" for your browser.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <h4>Download the APK</h4>
+                        <p>Tap the download button above. The file will be saved to your Downloads folder.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <h4>Install the App</h4>
+                        <p>Open the downloaded APK file and tap "Install". If prompted about Play Protect, tap "Install anyway".</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <div class="step-content">
+                        <h4>Launch & Configure</h4>
+                        <p>Open SwingCity from your app drawer. The app will auto-connect to the server on your local network.</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                SwingCity © <%= new Date().getFullYear() %>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/js/pin-lock.js"></script>
+    <script>
+        // Fetch and display all available files
+        async function loadFiles() {
+            const downloadSection = document.getElementById('downloadSection');
+            const appVersion = document.getElementById('appVersion');
+            
+            try {
+                const response = await fetch('/api/downloads');
+                const data = await response.json();
+                
+                if (data.files && data.files.length > 0) {
+                    // Find APK files for the header info
+                    const apkFiles = data.files.filter(f => f.type === 'android');
+                    
+                    if (apkFiles.length > 0) {
+                        const latestApk = apkFiles[0]; // Most recent APK
+                        appVersion.innerHTML = `
+                            <iconify-icon icon="ph:tag-bold"></iconify-icon>
+                            ${latestApk.modifiedFormatted} • ${latestApk.sizeFormatted}
+                        `;
+                    } else {
+                        appVersion.innerHTML = `
+                            <iconify-icon icon="ph:tag-bold"></iconify-icon>
+                            ${data.count} file${data.count !== 1 ? 's' : ''} available
+                        `;
+                    }
+                    
+                    // Build file list HTML
+                    let filesHTML = `
+                        <div class="files-count">${data.count} file${data.count !== 1 ? 's' : ''} available for download</div>
+                        <div class="files-list">
+                    `;
+                    
+                    data.files.forEach(file => {
+                        const icon = getFileIcon(file.type);
+                        filesHTML += `
+                            <div class="file-item">
+                                <div class="file-icon ${file.type}">
+                                    <iconify-icon icon="${icon}"></iconify-icon>
+                                </div>
+                                <div class="file-details">
+                                    <div class="file-name">${escapeHtml(file.name)}</div>
+                                    <div class="file-meta">
+                                        <span>
+                                            <iconify-icon icon="ph:hard-drive-bold"></iconify-icon>
+                                            ${file.sizeFormatted}
+                                        </span>
+                                        <span>
+                                            <iconify-icon icon="ph:calendar-bold"></iconify-icon>
+                                            ${file.modifiedFormatted}
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="${file.url}" class="download-file-btn" download>
+                                    <iconify-icon icon="ph:download-bold"></iconify-icon>
+                                    Download
+                                </a>
+                            </div>
+                        `;
+                    });
+                    
+                    filesHTML += '</div>';
+                    downloadSection.innerHTML = filesHTML;
+                } else {
+                    showNoFiles();
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+                showNoFiles();
+            }
+        }
+        
+        function getFileIcon(type) {
+            switch(type) {
+                case 'android': return 'ph:android-logo-bold';
+                case 'archive': return 'ph:file-zip-bold';
+                case 'document': return 'ph:file-pdf-bold';
+                case 'image': return 'ph:image-bold';
+                default: return 'ph:file-bold';
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showNoFiles() {
+            const downloadSection = document.getElementById('downloadSection');
+            const appVersion = document.getElementById('appVersion');
+            
+            appVersion.innerHTML = `
+                <iconify-icon icon="ph:tag-bold"></iconify-icon>
+                No files available
+            `;
+            
+            downloadSection.innerHTML = `
+                <div class="no-files-message">
+                    <iconify-icon icon="ph:folder-dashed-bold"></iconify-icon>
+                    <p>No files available yet.<br>Upload files to the server's <strong>/public/downloads/</strong> folder.</p>
+                </div>
+            `;
+        }
+        
+        // Load files when page unlocks
+        window.addEventListener('pinUnlocked', loadFiles);
+        
+        // Also check if already authenticated
+        if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
+            loadFiles();
+        }
+    </script>
+</body>
+</html>
+

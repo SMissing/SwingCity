@@ -1,0 +1,180 @@
+/* PIN Lock Screen Styles */
+.pin-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0f;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.pin-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.pin-overlay .bg-pattern {
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse at 20% 20%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.02) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.pin-container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+}
+
+.pin-logo {
+    width: 200px;
+    max-width: 60%;
+    height: auto;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.2));
+}
+
+.pin-title {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.pin-subtitle {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 0.95rem;
+    color: #9ca3af;
+    margin-bottom: 2.5rem;
+}
+
+.pin-input-group {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.pin-digit {
+    width: 60px;
+    height: 72px;
+    background: #12121a;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+    outline: none;
+    transition: all 0.2s ease;
+    caret-color: #00ff88;
+}
+
+.pin-digit:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+}
+
+.pin-digit.error {
+    border-color: #ef4444;
+    animation: shake 0.5s ease;
+}
+
+.pin-digit.success {
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+.pin-error-message {
+    color: #ef4444;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    min-height: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.pin-error-message.visible {
+    opacity: 1;
+}
+
+.pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.pin-key {
+    width: 80px;
+    height: 64px;
+    background: #12121a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pin-key:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #00ff88;
+}
+
+.pin-key:active {
+    transform: scale(0.95);
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.pin-key.delete {
+    font-size: 1.25rem;
+}
+
+.pin-key.empty {
+    visibility: hidden;
+}
+
+/* Mobile responsive */
+@media (max-width: 400px) {
+    .pin-digit {
+        width: 50px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .pin-key {
+        width: 65px;
+        height: 55px;
+        font-size: 1.3rem;
+    }
+
+    .pin-keypad {
+        max-width: 230px;
+    }
+}
+

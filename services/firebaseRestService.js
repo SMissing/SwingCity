@@ -117,14 +117,19 @@ class FirebaseRestService {
       // Use team name from card data or generate one as fallback
       const teamName = cardData.teamName || `Team ${rfid.slice(-4).toUpperCase()}`;
 
+      // Get the actual holesCompleted object from the database (not calculated)
+      const holesCompleted = cardData.holesCompleted || {};
+
       return {
         id: rfid,
         rfid: rfid,
         teamName: teamName,
         players: players,
         totalScore: this.calculateTeamTotal(players),
-        holesCompleted: this.calculateHolesCompleted(players),
-        lastActivity: cardData.lastActivity || new Date().toISOString()
+        holesCompleted: holesCompleted,
+        holesCompletedCount: this.calculateHolesCompleted(players),
+        lastActivity: cardData.lastActivity || new Date().toISOString(),
+        created: cardData.created || null
       };
 
     } catch (error) {
@@ -249,8 +254,12 @@ class FirebaseRestService {
         });
       }
 
-      // Update holes completed based on scores
-      if (currentTeam.holesCompleted) {
+      // Update holes completed - use provided values if available, otherwise calculate from scores
+      if (updateData.holesCompleted && Object.keys(updateData.holesCompleted).length > 0) {
+        // Use the explicitly provided holesCompleted values (manual override by staff)
+        currentTeam.holesCompleted = { ...currentTeam.holesCompleted, ...updateData.holesCompleted };
+      } else if (currentTeam.holesCompleted) {
+        // Auto-calculate based on scores if not explicitly provided
         Object.keys(currentTeam.holesCompleted).forEach(hole => {
           currentTeam.holesCompleted[hole] = Object.values(currentTeam.players).some(player => 
             player.scorePerHole[hole] && (player.scorePerHole[hole].total !== 0 || player.scorePerHole[hole].throws.length > 0)
@@ -787,8 +796,7 @@ class FirebaseRestService {
   // ==================== MOCK DATA FUNCTIONS ====================
 
   getMockTeamData(rfid) {
-    const { HOLES } = require('../config/holes');
-    const holeNames = Object.keys(HOLES);
+    const holeNames = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
     
     return {
       id: rfid,
@@ -814,8 +822,7 @@ class FirebaseRestService {
 
   generateMockScores(holeNames = null) {
     if (!holeNames) {
-      const { HOLES } = require('../config/holes');
-      holeNames = Object.keys(HOLES);
+      holeNames = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
     }
     
     const scores = {};

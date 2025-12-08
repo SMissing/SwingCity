@@ -1,0 +1,34 @@
+<!-- PIN Lock Screen -->
+<div class="pin-overlay" id="pinOverlay">
+    <div class="bg-pattern"></div>
+    <div class="pin-container">
+        <img src="/images/swingcity-main-logo.png" alt="SwingCity" class="pin-logo">
+        <h1 class="pin-title">Staff Access</h1>
+        <p class="pin-subtitle">Enter the 4-digit PIN to continue</p>
+        
+        <div class="pin-input-group">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="0" autocomplete="off">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1" autocomplete="off">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2" autocomplete="off">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3" autocomplete="off">
+        </div>
+        
+        <p class="pin-error-message" id="pinError">Invalid PIN. Please try again.</p>
+        
+        <div class="pin-keypad">
+            <button class="pin-key" data-value="1">1</button>
+            <button class="pin-key" data-value="2">2</button>
+            <button class="pin-key" data-value="3">3</button>
+            <button class="pin-key" data-value="4">4</button>
+            <button class="pin-key" data-value="5">5</button>
+            <button class="pin-key" data-value="6">6</button>
+            <button class="pin-key" data-value="7">7</button>
+            <button class="pin-key" data-value="8">8</button>
+            <button class="pin-key" data-value="9">9</button>
+            <button class="pin-key empty"></button>
+            <button class="pin-key" data-value="0">0</button>
+            <button class="pin-key delete" data-value="delete">⌫</button>
+        </div>
+    </div>
+</div>
+
