@@ -218,6 +218,28 @@
             opacity: 0.6;
         }
 
+        /* Settings Link */
+        .settings-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-link:hover {
+            opacity: 1;
+            color: var(--accent-purple);
+        }
+
+        .settings-link iconify-icon {
+            font-size: 0.95rem;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .container {
@@ -336,7 +358,11 @@
             </div>
 
             <footer class="footer">
-                SwingCity © <%= new Date().getFullYear() %>
+                <a href="/settings" class="settings-link">
+                    <iconify-icon icon="ph:gear-bold"></iconify-icon>
+                    Settings
+                </a>
+                <div>SwingCity © <%= new Date().getFullYear() %></div>
             </footer>
         </div>
     </div>

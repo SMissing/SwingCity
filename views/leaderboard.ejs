@@ -621,6 +621,107 @@
             }
         }
 
+        /* Mobile Portrait Mode */
+        @media (max-width: 768px) {
+            .leaderboard-header {
+                padding: 1rem;
+            }
+            
+            .leaderboard-logo {
+                height: 70px;
+            }
+            
+            .leaderboard-state {
+                padding: 0 1rem 1rem;
+            }
+            
+            .scorecard-wrapper {
+                border-radius: 16px;
+                overflow-x: auto;
+            }
+            
+            .scorecard-table {
+                font-size: 0.85rem;
+                min-width: 800px;
+            }
+            
+            .scorecard-table .player-name-header {
+                width: 120px;
+                min-width: 120px;
+            }
+            
+            .scorecard-table .player-name-cell {
+                font-size: 1rem;
+                padding: 0.9rem 1rem;
+            }
+            
+            .scorecard-table .score-cell {
+                padding: 0.9rem 0.3rem;
+                font-size: 1rem;
+            }
+            
+            .scorecard-table .total-cell {
+                font-size: 1.2rem;
+            }
+            
+            .highscore-columns {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .highscore-title {
+                font-size: 2.5rem;
+            }
+            
+            .hof-entry {
+                padding: 0.6rem 1rem;
+            }
+            
+            .hof-rank {
+                width: 40px;
+                font-size: 1.1rem;
+            }
+            
+            .hof-name {
+                font-size: 1rem;
+            }
+            
+            .hof-score {
+                font-size: 1rem;
+            }
+            
+            .cycle-indicator {
+                bottom: 1rem;
+            }
+            
+            .cycle-dot {
+                width: 8px;
+                height: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .leaderboard-logo {
+                height: 50px;
+            }
+            
+            .highscore-title {
+                font-size: 2rem;
+            }
+            
+            .highscore-subtitle {
+                font-size: 0.75rem;
+            }
+            
+            .no-teams-title {
+                font-size: 1.8rem;
+            }
+            
+            .no-teams-subtitle {
+                font-size: 1rem;
+            }
+        }
+
         /* Hidden elements */
         .visually-hidden {
             position: absolute !important;
@@ -751,6 +852,7 @@ let scannedTeamTimeout = null;
 let countdownInterval = null;
 let countdownRemaining = 0;
 let highScoreTimeout = null;
+let managerScorecardActive = false; // Flag for manager-triggered scorecard display
 
 // Configuration
 const CYCLE_DURATION = 10000; // 10 seconds per team
@@ -809,6 +911,18 @@ function initializeSocket() {
     socket.on('disconnect', () => console.log('Leaderboard disconnected'));
     socket.on('scoreUpdate', () => loadAllTeams());
     socket.on('highScoreUpdated', () => loadHighScores());
+    
+    // Listen for scorecard display requests from Team Manager
+    socket.on('displayTeamScorecard', async (data) => {
+        console.log('Received displayTeamScorecard event for:', data.rfid);
+        await displayManagerScorecard(data.rfid);
+    });
+    
+    // Listen for hide scorecard request from Team Manager
+    socket.on('hideTeamScorecard', () => {
+        console.log('Received hideTeamScorecard event');
+        hideManagerScorecard();
+    });
 }
 
 function setupFullscreenToggle() {
@@ -1268,6 +1382,9 @@ function stopCycling() {
 }
 
 function resumeCycling() {
+    // Don't resume if manager scorecard is active
+    if (managerScorecardActive) return;
+    
     scannedTeamData = null;
     document.getElementById('countdownBar').style.width = '0%';
     document.getElementById('cycleIndicator').style.display = 'flex';
@@ -1288,6 +1405,64 @@ function showState(stateName) {
     if (stateElement) stateElement.classList.add('active');
     
     ensureRFIDFocus();
+}
+
+// Display scorecard triggered by Team Manager
+async function displayManagerScorecard(rfid) {
+    console.log('Displaying manager-triggered scorecard for:', rfid);
+    
+    // Stop any existing cycling
+    stopCycling();
+    if (scannedTeamTimeout) clearTimeout(scannedTeamTimeout);
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    // Set flag to indicate manager-controlled display
+    managerScorecardActive = true;
+    scannedTeamData = null; // Clear any RFID-scanned data
+    
+    try {
+        const response = await fetch(`/api/team/${rfid}`);
+        if (!response.ok) throw new Error('Team not found');
+        const teamData = await response.json();
+        
+        // Hide cycle indicator since this is manager-controlled
+        document.getElementById('cycleIndicator').style.display = 'none';
+        
+        // Hide countdown bar (no auto-close for manager-triggered)
+        document.getElementById('countdownBar').style.width = '0%';
+        
+        // Hide high scores if showing
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        if (highScoreDisplay) highScoreDisplay.classList.remove('visible');
+        
+        // Display the team scorecard
+        displayTeam(teamData);
+        showState('scores');
+        
+        console.log('Manager scorecard displayed successfully for team:', teamData.teamName);
+    } catch (error) {
+        console.error('Error displaying manager scorecard:', error);
+    }
+}
+
+// Hide scorecard triggered by Team Manager
+function hideManagerScorecard() {
+    console.log('Hiding manager-triggered scorecard');
+    
+    managerScorecardActive = false;
+    
+    // Restore cycle indicator
+    document.getElementById('cycleIndicator').style.display = 'flex';
+    document.getElementById('countdownBar').style.width = '0%';
+    
+    // Resume normal cycling if we have teams
+    if (teamScores.length > 0) {
+        currentDisplayMode = 'team';
+        displayCurrentTeam();
+        startCycling();
+    } else {
+        showState('noTeams');
+    }
 }
 
 function escapeHtml(text) {

@@ -100,5 +100,6 @@ ehthumbs.db
 *.tmp
 *.temp
 
-# Downloads (APK files too large for GitHub)
+# APK files and downloads
+*.apk
 public/Downloads/

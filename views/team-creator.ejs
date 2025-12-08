@@ -116,7 +116,14 @@
             gap: 2rem;
         }
 
-        .create-team-btn {
+        .main-buttons {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .create-team-btn, .scorecard-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -128,6 +135,7 @@
             color: var(--text-primary);
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 200px;
         }
 
         .create-team-btn:hover {
@@ -142,9 +150,21 @@
             opacity: 0.9;
         }
 
-        .create-team-btn span {
+        .create-team-btn span, .scorecard-btn span {
             font-size: 1.3rem;
             font-weight: 600;
+        }
+
+        .scorecard-btn:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 20px 40px -20px rgba(0, 212, 255, 0.3);
+        }
+
+        .scorecard-btn iconify-icon {
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.9;
         }
 
         /* Footer */
@@ -429,6 +449,64 @@
 
         .player-name-input::placeholder { color: var(--text-muted); }
 
+        /* Team Email Section */
+        .team-email-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .email-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .email-label iconify-icon {
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+        }
+
+        .optional-tag {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .team-email-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .team-email-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .team-email-input::placeholder { 
+            color: var(--text-muted); 
+        }
+
+        .email-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
         /* Buttons */
         .btn-row {
             display: flex;
@@ -550,29 +628,48 @@
         /* Teams List Modal - With side panel */
         .teams-modal .modal-wrapper {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             align-items: flex-start;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .teams-modal .modal {
-            max-width: 500px;
-            flex-shrink: 0;
+            max-width: 700px;
+            flex: 1;
+            min-width: 0;
         }
 
         .teams-list {
-            max-height: 500px;
+            max-height: 65vh;
             overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .teams-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .teams-list::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 3px;
+        }
+
+        .teams-list::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 3px;
         }
 
         .team-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1rem 1.25rem;
+            padding: 1.25rem 1.5rem;
             background: var(--bg-input);
             border: 2px solid transparent;
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
+            border-radius: 14px;
+            margin-bottom: 1rem;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -582,6 +679,7 @@
         .team-item:hover {
             background: rgba(255, 255, 255, 0.06);
             border-color: var(--accent-blue);
+            transform: translateX(4px);
         }
 
         .team-item.selected {
@@ -597,46 +695,50 @@
         .team-item-info .team-name-row {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
         .team-item-info h4 {
-            font-size: 1.05rem;
+            font-size: 1.2rem;
             font-weight: 600;
             margin: 0;
         }
 
         .team-item-info .created-date {
-            font-size: 0.8rem;
-            color: var(--text-dark);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
         }
 
         .team-item-info .team-meta {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            margin-top: 0.25rem;
+            margin-top: 0.4rem;
         }
 
         .team-item-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
             flex-shrink: 0;
-            margin-left: 1rem;
+            margin-left: 1.5rem;
         }
 
         .team-item-actions button {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
+            width: 42px;
+            height: 42px;
             background: transparent;
             border: 1px solid var(--border-subtle);
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s ease;
+            font-size: 1.1rem;
         }
 
         .team-item-actions button:hover {
@@ -652,16 +754,17 @@
 
         /* Side Panel - Player Preview */
         .side-panel {
-            width: 280px;
+            width: 340px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 1.25rem;
+            border-radius: 18px;
+            padding: 1.5rem;
             opacity: 0;
             visibility: hidden;
             transform: translateX(-10px);
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             flex-shrink: 0;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
         }
 
         .side-panel.visible {
@@ -671,41 +774,59 @@
         }
 
         .side-panel-title {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.75rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .side-panel-player {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.6rem 0;
+            padding: 0.85rem 0.5rem;
             border-bottom: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            transition: background 0.2s ease;
         }
 
-        .side-panel-player:last-child { border-bottom: none; }
+        .side-panel-player:hover {
+            background: var(--bg-input);
+        }
+
+        .side-panel-player:last-child { 
+            border-bottom: none; 
+            margin-bottom: 0;
+        }
 
         .side-panel-player .name {
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             color: var(--text-primary);
+            font-weight: 500;
         }
 
         .side-panel-player .score {
-            font-size: 0.95rem;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: 700;
             color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
         }
 
         .side-panel-hint {
-            margin-top: 1rem;
+            margin-top: 1.25rem;
             padding-top: 1rem;
             border-top: 1px solid var(--border-subtle);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
         .no-teams {
@@ -1055,10 +1176,156 @@
         .toast.success iconify-icon { color: var(--success); }
         .toast.error iconify-icon { color: var(--danger); }
 
+        /* Scorecard Modal Styles */
+        .scorecard-modal .modal {
+            max-width: 500px;
+        }
+
+        .scorecard-step {
+            display: none;
+        }
+
+        .scorecard-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .scorecard-team-info {
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        .team-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-input);
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .team-badge iconify-icon {
+            color: var(--accent-blue);
+            font-size: 1.5rem;
+        }
+
+        .scorecard-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--accent-green);
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .scorecard-status iconify-icon {
+            font-size: 1.2rem;
+        }
+
+        .scorecard-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .scorecard-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.5rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scorecard-action-btn iconify-icon {
+            font-size: 2.5rem;
+        }
+
+        .scorecard-action-btn span {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .scorecard-action-btn small {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .scorecard-action-btn.close-action:hover {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .scorecard-action-btn.close-action iconify-icon {
+            color: var(--danger);
+        }
+
+        .scorecard-action-btn.email-action:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .scorecard-action-btn.email-action iconify-icon {
+            color: var(--accent-blue);
+        }
+
+        .scorecard-action-btn.email-action.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .scorecard-discount-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 12px;
+            color: var(--accent-purple);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .scorecard-discount-hint iconify-icon {
+            font-size: 1.2rem;
+        }
+
         /* Responsive */
+        @media (max-width: 1100px) {
+            .teams-modal .modal-wrapper {
+                max-width: 95%;
+            }
+            .teams-modal .modal {
+                max-width: 600px;
+            }
+            .side-panel {
+                width: 300px;
+            }
+        }
+
         @media (max-width: 900px) {
             .teams-modal .modal-wrapper {
                 flex-direction: column;
+                align-items: center;
+            }
+            .teams-modal .modal {
+                max-width: 100%;
+                width: 100%;
             }
             .side-panel {
                 width: 100%;
@@ -1067,12 +1334,154 @@
             }
         }
 
+        @media (max-width: 600px) {
+            .container { 
+                padding: 1rem 0.75rem; 
+            }
+            
+            .header {
+                margin-bottom: 2rem;
+            }
+            
+            .header-content h1 {
+                font-size: 1.3rem;
+            }
+            
+            .main-buttons {
+                flex-direction: column;
+                gap: 1rem;
+                width: 100%;
+                padding: 0 1rem;
+            }
+            
+            .create-team-btn, .scorecard-btn { 
+                padding: 2rem 2rem; 
+                border-radius: 18px;
+                width: 100%;
+                min-width: unset;
+            }
+            
+            .create-team-btn iconify-icon, .scorecard-btn iconify-icon { 
+                font-size: 2.5rem; 
+            }
+            
+            .create-team-btn span, .scorecard-btn span {
+                font-size: 1.1rem;
+            }
+            
+            .scorecard-actions {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .scorecard-action-btn {
+                padding: 1.25rem 1rem;
+            }
+            
+            .scorecard-action-btn iconify-icon {
+                font-size: 2rem;
+            }
+            
+            .scorecard-discount-hint {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .modal {
+                padding: 1.5rem;
+                border-radius: 16px;
+                width: 95%;
+            }
+            
+            .modal-header h2 {
+                font-size: 1.15rem;
+            }
+            
+            .team-item {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .team-item-info .team-name-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .team-item-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .side-panel {
+                padding: 1rem;
+            }
+            
+            .side-panel-player .name {
+                font-size: 0.95rem;
+            }
+            
+            .side-panel-player .score {
+                font-size: 1rem;
+            }
+            
+            .view-teams-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 500px) {
-            .container { padding: 1.5rem 1rem; }
-            .create-team-btn { padding: 2rem 3rem; }
-            .create-team-btn iconify-icon { font-size: 3rem; }
-            .player-count-grid { grid-template-columns: repeat(2, 1fr); }
-            .holes-grid { grid-template-columns: 1fr; }
+            .player-count-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+            
+            .holes-grid { 
+                grid-template-columns: 1fr; 
+            }
+            
+            .btn-row {
+                flex-direction: column;
+            }
+            
+            .btn-row .btn {
+                width: 100%;
+            }
+            
+            .player-tabs {
+                gap: 0.15rem;
+            }
+            
+            .player-tab {
+                padding: 0.75rem 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .player-tab .tab-number {
+                width: 18px;
+                height: 18px;
+                font-size: 0.7rem;
+            }
+            
+            .tab-content {
+                padding: 1rem;
+            }
+            
+            .edit-modal .modal {
+                padding: 0;
+            }
+            
+            .edit-modal-footer {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .edit-modal-footer .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -1094,10 +1503,17 @@
         </header>
 
         <main class="main-content">
-            <button class="create-team-btn" onclick="openCreateModal()">
-                <iconify-icon icon="ph:plus-circle-bold"></iconify-icon>
-                <span>Create New Team</span>
-            </button>
+            <div class="main-buttons">
+                <button class="create-team-btn" onclick="openCreateModal()">
+                    <iconify-icon icon="ph:plus-circle-bold"></iconify-icon>
+                    <span>Create New Team</span>
+                </button>
+                
+                <button class="scorecard-btn" onclick="openScorecardModal()">
+                    <iconify-icon icon="ph:identification-card-bold"></iconify-icon>
+                    <span>View Scorecard</span>
+                </button>
+            </div>
         </main>
             
         <footer class="footer">
@@ -1160,6 +1576,17 @@
                 <h3 style="text-align: center; margin-bottom: 0.5rem;">Enter Player Names</h3>
                 <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">Name each player</p>
                 <div class="player-inputs" id="playerInputs"></div>
+                
+                <!-- Team Email Input -->
+                <div class="team-email-section">
+                    <label class="email-label">
+                        <iconify-icon icon="ph:envelope-simple-bold"></iconify-icon>
+                        Team Email <span class="optional-tag">(optional)</span>
+                    </label>
+                    <input type="email" class="team-email-input" id="teamEmailInput" placeholder="email@example.com" autocomplete="off">
+                    <p class="email-hint">Scorecard will be sent to this email after the game</p>
+                </div>
+                
                 <div class="btn-row">
                     <button class="btn btn-secondary" onclick="goToStep(2)"><iconify-icon icon="ph:arrow-left-bold"></iconify-icon> Back</button>
                     <button class="btn btn-primary" id="createTeamBtn" onclick="createTeam()"><iconify-icon icon="ph:check-circle-bold"></iconify-icon> Create Team</button>
@@ -1231,6 +1658,61 @@
     </div>
 </div>
 
+    <!-- Scorecard Modal -->
+    <div class="modal-overlay scorecard-modal" id="scorecardModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><iconify-icon icon="ph:identification-card-bold" style="color: var(--accent-blue);"></iconify-icon> View Scorecard</h2>
+                <button class="close-btn" onclick="closeScorecardModal()">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                </button>
+            </div>
+            
+            <!-- Scan Step -->
+            <div class="scorecard-step active" id="scorecardScanStep">
+                <div class="rfid-prompt">
+                    <iconify-icon icon="ph:contactless-payment-bold"></iconify-icon>
+                    <h3>Tap Team's RFID Card</h3>
+                    <p>Scan to view and share their scorecard</p>
+                    <input type="text" class="rfid-input" id="scorecardRfidInput" placeholder="Waiting for card..." autocomplete="off">
+                </div>
+            </div>
+            
+            <!-- Actions Step -->
+            <div class="scorecard-step" id="scorecardActionsStep">
+                <div class="scorecard-team-info">
+                    <div class="team-badge">
+                        <iconify-icon icon="ph:users-three-bold"></iconify-icon>
+                        <span id="scorecardTeamName">Team Name</span>
+                    </div>
+                    <p class="scorecard-status">
+                        <iconify-icon icon="ph:monitor-bold"></iconify-icon>
+                        Scorecard is now displayed on the Leaderboard screen
+                    </p>
+                </div>
+                
+                <div class="scorecard-actions">
+                    <button class="scorecard-action-btn close-action" onclick="closeScorecardDisplay()">
+                        <iconify-icon icon="ph:x-circle-bold"></iconify-icon>
+                        <span>Close Scorecard</span>
+                        <small>Remove from display</small>
+                    </button>
+                    
+                    <button class="scorecard-action-btn email-action" onclick="emailScorecard()" id="emailScorecardBtn">
+                        <iconify-icon icon="ph:envelope-bold"></iconify-icon>
+                        <span>Email Scorecard</span>
+                        <small id="emailTarget">No email on file</small>
+                    </button>
+                </div>
+                
+                <div class="scorecard-discount-hint">
+                    <iconify-icon icon="ph:gift-bold"></iconify-icon>
+                    Sending the scorecard email includes a discount offer for their next visit!
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast">
         <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
@@ -1243,7 +1725,7 @@
         
         // State
         let currentStep = 1;
-        let teamData = { rfid: '', playerCount: 0, playerNames: [] };
+        let teamData = { rfid: '', playerCount: 0, playerNames: [], teamEmail: '' };
         let editingTeam = null;
         let teamsCache = [];
         let hoveredTeamRfid = null;
@@ -1425,8 +1907,10 @@
 
         function resetModal() {
             currentStep = 1;
-            teamData = { rfid: '', playerCount: 0, playerNames: [] };
+            teamData = { rfid: '', playerCount: 0, playerNames: [], teamEmail: '' };
             document.getElementById('rfidInput').value = '';
+            const emailInput = document.getElementById('teamEmailInput');
+            if (emailInput) emailInput.value = '';
             document.querySelectorAll('.player-count-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('playerCountNext').disabled = true;
             updateStepDisplay();
@@ -1637,6 +2121,10 @@
             }
 
             teamData.playerNames = names;
+            
+            // Get team email (optional)
+            const teamEmailInput = document.getElementById('teamEmailInput');
+            teamData.teamEmail = teamEmailInput ? teamEmailInput.value.trim() : '';
 
             const createBtn = document.getElementById('createTeamBtn');
             const originalContent = createBtn.innerHTML;
@@ -1655,7 +2143,8 @@
                     body: JSON.stringify({
                         rfid: teamData.rfid,
                         teamName: teamData.playerNames[0] || 'Team',
-                        players: players
+                        players: players,
+                        teamEmail: teamData.teamEmail
                     })
                 });
 
@@ -1876,6 +2365,147 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        // ==================== SCORECARD FUNCTIONALITY ====================
+        
+        let scorecardTeamData = null;
+        let socket = null;
+
+        // Initialize Socket.IO connection
+        function initSocket() {
+            if (!socket) {
+                socket = io();
+                socket.on('connect', () => console.log('Socket connected for scorecard'));
+            }
+        }
+
+        // Open scorecard modal
+        function openScorecardModal() {
+            initSocket();
+            document.getElementById('scorecardModal').classList.add('active');
+            document.getElementById('scorecardScanStep').classList.add('active');
+            document.getElementById('scorecardActionsStep').classList.remove('active');
+            scorecardTeamData = null;
+            setTimeout(() => {
+                const input = document.getElementById('scorecardRfidInput');
+                input.value = '';
+                input.focus();
+            }, 100);
+        }
+
+        // Close scorecard modal
+        function closeScorecardModal() {
+            document.getElementById('scorecardModal').classList.remove('active');
+            document.getElementById('scorecardScanStep').classList.add('active');
+            document.getElementById('scorecardActionsStep').classList.remove('active');
+            scorecardTeamData = null;
+        }
+
+        // Handle RFID scan for scorecard
+        document.getElementById('scorecardRfidInput').addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const rfid = this.value.trim();
+                if (rfid.length >= 4) {
+                    await loadAndDisplayScorecard(rfid);
+                } else {
+                    showToast('Please scan a valid RFID card', 'error');
+                }
+            }
+        });
+
+        // Load team data and display on leaderboard
+        async function loadAndDisplayScorecard(rfid) {
+            try {
+                const response = await fetch(`/api/team/${rfid}`);
+                if (!response.ok) throw new Error('Team not found');
+                
+                scorecardTeamData = await response.json();
+                
+                // Show the team name
+                document.getElementById('scorecardTeamName').textContent = 
+                    scorecardTeamData.teamName || getTeamDisplayName(scorecardTeamData);
+                
+                // Update email button state
+                const emailBtn = document.getElementById('emailScorecardBtn');
+                const emailTarget = document.getElementById('emailTarget');
+                
+                if (scorecardTeamData.teamEmail) {
+                    emailTarget.textContent = scorecardTeamData.teamEmail;
+                    emailBtn.classList.remove('disabled');
+                } else {
+                    emailTarget.textContent = 'No email on file';
+                    emailBtn.classList.add('disabled');
+                }
+                
+                // Send socket event to display scorecard on leaderboard
+                if (socket) {
+                    socket.emit('showTeamScorecard', { rfid: rfid });
+                    console.log('Sent showTeamScorecard event for:', rfid);
+                }
+                
+                // Switch to actions step
+                document.getElementById('scorecardScanStep').classList.remove('active');
+                document.getElementById('scorecardActionsStep').classList.add('active');
+                
+                showToast('Scorecard displayed on leaderboard', 'success');
+                
+            } catch (error) {
+                console.error('Error loading team:', error);
+                showToast('Team not found. Please try again.', 'error');
+                document.getElementById('scorecardRfidInput').value = '';
+                document.getElementById('scorecardRfidInput').focus();
+            }
+        }
+
+        // Close scorecard display on leaderboard
+        function closeScorecardDisplay() {
+            if (socket) {
+                socket.emit('hideTeamScorecard');
+                console.log('Sent hideTeamScorecard event');
+            }
+            showToast('Scorecard removed from display', 'success');
+            closeScorecardModal();
+        }
+
+        // Email the scorecard
+        async function emailScorecard() {
+            if (!scorecardTeamData || !scorecardTeamData.teamEmail) {
+                showToast('No email address on file for this team', 'error');
+                return;
+            }
+
+            const emailBtn = document.getElementById('emailScorecardBtn');
+            const originalContent = emailBtn.innerHTML;
+            emailBtn.innerHTML = '<div class="spinner" style="width: 24px; height: 24px;"></div><span>Sending...</span><small>Please wait</small>';
+            emailBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/email-scorecard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rfid: scorecardTeamData.rfid,
+                        email: scorecardTeamData.teamEmail
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Scorecard sent to ${scorecardTeamData.teamEmail}!`, 'success');
+                    // Close the scorecard display after sending email
+                    closeScorecardDisplay();
+                } else {
+                    throw new Error(data.message || 'Failed to send email');
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                showToast(error.message || 'Failed to send email', 'error');
+                emailBtn.innerHTML = originalContent;
+                emailBtn.disabled = false;
+            }
+        }
+
         // Close modals on overlay click
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) {
@@ -1903,6 +2533,7 @@
         });
     </script>
     </div><!-- end pageContent -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="/js/pin-lock.js"></script>
 </body>
 </html>

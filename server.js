@@ -81,6 +81,13 @@ app.get('/training', (req, res) => {
   });
 });
 
+// Settings page
+app.get('/settings', (req, res) => {
+  res.render('settings', {
+    title: 'Settings - SwingCity'
+  });
+});
+
 // API to list downloadable files
 app.get('/api/downloads', (req, res) => {
   const fs = require('fs');
@@ -285,6 +292,21 @@ app.post('/api/highscores/sync', async (req, res) => {
   }
 });
 
+// Remove all high scores with totalScore of 0
+app.delete('/api/highscores/cleanup-zeros', async (req, res) => {
+  try {
+    const result = await firebaseService.removeZeroScoreHighScores();
+    io.emit('highScoreUpdated', { source: 'cleanup', removed: result.removed });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error cleaning up zero-score high scores:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to clean up high scores',
+      message: error.message 
+    });
+  }
+});
+
 // Get top 3 players from a team for podium display
 app.get('/api/podium/:rfid', async (req, res) => {
   const { rfid } = req.params;
@@ -328,7 +350,7 @@ app.get('/api/podium/:rfid', async (req, res) => {
 
 // Create/update a team
 app.post('/api/teams', async (req, res) => {
-  const { rfid, teamName, players } = req.body;
+  const { rfid, teamName, players, teamEmail } = req.body;
   
   if (!rfid || !teamName || !players || !Array.isArray(players)) {
     return res.status(400).json({ 
@@ -338,7 +360,7 @@ app.post('/api/teams', async (req, res) => {
   }
 
   try {
-    const teamData = await firebaseService.createOrUpdateTeam(rfid, teamName, players);
+    const teamData = await firebaseService.createOrUpdateTeam(rfid, teamName, players, teamEmail || '');
     io.emit('teamUpdated', { rfid, teamName });
     res.json({ success: true, team: teamData });
   } catch (error) {
@@ -468,6 +490,378 @@ app.post('/api/unity/show-podium', async (req, res) => {
   }
 });
 
+// ==================== EMAIL SCORECARD ENDPOINT ====================
+
+// Import nodemailer for email sending
+const nodemailer = require('nodemailer');
+
+// Create email transporter (configured lazily from Firebase settings)
+let emailTransporter = null;
+let emailSettings = null;
+
+async function getEmailTransporter() {
+  // Get settings from Firebase
+  const settings = await firebaseService.getSettings();
+  
+  if (!settings.email || !settings.email.host || !settings.email.user || !settings.email.pass) {
+    return null;
+  }
+  
+  // Check if settings have changed
+  const settingsKey = JSON.stringify({
+    host: settings.email.host,
+    port: settings.email.port,
+    user: settings.email.user
+  });
+  
+  if (!emailTransporter || emailSettings !== settingsKey) {
+    emailTransporter = nodemailer.createTransport({
+      host: settings.email.host,
+      port: settings.email.port || 465,
+      secure: settings.email.secure !== false,
+      auth: {
+        user: settings.email.user,
+        pass: settings.email.pass
+      }
+    });
+    emailSettings = settingsKey;
+    console.log(`📧 Email transporter configured: ${settings.email.host}:${settings.email.port}`);
+  }
+  
+  return { transporter: emailTransporter, settings: settings };
+}
+
+// Email scorecard to team
+app.post('/api/email-scorecard', async (req, res) => {
+  const { rfid, email } = req.body;
+  
+  if (!rfid || !email) {
+    return res.status(400).json({ 
+      error: 'Missing required fields', 
+      message: 'RFID and email are required' 
+    });
+  }
+
+  try {
+    // Get team data
+    const teamData = await firebaseService.getTeamByRFID(rfid);
+    
+    if (!teamData) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    console.log(`📧 Scorecard email requested for ${email} (Team: ${teamData.teamName})`);
+    
+    // Get email transporter with settings from Firebase
+    const emailConfig = await getEmailTransporter();
+    
+    if (emailConfig && emailConfig.transporter) {
+      const { transporter, settings } = emailConfig;
+      const venueName = settings.venue?.name || 'SwingCity';
+      
+      // Generate scorecard HTML for email
+      const scorecardHtml = generateScorecardEmailHtml(teamData, venueName);
+      
+      // Build from address
+      const fromName = settings.email.fromName || venueName;
+      const fromAddress = `${fromName} <${settings.email.user}>`;
+      
+      // Send the actual email
+      const mailOptions = {
+        from: fromAddress,
+        to: email,
+        subject: `🏌️ Your ${venueName} Scorecard - ${teamData.teamName}`,
+        html: scorecardHtml
+      };
+      
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Scorecard email sent to ${email}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Scorecard email sent successfully',
+        team: teamData.teamName,
+        email: email
+      });
+    } else {
+      console.log('⚠️ Email not configured - go to Settings to configure');
+      res.status(503).json({ 
+        error: 'Email not configured', 
+        message: 'Email service is not configured. Go to Settings to set it up.' 
+      });
+    }
+  } catch (error) {
+    console.error('Error sending scorecard email:', error);
+    res.status(500).json({ 
+      error: 'Failed to send email', 
+      message: error.message 
+    });
+  }
+});
+
+// Helper function to generate beautiful scorecard email HTML
+function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
+  const holes = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
+  
+  // Calculate player totals and find winner
+  const playersWithTotals = teamData.players.map(player => {
+    let total = 0;
+    holes.forEach(hole => {
+      if (player.scores && player.scores[hole]) {
+        total += player.scores[hole].total || 0;
+      }
+    });
+    return { ...player, total };
+  }).sort((a, b) => b.total - a.total);
+  
+  const winner = playersWithTotals[0];
+  const teamTotal = playersWithTotals.reduce((sum, p) => sum + p.total, 0);
+  
+  let html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #0a0a0f;">
+  <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #12121a 0%, #0a0a0f 100%); padding: 0;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #1a1a24 0%, #12121a 100%); padding: 30px 20px; text-align: center; border-bottom: 3px solid #00ff88;">
+      <h1 style="margin: 0; color: #00ff88; font-size: 32px; font-weight: 700; letter-spacing: 2px;">${venueName.toUpperCase()}</h1>
+      <p style="margin: 10px 0 0; color: #9ca3af; font-size: 14px;">Interactive Arcade Golf</p>
+    </div>
+    
+    <!-- Team Name -->
+    <div style="padding: 30px 20px; text-align: center;">
+      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">Team Scorecard</p>
+      <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">${teamData.teamName}</h2>
+      <p style="color: #00ff88; font-size: 18px; margin: 15px 0 0;">Team Total: <strong>${teamTotal} pts</strong></p>
+    </div>
+    
+    <!-- Winner Highlight -->
+    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%); margin: 0 20px 20px; padding: 20px; border-radius: 12px; border-left: 4px solid #fbbf24; text-align: center;">
+      <p style="color: #fbbf24; font-size: 12px; margin: 0 0 5px; text-transform: uppercase; letter-spacing: 1px;">🏆 Winner</p>
+      <p style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0;">${winner.name}</p>
+      <p style="color: #fbbf24; font-size: 18px; margin: 5px 0 0;">${winner.total} pts</p>
+    </div>
+    
+    <!-- Player Scores -->
+    <div style="padding: 0 20px 20px;">
+      <table style="width: 100%; border-collapse: collapse; background: #1a1a24; border-radius: 12px; overflow: hidden;">
+        <thead>
+          <tr>
+            <th style="padding: 15px 12px; background: #242430; color: #9ca3af; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Player</th>
+            <th style="padding: 15px 12px; background: #242430; color: #00ff88; text-align: right; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Score</th>
+          </tr>
+        </thead>
+        <tbody>`;
+  
+  playersWithTotals.forEach((player, index) => {
+    const isWinner = index === 0;
+    const bgColor = isWinner ? 'rgba(251, 191, 36, 0.1)' : 'transparent';
+    const nameColor = isWinner ? '#fbbf24' : '#ffffff';
+    const prefix = isWinner ? '👑 ' : '';
+    
+    html += `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 14px 12px; background: ${bgColor}; color: ${nameColor}; font-weight: 500;">${prefix}${player.name}</td>
+            <td style="padding: 14px 12px; background: ${bgColor}; color: #00ff88; text-align: right; font-weight: 700; font-size: 16px;">${player.total}</td>
+          </tr>`;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Hole Breakdown (Compact) -->
+    <div style="padding: 0 20px 30px;">
+      <p style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px;">Hole Breakdown</p>
+      <div style="background: #1a1a24; border-radius: 12px; padding: 15px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+          <thead>
+            <tr>
+              <th style="padding: 8px 4px; color: #9ca3af; text-align: left; font-size: 10px;">Player</th>`;
+  
+  holes.forEach((hole, i) => {
+    const colors = ['#ec4899', '#00d4ff', '#fbbf24'];
+    const color = colors[i % 3];
+    html += `<th style="padding: 8px 2px; color: ${color}; text-align: center; font-size: 9px; font-weight: 500;">${hole.slice(0, 4)}</th>`;
+  });
+  
+  html += `<th style="padding: 8px 4px; color: #00ff88; text-align: center; font-size: 10px; font-weight: 700;">TOT</th>
+            </tr>
+          </thead>
+          <tbody>`;
+  
+  playersWithTotals.forEach(player => {
+    html += `<tr>
+              <td style="padding: 6px 4px; color: #ffffff; font-size: 11px; white-space: nowrap;">${player.name.split(' ')[0]}</td>`;
+    
+    holes.forEach(hole => {
+      const score = player.scores && player.scores[hole] ? player.scores[hole].total : 0;
+      const scoreColor = score > 0 ? '#00ff88' : score < 0 ? '#f87171' : '#6b7280';
+      html += `<td style="padding: 6px 2px; color: ${scoreColor}; text-align: center; font-size: 11px;">${score || '-'}</td>`;
+    });
+    
+    html += `<td style="padding: 6px 4px; color: #00ff88; text-align: center; font-size: 12px; font-weight: 700;">${player.total}</td>
+            </tr>`;
+  });
+  
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Discount Offer -->
+    <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0.1) 100%); margin: 0 20px 20px; padding: 25px 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(168, 85, 247, 0.3);">
+      <p style="color: #a855f7; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">🎁 Special Offer</p>
+      <p style="color: #ffffff; font-size: 20px; font-weight: 700; margin: 0 0 10px;">10% OFF Your Next Visit!</p>
+      <div style="background: #0a0a0f; display: inline-block; padding: 12px 30px; border-radius: 8px; margin-top: 5px;">
+        <span style="color: #00ff88; font-size: 24px; font-weight: 700; letter-spacing: 4px;">SWING10</span>
+      </div>
+      <p style="color: #9ca3af; font-size: 12px; margin: 15px 0 0;">Show this code at reception on your next visit</p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="padding: 25px 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
+      <p style="color: #9ca3af; font-size: 12px; margin: 0;">Thank you for playing at ${venueName}!</p>
+      <p style="color: #6b7280; font-size: 11px; margin: 10px 0 0;">© ${new Date().getFullYear()} ${venueName} • Interactive Arcade Golf</p>
+    </div>
+    
+  </div>
+</body>
+</html>`;
+  
+  return html;
+}
+
+// ==================== SETTINGS API ENDPOINTS ====================
+
+// Get all settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await firebaseService.getSettings();
+    // Don't send password back to client
+    if (settings.email && settings.email.pass) {
+      settings.email.pass = '********';
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.json({ venue: {}, email: {} });
+  }
+});
+
+// Save venue settings
+app.post('/api/settings/venue', async (req, res) => {
+  const { name, location } = req.body;
+  
+  try {
+    await firebaseService.saveSettings('venue', { name, location });
+    console.log(`✅ Venue settings saved: ${name}, ${location}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving venue settings:', error);
+    res.status(500).json({ error: 'Failed to save', message: error.message });
+  }
+});
+
+// Save email settings
+app.post('/api/settings/email', async (req, res) => {
+  const { host, port, secure, user, pass, fromName } = req.body;
+  
+  try {
+    // Get existing settings to preserve password if not provided
+    const existing = await firebaseService.getSettings();
+    const emailSettings = {
+      host,
+      port,
+      secure,
+      user,
+      fromName,
+      pass: pass || (existing.email ? existing.email.pass : '')
+    };
+    
+    await firebaseService.saveSettings('email', emailSettings);
+    
+    // Reset the email transporter so it picks up new settings
+    emailTransporter = null;
+    
+    console.log(`✅ Email settings saved for: ${user}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving email settings:', error);
+    res.status(500).json({ error: 'Failed to save', message: error.message });
+  }
+});
+
+// Test email
+app.post('/api/settings/email/test', async (req, res) => {
+  const { to } = req.body;
+  
+  if (!to) {
+    return res.status(400).json({ error: 'Email address required' });
+  }
+  
+  try {
+    // Get settings from Firebase
+    const settings = await firebaseService.getSettings();
+    
+    if (!settings.email || !settings.email.host || !settings.email.user) {
+      return res.status(400).json({ 
+        error: 'Email not configured', 
+        message: 'Please save email settings first' 
+      });
+    }
+    
+    // Create a test transporter
+    const testTransporter = nodemailer.createTransport({
+      host: settings.email.host,
+      port: settings.email.port || 465,
+      secure: settings.email.secure !== false,
+      auth: {
+        user: settings.email.user,
+        pass: settings.email.pass
+      }
+    });
+    
+    const venueName = settings.venue?.name || 'SwingCity';
+    
+    await testTransporter.sendMail({
+      from: settings.email.fromName ? `${settings.email.fromName} <${settings.email.user}>` : settings.email.user,
+      to: to,
+      subject: `✅ Test Email from ${venueName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #12121a; color: white; border-radius: 16px;">
+          <h1 style="color: #00ff88; margin-bottom: 20px;">🎉 Email Working!</h1>
+          <p style="color: #9ca3af; line-height: 1.6;">
+            Great news! Your email settings are configured correctly. 
+            Scorecards will be sent from this address.
+          </p>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+              ${venueName} • SwingCity Platform
+            </p>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log(`✅ Test email sent to ${to}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ 
+      error: 'Failed to send test email', 
+      message: error.message 
+    });
+  }
+});
+
 // ==================== SOCKET.IO HANDLERS ====================
 
 io.on('connection', (socket) => {
@@ -483,6 +877,19 @@ io.on('connection', (socket) => {
   socket.on('subscribe-podium', () => {
     socket.join('podium');
     console.log(`🏆 Client ${socket.id} subscribed to podium updates`);
+  });
+
+  // Show team scorecard on leaderboard (from Team Manager)
+  socket.on('showTeamScorecard', (data) => {
+    console.log(`📋 Show scorecard request for RFID: ${data.rfid}`);
+    // Broadcast to all clients (especially the leaderboard)
+    io.emit('displayTeamScorecard', { rfid: data.rfid });
+  });
+
+  // Hide team scorecard on leaderboard
+  socket.on('hideTeamScorecard', () => {
+    console.log(`📋 Hide scorecard request`);
+    io.emit('hideTeamScorecard');
   });
 
   socket.on('disconnect', () => {
@@ -508,6 +915,35 @@ app.use((err, req, res, next) => {
 
 // ==================== SERVER START ====================
 
+// ==================== AUTOMATIC HIGH SCORE SYNC ====================
+// This runs continuously to sync players from rfidCards to highScores
+let highScoreSyncInterval = null;
+
+async function syncHighScores() {
+  try {
+    await firebaseService.syncAllPlayersToHighScores();
+    io.emit('highScoreUpdated', { source: 'autoSync', timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('⚠️ Auto high score sync failed:', error.message);
+  }
+}
+
+function startHighScoreSync() {
+  // Run sync immediately on startup
+  syncHighScores();
+  
+  // Then run every 30 seconds to keep highScores in sync with rfidCards
+  highScoreSyncInterval = setInterval(syncHighScores, 30000);
+  console.log('🔄 Automatic high score sync started (runs every 30 seconds)');
+}
+
+function stopHighScoreSync() {
+  if (highScoreSyncInterval) {
+    clearInterval(highScoreSyncInterval);
+    highScoreSyncInterval = null;
+  }
+}
+
 async function startServer() {
   try {
     // Initialize Firebase REST service
@@ -521,6 +957,11 @@ async function startServer() {
       console.log('🔥 Firebase REST service connected successfully');
     } catch (error) {
       console.log('⚠️ Firebase REST connection failed, running in fallback mode');
+    }
+    
+    // Start automatic high score syncing
+    if (firebaseStatus.connected) {
+      startHighScoreSync();
     }
     
     // Start the server
@@ -561,6 +1002,9 @@ startServer();
 
 const gracefulShutdown = (signal) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+  
+  // Stop high score sync
+  stopHighScoreSync();
   
   server.close(() => {
     console.log('🚀 HTTP server closed');

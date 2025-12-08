@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - SwingCity</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/pin-lock.css">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-input: #1a1a24;
+            --accent-green: #00ff88;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-orange: #f59e0b;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 30% 20%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border-color: var(--accent-purple);
+        }
+
+        .back-btn iconify-icon { font-size: 1.4rem; }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .header-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Settings Sections */
+        .settings-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-header iconify-icon {
+            font-size: 1.5rem;
+            color: var(--accent-purple);
+        }
+
+        .section-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-header .badge {
+            margin-left: auto;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge.configured {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .badge.not-configured {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-input.password {
+            font-family: monospace;
+            letter-spacing: 0.1em;
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* Venue Info Card */
+        .venue-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-input);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .venue-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .venue-details h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .venue-details p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        .toast iconify-icon { font-size: 1.3rem; }
+        .toast.success iconify-icon { color: var(--success); }
+        .toast.error iconify-icon { color: var(--danger); }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .info-box p {
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .info-box iconify-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Future Badge */
+        .future-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--accent-purple);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/pin-lock') %>
+
+    <div id="pageContent" style="display: none;">
+    <div class="bg-pattern"></div>
+
+    <div class="container">
+        <header class="header">
+            <a href="/" class="back-btn">
+                <iconify-icon icon="ph:arrow-left-bold"></iconify-icon>
+            </a>
+            <div class="header-content">
+                <h1>Settings</h1>
+                <p>Configure your venue settings</p>
+            </div>
+        </header>
+
+        <!-- Venue Information -->
+        <section class="settings-section">
+            <div class="section-header">
+                <iconify-icon icon="ph:buildings-bold"></iconify-icon>
+                <h2>Venue Information</h2>
+            </div>
+            
+            <div class="venue-card">
+                <div class="venue-icon">🏌️</div>
+                <div class="venue-details">
+                    <h3 id="venueNameDisplay">Loading...</h3>
+                    <p id="venueLocationDisplay">Loading...</p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Venue Name</label>
+                <input type="text" class="form-input" id="venueName" placeholder="e.g. Spirits Bar & Games">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-input" id="venueLocation" placeholder="e.g. Chelmsford, Essex">
+            </div>
+            
+            <div class="section-actions">
+                <button class="btn btn-primary" onclick="saveVenueInfo()">
+                    <iconify-icon icon="ph:floppy-disk-bold"></iconify-icon>
+                    Save Venue Info
+                </button>
+            </div>
+        </section>
+
+        <!-- Email Configuration -->
+        <section class="settings-section">
+            <div class="section-header">
+                <iconify-icon icon="ph:envelope-bold"></iconify-icon>
+                <h2>Email Settings</h2>
+                <span class="badge not-configured" id="emailBadge">Not Configured</span>
+            </div>
+            
+            <div class="info-box">
+                <p>
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    Configure email to send scorecards to customers. We recommend using Gmail with an App Password.
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">SMTP Host</label>
+                <input type="text" class="form-input" id="smtpHost" placeholder="smtp.gmail.com">
+                <p class="form-hint">Gmail: smtp.gmail.com | Outlook: smtp-mail.outlook.com</p>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">SMTP Port</label>
+                    <input type="number" class="form-input" id="smtpPort" placeholder="465">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Security</label>
+                    <select class="form-input" id="smtpSecure">
+                        <option value="true">SSL/TLS (Port 465)</option>
+                        <option value="false">STARTTLS (Port 587)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" id="smtpUser" placeholder="your-email@gmail.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Password / App Password</label>
+                <input type="password" class="form-input password" id="smtpPass" placeholder="••••••••••••••••">
+                <p class="form-hint">For Gmail: Use an App Password from <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--accent-blue);">Google Account Settings</a></p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">From Name</label>
+                <input type="text" class="form-input" id="smtpFromName" placeholder="SwingCity - Spirits Bar">
+                <p class="form-hint">This name appears in the customer's inbox</p>
+            </div>
+            
+            <div class="section-actions">
+                <button class="btn btn-secondary" onclick="testEmail()">
+                    <iconify-icon icon="ph:paper-plane-tilt-bold"></iconify-icon>
+                    Send Test Email
+                </button>
+                <button class="btn btn-primary" onclick="saveEmailSettings()">
+                    <iconify-icon icon="ph:floppy-disk-bold"></iconify-icon>
+                    Save Email Settings
+                </button>
+            </div>
+        </section>
+
+        <!-- Database Maintenance -->
+        <section class="settings-section">
+            <div class="section-header">
+                <iconify-icon icon="ph:database-bold"></iconify-icon>
+                <h2>Database Maintenance</h2>
+            </div>
+            
+            <div class="info-box">
+                <p>
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    Clean up test data and zero-score entries from the high scores database.
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">High Scores Cleanup</label>
+                <p class="form-hint" style="margin-bottom: 1rem;">
+                    Remove all player entries from highScores where the total score is 0. This helps clean up test RFID teams and unused entries.
+                </p>
+            </div>
+            
+            <div class="section-actions">
+                <button class="btn btn-danger" id="cleanupBtn" type="button">
+                    <iconify-icon icon="ph:trash-bold"></iconify-icon>
+                    Remove Zero-Score Entries
+                </button>
+            </div>
+        </section>
+
+        <!-- Future: Multi-Venue -->
+        <section class="settings-section" style="opacity: 0.6;">
+            <div class="section-header">
+                <iconify-icon icon="ph:buildings-bold"></iconify-icon>
+                <h2>Multi-Venue Management</h2>
+                <span class="future-badge">
+                    <iconify-icon icon="ph:clock-bold"></iconify-icon>
+                    Coming Soon
+                </span>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                Soon you'll be able to manage multiple venues from a single dashboard. Each venue will have:
+            </p>
+            <ul style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.75rem; padding-left: 1.5rem; line-height: 1.8;">
+                <li>Separate staff logins</li>
+                <li>Independent team & score databases</li>
+                <li>Custom branding and email settings</li>
+                <li>Venue-specific high scores & leaderboards</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+        <span id="toastMessage">Success!</span>
+    </div>
+    </div>
+
+    <script src="/js/pin-lock.js"></script>
+    <script>
+        // Load settings on page load
+        function setupCleanupButton() {
+            const btn = document.getElementById('cleanupBtn');
+            if (btn) {
+                // Remove any existing listeners by cloning
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                // Add event listener
+                newBtn.addEventListener('click', cleanupZeroScores);
+                console.log('Cleanup button event listener attached');
+            } else {
+                console.log('Cleanup button not found yet');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            setupCleanupButton();
+        });
+        window.addEventListener('pinUnlocked', function() {
+            loadSettings();
+            setupCleanupButton();
+        });
+        
+        // Also load if already authenticated
+        if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
+            loadSettings();
+            setupCleanupButton();
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                
+                if (data.venue) {
+                    document.getElementById('venueName').value = data.venue.name || '';
+                    document.getElementById('venueLocation').value = data.venue.location || '';
+                    document.getElementById('venueNameDisplay').textContent = data.venue.name || 'Not Set';
+                    document.getElementById('venueLocationDisplay').textContent = data.venue.location || 'Not Set';
+                }
+                
+                if (data.email) {
+                    document.getElementById('smtpHost').value = data.email.host || '';
+                    document.getElementById('smtpPort').value = data.email.port || '465';
+                    document.getElementById('smtpSecure').value = data.email.secure !== false ? 'true' : 'false';
+                    document.getElementById('smtpUser').value = data.email.user || '';
+                    document.getElementById('smtpFromName').value = data.email.fromName || '';
+                    // Don't load password for security
+                    
+                    // Update badge
+                    const badge = document.getElementById('emailBadge');
+                    if (data.email.host && data.email.user) {
+                        badge.textContent = 'Configured';
+                        badge.className = 'badge configured';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        async function saveVenueInfo() {
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div> Saving...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/settings/venue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('venueName').value,
+                        location: document.getElementById('venueLocation').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('venueNameDisplay').textContent = document.getElementById('venueName').value || 'Not Set';
+                    document.getElementById('venueLocationDisplay').textContent = document.getElementById('venueLocation').value || 'Not Set';
+                    showToast('Venue info saved!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to save');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to save venue info', 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        async function saveEmailSettings() {
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div> Saving...';
+            btn.disabled = true;
+
+            try {
+                const password = document.getElementById('smtpPass').value;
+                const settings = {
+                    host: document.getElementById('smtpHost').value,
+                    port: parseInt(document.getElementById('smtpPort').value) || 465,
+                    secure: document.getElementById('smtpSecure').value === 'true',
+                    user: document.getElementById('smtpUser').value,
+                    fromName: document.getElementById('smtpFromName').value
+                };
+                
+                // Only include password if it was entered
+                if (password && password.length > 0) {
+                    settings.pass = password;
+                }
+
+                const response = await fetch('/api/settings/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const badge = document.getElementById('emailBadge');
+                    badge.textContent = 'Configured';
+                    badge.className = 'badge configured';
+                    document.getElementById('smtpPass').value = ''; // Clear password field
+                    showToast('Email settings saved!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to save');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to save email settings', 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        async function testEmail() {
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div> Sending...';
+            btn.disabled = true;
+
+            try {
+                const testTo = document.getElementById('smtpUser').value;
+                
+                if (!testTo) {
+                    throw new Error('Please enter an email address first');
+                }
+
+                const response = await fetch('/api/settings/email/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to: testTo })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Test email sent to ${testTo}!`, 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to send test email');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to send test email', 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        async function cleanupZeroScores() {
+            console.log('cleanupZeroScores called');
+            const btn = document.getElementById('cleanupBtn');
+            
+            if (!btn) {
+                console.error('Cleanup button not found!');
+                showToast('Error: Button not found', 'error');
+                return;
+            }
+            
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div> Cleaning up...';
+            btn.disabled = true;
+
+            // Confirm before deleting
+            const confirmed = confirm('Are you sure you want to remove all high score entries with a total score of 0?\n\nThis action cannot be undone.');
+            
+            if (!confirmed) {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                console.log('Sending DELETE request to /api/highscores/cleanup-zeros');
+                const response = await fetch('/api/highscores/cleanup-zeros', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    showToast(`Successfully removed ${data.removed || 0} zero-score entries!`, 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to clean up high scores');
+                }
+            } catch (error) {
+                console.error('Error in cleanupZeroScores:', error);
+                showToast(error.message || 'Failed to clean up high scores', 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('iconify-icon');
+            const text = document.getElementById('toastMessage');
+
+            toast.className = 'toast ' + type;
+            icon.setAttribute('icon', type === 'success' ? 'ph:check-circle-bold' : 'ph:x-circle-bold');
+            text.textContent = message;
+
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
+
+

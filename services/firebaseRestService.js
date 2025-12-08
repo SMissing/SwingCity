@@ -124,6 +124,7 @@ class FirebaseRestService {
         id: rfid,
         rfid: rfid,
         teamName: teamName,
+        teamEmail: cardData.teamEmail || '',
         players: players,
         totalScore: this.calculateTeamTotal(players),
         holesCompleted: holesCompleted,
@@ -450,10 +451,10 @@ class FirebaseRestService {
   // ==================== TEAM MANAGEMENT OPERATIONS ====================
 
   // Create or update a team
-  async createOrUpdateTeam(rfid, teamName, players) {
+  async createOrUpdateTeam(rfid, teamName, players, teamEmail = '') {
     if (this.mockMode) {
-      console.log('🚨 MOCK MODE: Would create/update team:', { rfid, teamName, players });
-      return { id: rfid, rfid, teamName, players, created: new Date().toISOString() };
+      console.log('🚨 MOCK MODE: Would create/update team:', { rfid, teamName, players, teamEmail });
+      return { id: rfid, rfid, teamName, players, teamEmail, created: new Date().toISOString() };
     }
 
     try {
@@ -461,6 +462,7 @@ class FirebaseRestService {
       const teamData = {
         rfid: rfid,
         teamName: teamName,
+        teamEmail: teamEmail || '',
         players: {},
         holesCompleted: {},
         created: new Date().toISOString(),
@@ -751,6 +753,60 @@ class FirebaseRestService {
     return await this.saveHighScore(player.id, player.name, totalScore, rfid);
   }
 
+  // Remove all high scores with totalScore of 0
+  async removeZeroScoreHighScores() {
+    if (this.mockMode) {
+      console.log('🔄 MOCK: Would remove zero-score high scores');
+      return { success: true, removed: 0 };
+    }
+
+    try {
+      console.log('🧹 Cleaning up zero-score high scores...');
+      
+      // Get all high scores
+      const response = await fetch(`${this.baseUrl}/highScores.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const highScores = await response.json();
+      
+      if (!highScores || typeof highScores !== 'object') {
+        console.log('No high scores found to clean up');
+        return { success: true, removed: 0 };
+      }
+
+      let removedCount = 0;
+      const deletions = [];
+
+      // Find all entries with totalScore of 0
+      for (const [playerId, scoreData] of Object.entries(highScores)) {
+        if (scoreData && scoreData.totalScore === 0) {
+          deletions.push(playerId);
+        }
+      }
+
+      // Delete all zero-score entries
+      for (const playerId of deletions) {
+        const deleteResponse = await fetch(`${this.baseUrl}/highScores/${playerId}.json`, {
+          method: 'DELETE'
+        });
+
+        if (deleteResponse.ok) {
+          removedCount++;
+        } else {
+          console.warn(`⚠️ Failed to delete high score: ${playerId}`);
+        }
+      }
+
+      console.log(`✅ Cleanup complete: Removed ${removedCount} zero-score entries`);
+      return { success: true, removed: removedCount };
+    } catch (error) {
+      console.error('❌ Error removing zero-score high scores:', error.message);
+      throw error;
+    }
+  }
+
   // Mock high scores for testing
   getMockHighScores(limit = 10) {
     const names = ['Alex Champion', 'Jordan Winner', 'Casey Pro', 'Morgan Ace', 'Riley Star', 
@@ -762,6 +818,53 @@ class FirebaseRestService {
       totalScore: Math.floor(Math.random() * 500) + 800 - (index * 30),
       lastUpdated: new Date().toISOString()
     })).sort((a, b) => b.totalScore - a.totalScore);
+  }
+
+  // ==================== SETTINGS OPERATIONS ====================
+
+  // Get all settings
+  async getSettings() {
+    if (this.mockMode) {
+      return { venue: { name: 'Demo Venue', location: 'Demo Location' }, email: {} };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/settings.json`);
+      if (!response.ok) {
+        return { venue: {}, email: {} };
+      }
+      const data = await response.json();
+      return data || { venue: {}, email: {} };
+    } catch (error) {
+      console.error('Error fetching settings:', error.message);
+      return { venue: {}, email: {} };
+    }
+  }
+
+  // Save settings (venue or email)
+  async saveSettings(type, settings) {
+    if (this.mockMode) {
+      console.log('🚨 MOCK MODE: Would save settings:', { type, settings });
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/settings/${type}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`✅ Settings saved: ${type}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving settings:', error.message);
+      throw error;
+    }
   }
 
   // ==================== UTILITY FUNCTIONS ====================
