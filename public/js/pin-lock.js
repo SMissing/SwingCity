@@ -40,7 +40,7 @@
             d.value = '';
             d.classList.remove('error', 'success');
         });
-        if (digits[0]) digits[0].focus();
+        // Don't focus to prevent keyboard popup
     }
 
     // Show error state
@@ -89,7 +89,7 @@
         }
     }
 
-    // Handle PIN input
+        // Handle PIN input
     function handlePinInput(index, value) {
         const digits = document.querySelectorAll('.pin-digit');
         
@@ -100,10 +100,7 @@
 
         digits[index].value = value;
         
-        // Move to next input
-        if (index < 3 && digits[index + 1]) {
-            digits[index + 1].focus();
-        }
+        // Don't auto-focus next input to prevent keyboard popup
         
         // Check if all digits are filled
         const pin = getCurrentPin();
@@ -120,7 +117,7 @@
             digits[index].value = '';
         } else if (index > 0) {
             digits[index - 1].value = '';
-            digits[index - 1].focus();
+            // Don't focus to prevent keyboard popup
         }
     }
 
@@ -140,22 +137,22 @@
             return;
         }
 
-        // Input event listeners
+        // Prevent keyboard from appearing on mobile
         digits.forEach((digit, index) => {
-            digit.addEventListener('input', (e) => {
-                const value = e.target.value.slice(-1);
-                handlePinInput(index, value);
+            // Prevent focus events that trigger keyboard
+            digit.addEventListener('focus', (e) => {
+                e.preventDefault();
+                digit.blur();
             });
 
-            digit.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace') {
-                    e.preventDefault();
-                    handleDelete(index);
-                }
+            // Prevent touch events from focusing
+            digit.addEventListener('touchstart', (e) => {
+                e.preventDefault();
             });
 
-            digit.addEventListener('focus', () => {
-                digit.select();
+            // Prevent click events from focusing
+            digit.addEventListener('click', (e) => {
+                e.preventDefault();
             });
         });
 
@@ -199,10 +196,7 @@
             }
         });
 
-        // Focus first digit
-        if (digits[0]) {
-            setTimeout(() => digits[0].focus(), 100);
-        }
+        // Don't auto-focus to prevent keyboard popup on mobile
     }
 
     // Initialize when DOM is ready

@@ -731,21 +731,20 @@ function setTimePeriod(period) {
 
 function filterScoresByPeriod() {
     const now = new Date();
-    
+
+    // Use trailing windows instead of calendar boundaries
     switch (currentPeriod) {
         case 'daily':
-            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfDay);
+            const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= last24Hours);
             break;
         case 'weekly':
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
-            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfWeek);
+            const last168Hours = new Date(now.getTime() - 168 * 60 * 60 * 1000);
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= last168Hours);
             break;
         case 'monthly':
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= startOfMonth);
+            const last31Days = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
+            filteredHighScores = allHighScores.filter(s => new Date(s.lastUpdated) >= last31Days);
             break;
         default:
             filteredHighScores = [...allHighScores];
