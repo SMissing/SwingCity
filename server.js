@@ -192,22 +192,33 @@ app.get('/team-creator', (req, res) => {
 // PIN verification for dashboard access
 app.post('/api/verify-pin', async (req, res) => {
   const { pin } = req.body;
-  const sitePin = process.env.SITE_PIN || '5656';
   
   if (!pin) {
     return res.status(400).json({ success: false, message: 'PIN required' });
   }
   
+  // Get default PIN from settings or fallback to environment variable
+  let sitePin = process.env.SITE_PIN || '5656';
+  try {
+    const settings = await firebaseService.getSettings();
+    if (settings.defaultPin) {
+      sitePin = settings.defaultPin;
+    }
+  } catch (error) {
+    console.error('Error fetching default PIN from settings:', error);
+    // Continue with environment variable default
+  }
+  
   // Check default PIN first
   if (pin === sitePin) {
-    // Default PIN has full access (management = true)
+    // Default PIN acts as staff member (non-management)
     return res.json({ 
       success: true, 
       message: 'Access granted',
       user: {
-        name: 'Admin',
+        name: 'Staff',
         pin: sitePin,
-        management: true
+        management: false
       }
     });
   }
@@ -997,6 +1008,24 @@ app.post('/api/email-scorecard/preview', async (req, res) => {
       error: 'Failed to generate preview', 
       message: error.message || 'An unexpected error occurred' 
     });
+  }
+});
+
+// Save default PIN
+app.post('/api/settings/default-pin', async (req, res) => {
+  const { pin } = req.body;
+  
+  if (!pin || !/^\d{4}$/.test(pin)) {
+    return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+  }
+  
+  try {
+    await firebaseService.saveSettings('defaultPin', pin);
+    console.log(`✅ Default PIN updated to: ${pin}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving default PIN:', error);
+    res.status(500).json({ error: 'Failed to save', message: error.message });
   }
 });
 

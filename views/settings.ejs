@@ -954,6 +954,34 @@
             </div>
         </section>
 
+        <!-- Default PIN Settings -->
+        <section class="settings-section">
+            <div class="section-header">
+                <iconify-icon icon="ph:key-bold"></iconify-icon>
+                <h2>Default PIN</h2>
+            </div>
+            
+            <div class="info-box">
+                <p>
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    The default PIN acts as a staff member with limited access. Only management users can access Settings and Download pages.
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Default Staff PIN</label>
+                <input type="text" class="form-input" id="defaultPin" placeholder="5656" maxlength="4" pattern="\d{4}" style="font-family: monospace; letter-spacing: 0.1em; text-align: center; max-width: 150px;">
+                <p class="form-hint">Must be exactly 4 digits. This PIN grants staff-level access (no Settings or Download access).</p>
+            </div>
+            
+            <div class="section-actions">
+                <button class="btn btn-primary" onclick="saveDefaultPin()">
+                    <iconify-icon icon="ph:floppy-disk-bold"></iconify-icon>
+                    Save Default PIN
+                </button>
+            </div>
+        </section>
+
         <!-- User Management -->
         <section class="settings-section">
             <div class="section-header">
@@ -964,7 +992,7 @@
             <div class="info-box">
                 <p>
                     <iconify-icon icon="ph:info-bold"></iconify-icon>
-                    Management users have full site access. Non-management users can access: Dashboard, Teams, Leaderboard, High Scores, Podium, and Training.
+                    Management users have full site access. Non-management users (including the default PIN) can access: Dashboard, Teams, Leaderboard, High Scores, Podium, and Training.
                 </p>
             </div>
             
@@ -1162,6 +1190,17 @@
                     if (data.email.host && data.email.user) {
                         badge.textContent = 'Configured';
                         badge.className = 'badge configured';
+                    }
+                }
+                
+                // Load default PIN
+                const defaultPinInput = document.getElementById('defaultPin');
+                if (defaultPinInput) {
+                    if (data.defaultPin) {
+                        defaultPinInput.value = data.defaultPin;
+                    } else {
+                        // Fallback to environment default
+                        defaultPinInput.value = '5656';
                     }
                 }
             } catch (error) {
@@ -1523,6 +1562,35 @@
 
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ==================== DEFAULT PIN ====================
+
+        async function saveDefaultPin() {
+            const pin = document.getElementById('defaultPin').value.trim();
+            
+            if (!/^\d{4}$/.test(pin)) {
+                showToast('PIN must be exactly 4 digits', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/settings/default-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Default PIN updated successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to save default PIN');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to save default PIN', 'error');
+            }
         }
 
         // ==================== USER MANAGEMENT ====================
