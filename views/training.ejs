@@ -439,6 +439,236 @@
             font-size: 1.25rem;
         }
 
+        /* Quiz Modal */
+        .quiz-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .quiz-overlay.active {
+            display: flex;
+        }
+
+        .quiz-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .quiz-header {
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .quiz-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .quiz-progress {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quiz-progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-progress-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .quiz-content {
+            padding: 2rem;
+        }
+
+        .quiz-question {
+            display: none;
+        }
+
+        .quiz-question.active {
+            display: block;
+        }
+
+        .question-number {
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-option {
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            text-align: left;
+            color: var(--text-primary);
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .quiz-option.selected {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .quiz-option.correct {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: var(--accent-green);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #ef4444;
+        }
+
+        .quiz-actions {
+            padding: 1.5rem 2rem 2rem;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .quiz-btn {
+            padding: 0.875rem 1.75rem;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quiz-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .quiz-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .quiz-btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: #0a0a0f;
+        }
+
+        .quiz-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .quiz-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quiz-result {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .quiz-result-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-result-icon.success {
+            color: var(--accent-green);
+        }
+
+        .quiz-result-icon.failed {
+            color: #ef4444;
+        }
+
+        .quiz-result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-result-score {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -537,6 +767,35 @@
 <body>
     <%- include('partials/pin-lock') %>
 
+    <!-- Quiz Modal -->
+    <div class="quiz-overlay" id="quizOverlay">
+        <div class="quiz-modal">
+            <div class="quiz-header">
+                <h2 class="quiz-title">Knowledge Check</h2>
+                <p class="quiz-subtitle">Answer these questions to confirm you understood the content</p>
+                <div class="quiz-progress">
+                    <div class="quiz-progress-bar">
+                        <div class="quiz-progress-fill" id="quizProgressFill" style="width: 0%"></div>
+                    </div>
+                    <span class="quiz-progress-text" id="quizProgressText">1 of 3</span>
+                </div>
+            </div>
+            <div class="quiz-content" id="quizContent">
+                <!-- Questions will be inserted here -->
+            </div>
+            <div class="quiz-actions">
+                <button class="quiz-btn quiz-btn-secondary" id="quizCancelBtn">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                    Cancel
+                </button>
+                <button class="quiz-btn quiz-btn-primary" id="quizNextBtn">
+                    Next
+                    <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="pageContent" style="display: none;">
         <div class="bg-pattern"></div>
         
@@ -547,6 +806,24 @@
                 </a>
                 <h1 class="page-title">Training Centre</h1>
             </header>
+
+            <!-- Progress Section -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="progress-title">
+                        <iconify-icon icon="ph:chart-line-up-bold"></iconify-icon>
+                        Your Progress
+                    </span>
+                    <span class="progress-stats" id="progressStats">0 of 0 completed</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-note" id="progressNote">
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    <span id="progressNoteText">Progress is saved on this device.</span>
+                </div>
+            </div>
 
             <!-- Category Tabs -->
             <div class="role-tabs">
@@ -564,24 +841,6 @@
                 </button>
             </div>
 
-            <!-- Progress Section -->
-            <div class="progress-section">
-                <div class="progress-header">
-                    <span class="progress-title">
-                        <iconify-icon icon="ph:chart-line-up-bold"></iconify-icon>
-                        Your Progress
-                    </span>
-                    <span class="progress-stats" id="progressStats">0 of 0 completed</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                </div>
-                <div class="progress-note">
-                    <iconify-icon icon="ph:info-bold"></iconify-icon>
-                    Progress is saved on this device. Staff login system coming soon for individual tracking.
-                </div>
-            </div>
-
             <!-- Website Training Content -->
             <div class="training-content active" data-role="website">
                 
@@ -594,7 +853,7 @@
                         <div class="module-info">
                             <h3 class="module-title">Dashboard Overview</h3>
                             <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 5 min</span>
+                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 3 min</span>
                                 <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
                             </div>
                         </div>
@@ -605,16 +864,18 @@
                     </div>
                     <div class="module-content">
                         <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                                <!-- Replace with actual video URL when available -->
-                                <!-- <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe> -->
+                            <div class="video-container" id="dashboard-video-container">
+                                <!-- Video will be loaded here via JavaScript -->
                             </div>
                             <div class="content-text">
-                                <p>The SwingCity Dashboard is your central hub for managing the venue.</p>
+                                <p>This video provides a comprehensive overview of the SwingCity Dashboard and its key features for staff members.</p>
+                                <p><strong>What you'll learn:</strong></p>
+                                <ul>
+                                    <li>Navigating the main dashboard interface</li>
+                                    <li>Understanding the different sections and their purposes</li>
+                                    <li>Accessing key features like Teams, Leaderboard, and High Scores</li>
+                                    <li>Basic navigation and getting started with the system</li>
+                                </ul>
                                 <p><strong>Dashboard Sections:</strong></p>
                                 <ul>
                                     <li><strong>Teams:</strong> Create and manage player teams</li>
@@ -633,226 +894,21 @@
                     </div>
                 </div>
 
-                <!-- Module 2: Creating & Managing Teams -->
-                <div class="module-card" data-module="web-2">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Creating & Managing Teams</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 8 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p>Learn how to set up teams when guests arrive.</p>
-                                
-                                <p><strong>Step-by-Step Process:</strong></p>
-                                <ul>
-                                    <li><strong>Step 1:</strong> Go to the Teams page from the dashboard</li>
-                                    <li><strong>Step 2:</strong> Scan or enter the RFID card number</li>
-                                    <li><strong>Step 3:</strong> Enter the team name</li>
-                                    <li><strong>Step 4:</strong> Add player names (2-6 players per team)</li>
-                                    <li><strong>Step 5:</strong> Click "Create Team" to save</li>
-                                </ul>
-
-                                <p><strong>Important Notes:</strong></p>
-                                <ul>
-                                    <li>Double-check player names for spelling</li>
-                                    <li>Each RFID card can only be assigned to one active team</li>
-                                    <li>You can edit team details later if needed</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'web-2')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 3: Leaderboard & High Scores -->
-                <div class="module-card" data-module="web-3">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Leaderboard & High Scores</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 6 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p>Understanding the leaderboard and high scores displays.</p>
-                                <p><strong>Leaderboard:</strong></p>
-                                <ul>
-                                    <li>Shows live rankings for all active teams</li>
-                                    <li>Scan RFID to view a specific team's scorecard</li>
-                                    <li>Updates in real-time as scores come in</li>
-                                    <li>Perfect for displaying on a TV in the venue</li>
-                                </ul>
-                                <p><strong>High Scores:</strong></p>
-                                <ul>
-                                    <li>All-time best player performances</li>
-                                    <li>Only shows players who completed all 12 holes</li>
-                                    <li>Great for competitive motivation</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'web-3')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 4: Podium Display -->
-                <div class="module-card" data-module="web-4">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Podium & Winner Celebrations</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 4 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p>The podium display celebrates team winners at the end of their round.</p>
-                                <p><strong>How it works:</strong></p>
-                                <ul>
-                                    <li>Scan the team's RFID card on the podium display</li>
-                                    <li>Shows the top 3 players from that team</li>
-                                    <li>Displays final scores and rankings</li>
-                                    <li>Can be triggered automatically from Unity</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'web-4')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 5: Troubleshooting the Website -->
-                <div class="module-card" data-module="web-5">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon guide">
-                            <iconify-icon icon="ph:wrench-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Website Troubleshooting</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 10 min</span>
-                                <span><iconify-icon icon="ph:book-open-bold"></iconify-icon> Guide</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="content-text">
-                                <p><strong>Common issues and how to resolve them:</strong></p>
-                                
-                                <p><strong>Server Status Shows Offline:</strong></p>
-                                <ul>
-                                    <li>Check the server computer is running</li>
-                                    <li>Verify Node.js server is started</li>
-                                    <li>Check network connectivity</li>
-                                </ul>
-
-                                <p><strong>Database Not Connected:</strong></p>
-                                <ul>
-                                    <li>Check internet connection (Firebase needs internet)</li>
-                                    <li>Verify Firebase credentials in .env file</li>
-                                    <li>Restart the server</li>
-                                </ul>
-
-                                <p><strong>Scores Not Updating:</strong></p>
-                                <ul>
-                                    <li>Refresh the page</li>
-                                    <li>Check the tablets are connected to WiFi</li>
-                                    <li>Verify the team exists in the system</li>
-                                </ul>
-
-                                <p><strong>PIN Lock Not Working:</strong></p>
-                                <ul>
-                                    <li>Default PIN is set in server environment</li>
-                                    <li>Clear browser cache if issues persist</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'web-5')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <!-- Software Training Content -->
             <div class="training-content" data-role="software">
                 
-                <!-- Module 1: Unity App Overview -->
+                <!-- Module 1: Hosting a Booking -->
                 <div class="module-card" data-module="soft-1">
                     <div class="module-header" onclick="toggleModule(this)">
                         <div class="module-icon video">
                             <iconify-icon icon="ph:play-bold"></iconify-icon>
                         </div>
                         <div class="module-info">
-                            <h3 class="module-title">Unity App Overview</h3>
+                            <h3 class="module-title">Hosting a Booking</h3>
                             <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 10 min</span>
+                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 2 min</span>
                                 <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
                             </div>
                         </div>
@@ -863,208 +919,27 @@
                     </div>
                     <div class="module-content">
                         <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
+                            <div class="video-container" id="soft-1-video-container">
+                                <!-- Video will be loaded here via JavaScript -->
                             </div>
                             <div class="content-text">
-                                <p><strong>The Unity Application</strong> runs the interactive golf experience on each hole.</p>
-                                
-                                <p><strong>Key Components:</strong></p>
+                                <p>This video demonstrates how to host a booking and show customers how the SwingCity system works.</p>
+                                <p><strong>What you'll learn:</strong></p>
                                 <ul>
-                                    <li>Game visuals and animations</li>
-                                    <li>Sensor integration for ball detection</li>
-                                    <li>Communication with tablets via OSC</li>
-                                    <li>Score calculations and feedback</li>
+                                    <li>How to guide customers through the booking process</li>
+                                    <li>Demonstrating the system features to new players</li>
+                                    <li>Key points to explain during a booking</li>
+                                    <li>Best practices for hosting and customer interaction</li>
                                 </ul>
-
-                                <p><strong>Starting the Unity App:</strong></p>
+                                <p><strong>Hosting Tips:</strong></p>
                                 <ul>
-                                    <li>Launch from the desktop shortcut</li>
-                                    <li>Wait for initial connection to sensors</li>
-                                    <li>Verify OSC connection status</li>
+                                    <li>Be friendly and welcoming to create a positive experience</li>
+                                    <li>Explain the system clearly and answer any questions</li>
+                                    <li>Show customers how to use RFID cards and navigate the course</li>
+                                    <li>Ensure they understand the scoring system and how to view their progress</li>
                                 </ul>
                             </div>
                             <button class="complete-btn" onclick="toggleComplete(this, 'soft-1')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 2: COGs Software -->
-                <div class="module-card" data-module="soft-2">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">COGs Software & OSC Messages</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 15 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>COGs</strong> is the software that handles OSC (Open Sound Control) messaging between the Unity app and tablets.</p>
-                                
-                                <p><strong>What is OSC?</strong></p>
-                                <ul>
-                                    <li>Protocol for communication between software/hardware</li>
-                                    <li>Sends messages over the network</li>
-                                    <li>Used to trigger tablet updates when balls are detected</li>
-                                </ul>
-
-                                <p><strong>COGs Configuration:</strong></p>
-                                <ul>
-                                    <li>IP addresses for each tablet</li>
-                                    <li>Port numbers for OSC communication</li>
-                                    <li>Message routing from sensors to tablets</li>
-                                </ul>
-
-                                <p><strong>Common COGs Issues:</strong></p>
-                                <ul>
-                                    <li>Tablets not receiving messages - check IP configuration</li>
-                                    <li>Delayed responses - check network congestion</li>
-                                    <li>Wrong tablet triggered - verify routing settings</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'soft-2')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 3: Unity Troubleshooting -->
-                <div class="module-card" data-module="soft-3">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Unity App Troubleshooting</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 12 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>Troubleshooting common Unity issues:</strong></p>
-                                
-                                <p><strong>App Won't Start:</strong></p>
-                                <ul>
-                                    <li>Check Windows is fully booted</li>
-                                    <li>Verify graphics drivers are up to date</li>
-                                    <li>Ensure no other Unity instance is running</li>
-                                </ul>
-
-                                <p><strong>Sensors Not Detected:</strong></p>
-                                <ul>
-                                    <li>Check USB connections</li>
-                                    <li>Restart the sensor calibration</li>
-                                    <li>See Hardware section for more details</li>
-                                </ul>
-
-                                <p><strong>OSC Connection Lost:</strong></p>
-                                <ul>
-                                    <li>Verify network connection</li>
-                                    <li>Restart COGs software</li>
-                                    <li>Check firewall settings</li>
-                                </ul>
-
-                                <p><strong>Game Frozen:</strong></p>
-                                <ul>
-                                    <li>Wait 30 seconds for potential recovery</li>
-                                    <li>If unresponsive, close via Task Manager</li>
-                                    <li>Restart the application</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'soft-3')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 4: Tablet App -->
-                <div class="module-card" data-module="soft-4">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Tablet App & Scoring</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 8 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>The Tablet App</strong> runs on Android tablets at each hole.</p>
-                                
-                                <p><strong>How Scoring Works:</strong></p>
-                                <ul>
-                                    <li>Team scans RFID card to identify themselves</li>
-                                    <li>Sensor detects ball entry into scoring zones</li>
-                                    <li>OSC message sent to tablet via COGs</li>
-                                    <li>Tablet displays score and moves to next player</li>
-                                    <li>Scores sync to Firebase database</li>
-                                </ul>
-
-                                <p><strong>Installing Updates:</strong></p>
-                                <ul>
-                                    <li>Download new APK from App Install page</li>
-                                    <li>Transfer to tablet or download directly</li>
-                                    <li>Enable "Install from unknown sources"</li>
-                                    <li>Install and restart the app</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'soft-4')">
                                 <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
                                 Mark as Complete
                             </button>
@@ -1076,289 +951,11 @@
 
             <!-- Hardware Training Content -->
             <div class="training-content" data-role="hardware">
-                
-                <!-- Module 1: Sensor Overview -->
-                <div class="module-card" data-module="hw-1">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Sensor System Overview</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 12 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>Understanding the sensor system</strong> is crucial for troubleshooting hardware issues.</p>
-                                
-                                <p><strong>Sensor Types:</strong></p>
-                                <ul>
-                                    <li>Ball detection sensors at scoring zones</li>
-                                    <li>RFID readers for team identification</li>
-                                    <li>Position/motion sensors (hole-specific)</li>
-                                </ul>
-
-                                <p><strong>How Sensors Work:</strong></p>
-                                <ul>
-                                    <li>Sensors detect ball presence in scoring zones</li>
-                                    <li>Signal sent to Unity app via USB/serial connection</li>
-                                    <li>Unity processes and sends score to tablet via OSC</li>
-                                    <li>Tablet updates display and syncs to database</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'hw-1')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
+                <div class="empty-state">
+                    <iconify-icon icon="ph:cpu-bold"></iconify-icon>
+                    <h3>Coming Soon</h3>
+                    <p>Hardware training modules will be added here.</p>
                 </div>
-
-                <!-- Module 2: Sensor Calibration -->
-                <div class="module-card" data-module="hw-2">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Sensor Calibration & Setup</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 15 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>Calibrating sensors</strong> ensures accurate ball detection.</p>
-                                
-                                <p><strong>When to Calibrate:</strong></p>
-                                <ul>
-                                    <li>After sensor replacement</li>
-                                    <li>If detection is inconsistent</li>
-                                    <li>After physical adjustments to the hole</li>
-                                    <li>As part of regular maintenance</li>
-                                </ul>
-
-                                <p><strong>Calibration Process:</strong></p>
-                                <ul>
-                                    <li>Access calibration mode in Unity app</li>
-                                    <li>Follow on-screen prompts</li>
-                                    <li>Test with multiple ball placements</li>
-                                    <li>Verify scores register correctly</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'hw-2')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 3: RFID System -->
-                <div class="module-card" data-module="hw-3">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon video">
-                            <iconify-icon icon="ph:play-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">RFID Readers & Cards</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 8 min</span>
-                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="video-container">
-                                <div class="video-placeholder">
-                                    <iconify-icon icon="ph:video-camera-bold"></iconify-icon>
-                                    <p>Video content coming soon</p>
-                                </div>
-                            </div>
-                            <div class="content-text">
-                                <p><strong>RFID System</strong> identifies teams at each hole.</p>
-                                
-                                <p><strong>RFID Readers:</strong></p>
-                                <ul>
-                                    <li>USB connection to tablet or computer</li>
-                                    <li>Acts like a keyboard - types card number</li>
-                                    <li>Range: approximately 5cm from reader</li>
-                                </ul>
-
-                                <p><strong>RFID Cards:</strong></p>
-                                <ul>
-                                    <li>Each card has a unique ID number</li>
-                                    <li>ID is linked to team in the database</li>
-                                    <li>Cards are reusable - just reassign to new teams</li>
-                                </ul>
-
-                                <p><strong>Troubleshooting RFID:</strong></p>
-                                <ul>
-                                    <li><strong>Card not reading:</strong> Check USB connection, try different USB port</li>
-                                    <li><strong>Wrong team shows:</strong> Verify card is assigned correctly in Teams page</li>
-                                    <li><strong>Intermittent reads:</strong> Clean the reader surface, check card condition</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'hw-3')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 4: Hardware Troubleshooting -->
-                <div class="module-card" data-module="hw-4">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon guide">
-                            <iconify-icon icon="ph:wrench-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Hardware Troubleshooting Guide</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 15 min</span>
-                                <span><iconify-icon icon="ph:book-open-bold"></iconify-icon> Guide</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="content-text">
-                                <p><strong>Common hardware issues and solutions:</strong></p>
-                                
-                                <p><strong>Sensor Not Detecting Balls:</strong></p>
-                                <ul>
-                                    <li>Check sensor is powered (indicator light)</li>
-                                    <li>Verify USB/serial connection</li>
-                                    <li>Clean sensor surface</li>
-                                    <li>Check for physical obstructions</li>
-                                    <li>Recalibrate if needed</li>
-                                </ul>
-
-                                <p><strong>Tablet Issues:</strong></p>
-                                <ul>
-                                    <li><strong>Tablet won't turn on:</strong> Check power cable, try different outlet</li>
-                                    <li><strong>Touchscreen unresponsive:</strong> Restart tablet, check for screen damage</li>
-                                    <li><strong>WiFi disconnecting:</strong> Check router, move tablet closer to access point</li>
-                                </ul>
-
-                                <p><strong>Computer/Server Issues:</strong></p>
-                                <ul>
-                                    <li><strong>Unity PC won't start:</strong> Check power, monitor connections</li>
-                                    <li><strong>Overheating:</strong> Clean dust from vents, ensure good airflow</li>
-                                    <li><strong>USB ports not working:</strong> Try different ports, restart computer</li>
-                                </ul>
-
-                                <p><strong>Network Issues:</strong></p>
-                                <ul>
-                                    <li>Check all network cables are secure</li>
-                                    <li>Restart router/switch if needed</li>
-                                    <li>Verify all devices on same network</li>
-                                    <li>Check for IP address conflicts</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'hw-4')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Module 5: Maintenance Checklist -->
-                <div class="module-card" data-module="hw-5">
-                    <div class="module-header" onclick="toggleModule(this)">
-                        <div class="module-icon guide">
-                            <iconify-icon icon="ph:clipboard-text-bold"></iconify-icon>
-                        </div>
-                        <div class="module-info">
-                            <h3 class="module-title">Daily & Weekly Maintenance</h3>
-                            <div class="module-meta">
-                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 10 min</span>
-                                <span><iconify-icon icon="ph:book-open-bold"></iconify-icon> Checklist</span>
-                            </div>
-                        </div>
-                        <div class="module-status">
-                            <span class="status-badge not-started">Not Started</span>
-                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
-                        </div>
-                    </div>
-                    <div class="module-content">
-                        <div class="content-body">
-                            <div class="content-text">
-                                <p><strong>Daily Startup Checklist:</strong></p>
-                                <ul>
-                                    <li>☐ Power on all computers and tablets</li>
-                                    <li>☐ Start Unity app on each hole PC</li>
-                                    <li>☐ Verify COGs software is running</li>
-                                    <li>☐ Check server status on dashboard</li>
-                                    <li>☐ Test one RFID card at each hole</li>
-                                    <li>☐ Verify leaderboard displays correctly</li>
-                                </ul>
-
-                                <p><strong>Daily Shutdown Checklist:</strong></p>
-                                <ul>
-                                    <li>☐ Delete completed teams from database</li>
-                                    <li>☐ Close Unity apps gracefully</li>
-                                    <li>☐ Shut down computers properly</li>
-                                    <li>☐ Charge tablets if needed</li>
-                                </ul>
-
-                                <p><strong>Weekly Maintenance:</strong></p>
-                                <ul>
-                                    <li>☐ Clean all sensor surfaces</li>
-                                    <li>☐ Check all cable connections</li>
-                                    <li>☐ Clean tablet screens</li>
-                                    <li>☐ Verify all RFID cards are accounted for</li>
-                                    <li>☐ Check for software updates</li>
-                                    <li>☐ Test backup systems</li>
-                                </ul>
-                            </div>
-                            <button class="complete-btn" onclick="toggleComplete(this, 'hw-5')">
-                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
-                                Mark as Complete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <footer class="footer">
@@ -1371,14 +968,83 @@
     <script>
         // ==================== TRAINING MODULE SYSTEM ====================
         
-        // State management
-        let completedModules = JSON.parse(localStorage.getItem('swingcity_training_completed') || '{}');
+        // Get current user info
+        function getCurrentUser() {
+            const userStr = sessionStorage.getItem('swingcity_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    return user;
+                } catch (e) {
+                    console.error('Error parsing user info:', e);
+                }
+            }
+            // Default staff member if no user info - try to get from authenticated session
+            const authenticated = sessionStorage.getItem('swingcity_authenticated');
+            if (authenticated === 'true') {
+                // User is authenticated but no user object - likely default PIN
+                // We'll use a default key
+                return { id: null, name: 'Staff', pin: 'default' };
+            }
+            return { id: null, name: 'Staff', pin: 'default' };
+        }
+
+        // Get storage key for current user - always use PIN as primary identifier
+        function getStorageKey() {
+            const user = getCurrentUser();
+            // Prioritize PIN over ID since PIN is always present
+            // For default PIN users, use 'default' as the identifier
+            let userId = 'default';
+            
+            if (user) {
+                if (user.pin && user.pin !== 'default') {
+                    // Use PIN as the identifier (most reliable)
+                    userId = `pin_${user.pin}`;
+                } else if (user.id) {
+                    // Fallback to ID if PIN not available
+                    userId = `id_${user.id}`;
+                } else if (user.pin === 'default') {
+                    // Default PIN user
+                    userId = 'default';
+                }
+            }
+            
+            const storageKey = `swingcity_training_completed_${userId}`;
+            return storageKey;
+        }
+
+        // State management - per user
+        let completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
         let currentCategory = 'website';
+
+        // Check if user is default staff account
+        function isDefaultStaff() {
+            const user = getCurrentUser();
+            return user && user.pin === 'default';
+        }
 
         // Initialize on page load
         function initTraining() {
+            // Hide progress bar for default staff account
+            const progressSection = document.querySelector('.progress-section');
+            if (isDefaultStaff() && progressSection) {
+                progressSection.style.display = 'none';
+            } else if (progressSection) {
+                progressSection.style.display = 'block';
+            }
+            
+            updateUserInfo();
             updateAllStatuses();
             updateProgress();
+        }
+
+        // Update user info display
+        function updateUserInfo() {
+            const user = getCurrentUser();
+            const noteText = document.getElementById('progressNoteText');
+            if (noteText) {
+                noteText.textContent = `Progress tracked for: ${user.name || 'Staff'}. Progress is saved per staff member.`;
+            }
         }
 
         // Tab switching
@@ -1395,58 +1061,80 @@
                 });
                 document.querySelector(`.training-content[data-role="${currentCategory}"]`).classList.add('active');
                 
-                // Update progress for this category
-                updateProgress();
+                // Progress is now global, so no need to update on tab switch
             });
         });
 
         // Toggle module expansion
         function toggleModule(header) {
             const card = header.closest('.module-card');
+            const isExpanding = !card.classList.contains('expanded');
             card.classList.toggle('expanded');
+            
+            // Load video when module is expanded
+            if (isExpanding) {
+                const moduleId = card.getAttribute('data-module');
+                const videoContainer = card.querySelector('.video-container');
+                if (videoContainer && moduleId) {
+                    const containerId = videoContainer.getAttribute('id');
+                    if (containerId) {
+                        loadVideo(moduleId, containerId);
+                    }
+                }
+            }
         }
 
         // Toggle completion status
         function toggleComplete(btn, moduleId) {
+            // Reload modules from storage in case user changed
+            completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+            
             const isCompleted = completedModules[moduleId];
             
             if (isCompleted) {
+                // Uncomplete module
                 delete completedModules[moduleId];
                 btn.classList.remove('completed');
                 btn.innerHTML = '<iconify-icon icon="ph:check-circle-bold"></iconify-icon> Mark as Complete';
+                
+                // Save to localStorage with user-specific key
+                localStorage.setItem(getStorageKey(), JSON.stringify(completedModules));
+                
+                // Update status badge
+                updateModuleStatus(moduleId);
+                
+                // Update progress
+                updateProgress();
             } else {
-                completedModules[moduleId] = true;
-                btn.classList.add('completed');
-                btn.innerHTML = '<iconify-icon icon="ph:check-circle-fill"></iconify-icon> Completed!';
+                // Show quiz before marking as complete
+                showQuiz(moduleId);
             }
-            
-            // Save to localStorage
-            localStorage.setItem('swingcity_training_completed', JSON.stringify(completedModules));
-            
-            // Update status badge
-            updateModuleStatus(moduleId);
-            
-            // Update progress
-            updateProgress();
         }
 
         // Update status badge for a module
         function updateModuleStatus(moduleId) {
+            // Ensure we have the latest data
+            const latestModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
             const card = document.querySelector(`[data-module="${moduleId}"]`);
             if (!card) return;
             
             const badge = card.querySelector('.status-badge');
-            if (completedModules[moduleId]) {
-                badge.className = 'status-badge completed';
-                badge.textContent = 'Completed';
-            } else {
-                badge.className = 'status-badge not-started';
-                badge.textContent = 'Not Started';
+            if (badge) {
+                if (latestModules[moduleId]) {
+                    badge.className = 'status-badge completed';
+                    badge.textContent = 'Completed';
+                } else {
+                    badge.className = 'status-badge not-started';
+                    badge.textContent = 'Not Started';
+                }
             }
         }
 
         // Update all module statuses
         function updateAllStatuses() {
+            // Reload modules from storage in case user changed
+            completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+            
             Object.keys(completedModules).forEach(moduleId => {
                 updateModuleStatus(moduleId);
                 
@@ -1462,31 +1150,466 @@
             });
         }
 
-        // Update progress bar
+        // Update progress bar - shows overall progress across all categories
         function updateProgress() {
-            const activeContent = document.querySelector(`.training-content[data-role="${currentCategory}"]`);
-            const totalModules = activeContent.querySelectorAll('.module-card').length;
+            // Don't update progress for default staff account
+            if (isDefaultStaff()) {
+                return;
+            }
             
-            // Count completed modules for current category
+            // Reload modules from storage in case user changed
+            completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+            
+            // Count all modules across all categories
+            let totalModules = 0;
             let completedCount = 0;
-            activeContent.querySelectorAll('.module-card').forEach(card => {
-                const moduleId = card.dataset.module;
-                if (completedModules[moduleId]) completedCount++;
+            
+            document.querySelectorAll('.training-content').forEach(content => {
+                content.querySelectorAll('.module-card').forEach(card => {
+                    const moduleId = card.dataset.module;
+                    totalModules++;
+                    if (completedModules[moduleId]) {
+                        completedCount++;
+                    }
+                });
             });
             
             // Update UI
             const percentage = totalModules > 0 ? (completedCount / totalModules) * 100 : 0;
-            document.getElementById('progressFill').style.width = `${percentage}%`;
-            document.getElementById('progressStats').textContent = `${completedCount} of ${totalModules} completed`;
+            const progressFill = document.getElementById('progressFill');
+            const progressStats = document.getElementById('progressStats');
+            if (progressFill) progressFill.style.width = `${percentage}%`;
+            if (progressStats) progressStats.textContent = `${completedCount} of ${totalModules} completed`;
+        }
+
+        // ==================== VIDEO LOADING SYSTEM ====================
+        
+        // Video configuration - Update these URLs with your actual video sources
+        const videoConfig = {
+            'web-1': {
+                // Dashboard Overview video - YouTube unlisted
+                type: 'youtube',
+                url: 'QKmFzc5dgVk'
+            },
+            'soft-1': {
+                // Hosting a Booking video - YouTube unlisted
+                type: 'youtube',
+                url: '_PMBBdwD6BU'
+            }
+            // Add more video configs for other modules as needed
+        };
+
+        // ==================== QUIZ SYSTEM ====================
+        
+        // Quiz questions for each module
+        const quizData = {
+            'web-1': {
+                questions: [
+                    {
+                        question: 'What is the main purpose of the SwingCity Dashboard?',
+                        options: [
+                            'To play games',
+                            'To manage the venue and teams',
+                            'To watch videos',
+                            'To check emails'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'Which section allows you to create and manage player teams?',
+                        options: [
+                            'Leaderboard',
+                            'High Scores',
+                            'Teams',
+                            'Podium'
+                        ],
+                        correct: 2
+                    },
+                    {
+                        question: 'What does the Leaderboard display?',
+                        options: [
+                            'All-time best performances',
+                            'Live scores and rankings for active teams',
+                            'Winner celebrations',
+                            'App downloads'
+                        ],
+                        correct: 1
+                    }
+                ]
+            },
+            'soft-1': {
+                questions: [
+                    {
+                        question: 'What is the main purpose of hosting a booking?',
+                        options: [
+                            'To play the game yourself',
+                            'To demonstrate the system and guide customers',
+                            'To fix technical issues',
+                            'To update the software'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'What should you explain to customers during a booking?',
+                        options: [
+                            'Only the scoring system',
+                            'How to use RFID cards, navigate the course, and view progress',
+                            'Just the rules of golf',
+                            'Nothing - let them figure it out'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'What is important when hosting a booking?',
+                        options: [
+                            'Be quiet and let customers explore alone',
+                            'Be friendly, explain clearly, and answer questions',
+                            'Rush through the explanation quickly',
+                            'Only show advanced features'
+                        ],
+                        correct: 1
+                    }
+                ]
+            }
+            // Add more quiz data for other modules as needed
+        };
+
+        let currentQuiz = null;
+        let currentQuestionIndex = 0;
+        let quizAnswers = [];
+
+        // Show quiz for a module
+        function showQuiz(moduleId) {
+            const quiz = quizData[moduleId];
+            if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+                // No quiz for this module, mark as complete directly
+                markModuleComplete(moduleId);
+                return;
+            }
+
+            currentQuiz = {
+                moduleId: moduleId,
+                questions: quiz.questions
+            };
+            currentQuestionIndex = 0;
+            quizAnswers = [];
+
+            renderQuiz();
+            setupQuizNextButton();
+            document.getElementById('quizOverlay').classList.add('active');
+        }
+
+        // Render current quiz question
+        function renderQuiz() {
+            if (!currentQuiz) {
+                console.error('currentQuiz is null in renderQuiz');
+                return;
+            }
+            
+            const content = document.getElementById('quizContent');
+            const question = currentQuiz.questions[currentQuestionIndex];
+            
+            // Clear previous content
+            content.innerHTML = '';
+
+            // Update progress
+            const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100;
+            document.getElementById('quizProgressFill').style.width = `${progress}%`;
+            document.getElementById('quizProgressText').textContent = `${currentQuestionIndex + 1} of ${currentQuiz.questions.length}`;
+
+            // Create question HTML
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'quiz-question active';
+            questionDiv.innerHTML = `
+                <div class="question-number">Question ${currentQuestionIndex + 1}</div>
+                <div class="question-text">${question.question}</div>
+                <div class="quiz-options">
+                    ${question.options.map((option, index) => `
+                        <button class="quiz-option" data-index="${index}" onclick="selectQuizOption(this, ${index})">
+                            ${option}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+
+            content.appendChild(questionDiv);
+
+            // Update button state
+            const nextBtn = document.getElementById('quizNextBtn');
+            nextBtn.disabled = true;
+            if (currentQuestionIndex === currentQuiz.questions.length - 1) {
+                nextBtn.innerHTML = '<iconify-icon icon="ph:check-circle-bold"></iconify-icon> Complete';
+            } else {
+                nextBtn.innerHTML = 'Next <iconify-icon icon="ph:arrow-right-bold"></iconify-icon>';
+            }
+        }
+
+        // Select quiz option
+        window.selectQuizOption = function(button, index) {
+            // Remove previous selection
+            button.parentElement.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Mark as selected
+            button.classList.add('selected');
+            quizAnswers[currentQuestionIndex] = index;
+
+            // Enable next button
+            document.getElementById('quizNextBtn').disabled = false;
+        };
+
+        // Handle quiz next/complete
+        let quizNextHandler = null;
+        
+        function setupQuizNextButton() {
+            const nextBtn = document.getElementById('quizNextBtn');
+            // Remove old handler if exists
+            if (quizNextHandler) {
+                nextBtn.removeEventListener('click', quizNextHandler);
+            }
+            
+            // Create new handler
+            quizNextHandler = () => {
+                if (!currentQuiz) {
+                    console.error('currentQuiz is null');
+                    return;
+                }
+                
+                if (quizAnswers[currentQuestionIndex] === undefined) {
+                    return; // No answer selected
+                }
+
+                if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+                    // Move to next question
+                    currentQuestionIndex++;
+                    renderQuiz();
+                    setupQuizNextButton(); // Re-setup for next question
+                } else {
+                    // All questions answered, show results
+                    showQuizResults();
+                }
+            };
+            
+            nextBtn.addEventListener('click', quizNextHandler);
+        }
+
+        // Show quiz results
+        function showQuizResults() {
+            if (!currentQuiz) {
+                console.error('currentQuiz is null in showQuizResults');
+                closeQuiz();
+                return;
+            }
+            
+            let correctCount = 0;
+            currentQuiz.questions.forEach((question, index) => {
+                if (quizAnswers[index] === question.correct) {
+                    correctCount++;
+                }
+            });
+
+            const content = document.getElementById('quizContent');
+            const passed = correctCount === currentQuiz.questions.length;
+            const moduleId = currentQuiz.moduleId; // Store moduleId before it might be cleared
+
+            content.innerHTML = `
+                <div class="quiz-result">
+                    <div class="quiz-result-icon ${passed ? 'success' : 'failed'}">
+                        <iconify-icon icon="ph:${passed ? 'check-circle-fill' : 'x-circle-fill'}"></iconify-icon>
+                    </div>
+                    <h3 class="quiz-result-title">${passed ? 'Great job!' : 'Almost there!'}</h3>
+                    <p class="quiz-result-score">You got ${correctCount} out of ${currentQuiz.questions.length} questions correct</p>
+                    ${!passed ? '<p style="color: var(--text-secondary); margin-top: 1rem;">Please review the video and try again.</p>' : ''}
+                </div>
+            `;
+
+            const nextBtn = document.getElementById('quizNextBtn');
+            
+            // Remove old handler
+            if (quizNextHandler) {
+                nextBtn.removeEventListener('click', quizNextHandler);
+            }
+            
+            if (passed) {
+                nextBtn.innerHTML = '<iconify-icon icon="ph:check-circle-bold"></iconify-icon> Mark as Complete';
+                // Create new handler for completion - use stored moduleId
+                quizNextHandler = () => {
+                    closeQuiz();
+                    markModuleComplete(moduleId);
+                };
+            } else {
+                nextBtn.innerHTML = '<iconify-icon icon="ph:arrow-clockwise-bold"></iconify-icon> Try Again';
+                // Create new handler for retry
+                quizNextHandler = () => {
+                    // Reset and restart quiz
+                    currentQuestionIndex = 0;
+                    quizAnswers = [];
+                    renderQuiz();
+                    setupQuizNextButton();
+                };
+            }
+            nextBtn.addEventListener('click', quizNextHandler);
+            nextBtn.disabled = false;
+        }
+
+        // Close quiz
+        function closeQuiz() {
+            document.getElementById('quizOverlay').classList.remove('active');
+            currentQuiz = null;
+            currentQuestionIndex = 0;
+            quizAnswers = [];
+        }
+
+        // Cancel quiz
+        document.getElementById('quizCancelBtn').addEventListener('click', closeQuiz);
+
+        // Close on overlay click
+        document.getElementById('quizOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'quizOverlay') {
+                closeQuiz();
+            }
+        });
+
+        // Mark module as complete (after quiz passed)
+        function markModuleComplete(moduleId) {
+            // Get the storage key for current user
+            const storageKey = getStorageKey();
+            
+            // Reload modules from storage in case user changed
+            completedModules = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            
+            // Mark as completed
+            completedModules[moduleId] = true;
+            
+            // Save to localStorage with user-specific key
+            localStorage.setItem(storageKey, JSON.stringify(completedModules));
+            
+            // Find the module card
+            const card = document.querySelector(`[data-module="${moduleId}"]`);
+            if (!card) {
+                return;
+            }
+            
+            // Update button
+            const btn = card.querySelector('.complete-btn');
+            if (btn) {
+                btn.classList.add('completed');
+                btn.innerHTML = '<iconify-icon icon="ph:check-circle-fill"></iconify-icon> Completed!';
+            }
+            
+            // Update status badge directly
+            const badge = card.querySelector('.status-badge');
+            if (badge) {
+                badge.className = 'status-badge completed';
+                badge.textContent = 'Completed';
+            }
+            
+            // Update progress - use the helper function but ensure it uses updated data
+            updateProgress();
+            
+            // Also call updateModuleStatus to ensure consistency
+            updateModuleStatus(moduleId);
+            
+            // Show success notification
+            setTimeout(() => {
+                showCompletionNotification(moduleId);
+            }, 100);
+        }
+        
+        // Show completion notification
+        function showCompletionNotification(moduleId) {
+            const card = document.querySelector(`[data-module="${moduleId}"]`);
+            if (!card) return;
+
+            const moduleTitle = card.querySelector('.module-title')?.textContent || 'Module';
+            
+            // Create notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #00ff88, #00d4ff);
+                color: #0a0a0f;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+                z-index: 10001;
+                font-weight: 600;
+                animation: fadeInUp 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <iconify-icon icon="ph:check-circle-fill" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem;"></iconify-icon>
+                ${moduleTitle} completed!
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Load video based on type
+        function loadVideo(moduleId, containerId) {
+            const config = videoConfig[moduleId];
+            if (!config) return;
+            
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let videoHTML = '';
+            
+            if (config.type === 'youtube') {
+                // YouTube embed
+                const videoId = config.url;
+                videoHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0" allowfullscreen></iframe>`;
+            } else if (config.type === 'vimeo') {
+                // Vimeo embed
+                const videoId = config.url;
+                videoHTML = `<iframe src="https://player.vimeo.com/video/${videoId}" allowfullscreen></iframe>`;
+            } else if (config.type === 'direct') {
+                // Direct video URL
+                videoHTML = `
+                    <video controls preload="metadata">
+                        <source src="${config.url}" type="video/mp4">
+                        <source src="${config.url}" type="video/webm">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
+            }
+            
+            if (videoHTML) {
+                container.innerHTML = videoHTML;
+            }
         }
 
         // Initialize when PIN is unlocked
-        window.addEventListener('pinUnlocked', initTraining);
+        window.addEventListener('pinUnlocked', () => {
+            // Reload modules when user logs in
+            completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+            initTraining();
+            // Load videos after initialization
+            loadVideo('web-1', 'dashboard-video-container');
+        });
         
         // Also check if already authenticated
         if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
             initTraining();
+            // Load videos after initialization
+            loadVideo('web-1', 'dashboard-video-container');
         }
+
+        // Reload when user changes (if they log out and back in)
+        window.addEventListener('storage', (e) => {
+            if (e.key && e.key.startsWith('swingcity_training_completed_')) {
+                completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+                updateAllStatuses();
+                updateProgress();
+            }
+        });
     </script>
 </body>
 </html>
