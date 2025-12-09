@@ -403,6 +403,12 @@
             border-radius: 2px;
         }
 
+        .recent-highlight {
+            background: linear-gradient(90deg, rgba(212, 168, 84, 0.09), rgba(245, 215, 142, 0.04));
+            border-color: rgba(212, 168, 84, 0.45);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
         .score-row {
             display: flex;
             align-items: center;
@@ -692,6 +698,7 @@ let socket = null;
 let currentPeriod = 'all';
 
 const REFRESH_INTERVAL = 30000;
+const RECENT_HIGHLIGHT_MS = 5 * 60 * 1000; // 5 minutes
 
 const PERIOD_CONFIG = {
     all: { title: 'High Scores', subtitle: 'All-Time Leaders', label: 'Total Players:', empty: 'No scores yet' },
@@ -790,6 +797,9 @@ function renderScores() {
     top3.forEach((score, i) => {
         const entry = document.createElement('div');
         entry.className = `podium-entry${i === 0 ? ' first' : ''}`;
+        if (isRecentlyUpdated(score)) {
+            entry.classList.add('recent-highlight');
+        }
         entry.innerHTML = `
             <div class="podium-rank ${rankStyles[i]}">${i + 1}</div>
             <div class="podium-info">
@@ -807,6 +817,9 @@ function renderScores() {
     remaining.forEach((score, i) => {
         const row = document.createElement('div');
         row.className = 'score-row';
+        if (isRecentlyUpdated(score)) {
+            row.classList.add('recent-highlight');
+        }
         row.innerHTML = `
             <div class="score-rank">${i + 4}</div>
             <div class="score-name">${escapeHtml(score.playerName)}</div>
@@ -831,6 +844,13 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function isRecentlyUpdated(score) {
+    if (!score || !score.lastUpdated) return false;
+    const updatedAt = new Date(score.lastUpdated).getTime();
+    if (Number.isNaN(updatedAt)) return false;
+    return (Date.now() - updatedAt) <= RECENT_HIGHLIGHT_MS;
 }
 
 function setupFullscreenToggle() {

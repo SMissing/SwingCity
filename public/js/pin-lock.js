@@ -11,8 +11,70 @@
         return false;
     }
 
+    // Check if user has permission for current page
+    function checkPagePermission() {
+        const userStr = sessionStorage.getItem('swingcity_user');
+        if (!userStr) {
+            // Default PIN user has full access
+            return true;
+        }
+        
+        try {
+            const user = JSON.parse(userStr);
+            const isManagement = user.management === true;
+            
+            // Management users have full access
+            if (isManagement) {
+                return true;
+            }
+            
+            // Non-management users can only access: dashboard, teams, leaderboard, highscores, podium, training
+            const path = window.location.pathname;
+            const allowedPages = ['/', '/dashboard', '/teams', '/leaderboard', '/highscores', '/podium', '/training'];
+            const restrictedPages = ['/settings', '/download'];
+            
+            // Check if current path is restricted
+            if (restrictedPages.some(page => path.startsWith(page))) {
+                return false;
+            }
+            
+            // Allow access to allowed pages or unknown pages (default allow)
+            return true;
+        } catch (error) {
+            console.error('Error checking permissions:', error);
+            return true; // Default to allowing access on error
+        }
+    }
+
+    // Show permission denied message
+    function showPermissionDenied() {
+        const overlay = document.getElementById('pinOverlay');
+        const pinContainer = overlay?.querySelector('.pin-container');
+        
+        if (pinContainer) {
+            pinContainer.innerHTML = `
+                <img src="/images/swingcity-main-logo.png" alt="SwingCity" class="pin-logo">
+                <h1 class="pin-title" style="color: #ef4444;">Access Denied</h1>
+                <p class="pin-subtitle" style="color: #9ca3af; margin-bottom: 1.5rem;">
+                    You don't have permission to access this page.
+                </p>
+                <a href="/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem; background: var(--accent-purple, #a855f7); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; transition: all 0.2s ease;">
+                    <iconify-icon icon="ph:arrow-left-bold"></iconify-icon>
+                    Go to Dashboard
+                </a>
+            `;
+            overlay.classList.remove('hidden');
+        }
+    }
+
     // Unlock the page
     function unlockPage() {
+        // Check permissions first
+        if (!checkPagePermission()) {
+            showPermissionDenied();
+            return;
+        }
+        
         const overlay = document.getElementById('pinOverlay');
         const content = document.getElementById('pageContent');
         
@@ -58,12 +120,16 @@
     }
 
     // Show success state
-    function showSuccess() {
+    function showSuccess(user) {
         const digits = document.querySelectorAll('.pin-digit');
         digits.forEach(d => d.classList.add('success'));
         
         setTimeout(() => {
             sessionStorage.setItem(SESSION_KEY, 'true');
+            // Store user info and permissions
+            if (user) {
+                sessionStorage.setItem('swingcity_user', JSON.stringify(user));
+            }
             unlockPage();
         }, 400);
     }
@@ -79,7 +145,7 @@
             const data = await response.json();
             
             if (data.success) {
-                showSuccess();
+                showSuccess(data.user);
             } else {
                 showError();
             }

@@ -71,7 +71,7 @@
             max-width: 80%;
             height: auto;
             margin-bottom: 1rem;
-            filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.2));
+            /*filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.2));*/
         }
 
         .tagline {
@@ -308,38 +308,38 @@
                 <p class="tagline">Interactive Arcade Golf</p>
             </header>
 
-            <nav class="nav-grid">
-                <a href="/teams" class="nav-card teams">
+            <nav class="nav-grid" id="navGrid">
+                <a href="/teams" class="nav-card teams" data-page="teams">
                     <iconify-icon icon="ph:users-three-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">Teams</span>
                     <span class="nav-desc">Create and manage player teams</span>
                 </a>
 
-                <a href="/leaderboard" class="nav-card leaderboard">
+                <a href="/leaderboard" class="nav-card leaderboard" data-page="leaderboard">
                     <iconify-icon icon="ph:chart-bar-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">Leaderboard</span>
                     <span class="nav-desc">Live scores and rankings</span>
                 </a>
 
-                <a href="/highscores" class="nav-card highscores">
+                <a href="/highscores" class="nav-card highscores" data-page="highscores">
                     <iconify-icon icon="ph:trophy-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">High Scores</span>
                     <span class="nav-desc">All-time best players</span>
                 </a>
 
-                <a href="/podium" class="nav-card podium">
+                <!--<a href="/podium" class="nav-card podium" data-page="podium">
                     <iconify-icon icon="ph:medal-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">Podium</span>
                     <span class="nav-desc">Winner celebration display</span>
-                </a>
+                </a>-->
 
-                <a href="/download" class="nav-card appinstall">
+                <a href="/download" class="nav-card appinstall" data-page="download">
                     <iconify-icon icon="ph:device-tablet-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">App Install</span>
                     <span class="nav-desc">Download tablet app updates</span>
                 </a>
 
-                <a href="/training" class="nav-card training">
+                <a href="/training" class="nav-card training" data-page="training">
                     <iconify-icon icon="ph:graduation-cap-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">Training</span>
                     <span class="nav-desc">Staff & management guides</span>
@@ -398,12 +398,45 @@
             }
         }
 
+        // Filter navigation based on permissions
+        function filterNavigation() {
+            const userStr = sessionStorage.getItem('swingcity_user');
+            if (!userStr) {
+                // Default PIN user has full access, show all
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userStr);
+                const isManagement = user.management === true;
+                
+                // Management users see all pages
+                if (isManagement) {
+                    return;
+                }
+                
+                // Non-management users: hide settings and download
+                document.querySelectorAll('[data-page]').forEach(navCard => {
+                    const pageName = navCard.getAttribute('data-page');
+                    if (pageName === 'settings' || pageName === 'download') {
+                        navCard.style.display = 'none';
+                    }
+                });
+            } catch (error) {
+                console.error('Error filtering navigation:', error);
+            }
+        }
+
         // Start health check when PIN is unlocked
-        window.addEventListener('pinUnlocked', checkHealth);
+        window.addEventListener('pinUnlocked', function() {
+            checkHealth();
+            filterNavigation();
+        });
 
         // Also check if already authenticated on page load
         if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
             checkHealth();
+            filterNavigation();
         }
 
         // Recheck every 30 seconds (only when authenticated)

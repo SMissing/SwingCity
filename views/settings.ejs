@@ -297,6 +297,23 @@
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .venue-icon img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+        
+        .venue-icon span {
+            position: relative;
+            z-index: 1;
         }
 
         .venue-details h3 {
@@ -410,6 +427,382 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Logo Upload Styles */
+        .logo-upload-area {
+            margin-top: 0.5rem;
+        }
+
+        .logo-preview-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .logo-preview-image {
+            max-width: 200px;
+            max-height: 80px;
+            height: auto;
+            display: block;
+        }
+
+        .logo-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            background: var(--danger);
+            border: 2px solid var(--bg-card);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logo-delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .logo-upload-input-wrapper {
+            display: inline-block;
+        }
+
+        .logo-upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-input);
+            border: 2px dashed var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logo-upload-label:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-purple);
+            color: var(--text-primary);
+        }
+
+        .logo-upload-progress {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Email Preview Modal */
+        .preview-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .preview-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preview-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.95) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .preview-modal-overlay.active .preview-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .preview-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .preview-modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-modal-header h3 iconify-icon {
+            color: var(--accent-blue);
+        }
+
+        .preview-modal-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preview-modal-close:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        .preview-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            background: white;
+            border-radius: 8px;
+        }
+
+        /* User Management Table Styles */
+        .users-table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .users-table thead {
+            background: var(--bg-input);
+        }
+
+        .users-table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .users-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .users-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .users-table tbody tr:hover {
+            background: var(--bg-input);
+        }
+
+        .users-table tbody tr.editing {
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        .user-name-input,
+        .user-pin-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .user-name-input:focus,
+        .user-pin-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .user-pin-input {
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            text-align: center;
+            max-width: 100px;
+        }
+
+        .user-pin-display {
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(107, 114, 128, 0.3);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--accent-purple);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-table {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-table-save {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-table-save:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        .btn-table-cancel {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-table-cancel:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .btn-table-delete {
+            background: transparent;
+            color: var(--danger);
+            padding: 0.5rem;
+        }
+
+        .btn-table-delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-table-edit {
+            background: transparent;
+            color: var(--accent-blue);
+            padding: 0.5rem;
+        }
+
+        .btn-table-edit:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .users-table-container {
+                font-size: 0.85rem;
+            }
+
+            .users-table th,
+            .users-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .table-actions {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .btn-table {
+                width: 100%;
+                padding: 0.4rem 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -437,7 +830,10 @@
             </div>
             
             <div class="venue-card">
-                <div class="venue-icon">🏌️</div>
+                <div class="venue-icon" id="venueIconDisplay">
+                    <img id="venueIconImage" src="" alt="Venue Logo" style="display: none; width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+                    <span id="venueIconEmoji" style="display: block;">🏌️</span>
+                </div>
                 <div class="venue-details">
                     <h3 id="venueNameDisplay">Loading...</h3>
                     <p id="venueLocationDisplay">Loading...</p>
@@ -452,6 +848,34 @@
             <div class="form-group">
                 <label class="form-label">Location</label>
                 <input type="text" class="form-input" id="venueLocation" placeholder="e.g. Chelmsford, Essex">
+            </div>
+            
+            <!-- Venue Logo/Profile Image Upload -->
+            <div class="form-group">
+                <label class="form-label">Venue Logo / Profile Image</label>
+                <p class="form-hint">Upload your venue logo. This will appear in scorecard emails and can be used as your venue's profile image (max 5MB, PNG/JPG/SVG)</p>
+                
+                <div class="logo-upload-area" id="logoUploadArea">
+                    <div class="logo-preview-container" id="logoPreviewContainer" style="display: none;">
+                        <img id="logoPreview" src="" alt="Venue Logo" class="logo-preview-image">
+                        <button type="button" class="logo-delete-btn" onclick="deleteLogo()" title="Remove logo">
+                            <iconify-icon icon="ph:x-bold"></iconify-icon>
+                        </button>
+                    </div>
+                    
+                    <div class="logo-upload-input-wrapper" id="logoUploadWrapper">
+                        <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
+                        <label for="logoFileInput" class="logo-upload-label">
+                            <iconify-icon icon="ph:image-bold"></iconify-icon>
+                            <span id="logoUploadText">Choose Logo / Profile Image</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="logo-upload-progress" id="logoUploadProgress" style="display: none;">
+                    <div class="spinner" style="width: 16px; height: 16px;"></div>
+                    <span>Uploading...</span>
+                </div>
             </div>
             
             <div class="section-actions">
@@ -519,9 +943,52 @@
                     <iconify-icon icon="ph:paper-plane-tilt-bold"></iconify-icon>
                     Send Test Email
                 </button>
+                <button class="btn btn-secondary" onclick="previewEmail()">
+                    <iconify-icon icon="ph:eye-bold"></iconify-icon>
+                    Preview Email
+                </button>
                 <button class="btn btn-primary" onclick="saveEmailSettings()">
                     <iconify-icon icon="ph:floppy-disk-bold"></iconify-icon>
                     Save Email Settings
+                </button>
+            </div>
+        </section>
+
+        <!-- User Management -->
+        <section class="settings-section">
+            <div class="section-header">
+                <iconify-icon icon="ph:users-bold"></iconify-icon>
+                <h2>User Management</h2>
+            </div>
+            
+            <div class="info-box">
+                <p>
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    Management users have full site access. Non-management users can access: Dashboard, Teams, Leaderboard, High Scores, Podium, and Training.
+                </p>
+            </div>
+            
+            <!-- Users Table -->
+            <div class="users-table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>PIN</th>
+                            <th>Management</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section-actions" style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="addNewUserRow()">
+                    <iconify-icon icon="ph:user-plus-bold"></iconify-icon>
+                    Add New User
                 </button>
             </div>
         </section>
@@ -583,6 +1050,28 @@
         <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
         <span id="toastMessage">Success!</span>
     </div>
+
+    <!-- Email Preview Modal -->
+    <div class="preview-modal-overlay" id="previewModal">
+        <div class="preview-modal">
+            <div class="preview-modal-header">
+                <h3>
+                    <iconify-icon icon="ph:eye-bold"></iconify-icon>
+                    Email Preview
+                </h3>
+                <button class="preview-modal-close" onclick="closePreviewModal()">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                </button>
+            </div>
+            <div class="preview-modal-content">
+                <div id="previewLoading" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                    <p>Loading preview...</p>
+                </div>
+                <iframe id="previewIframe" class="preview-iframe" style="display: none;"></iframe>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script src="/js/pin-lock.js"></script>
@@ -605,16 +1094,19 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadSettings();
             setupCleanupButton();
+            loadUsers();
         });
         window.addEventListener('pinUnlocked', function() {
             loadSettings();
             setupCleanupButton();
+            loadUsers();
         });
         
         // Also load if already authenticated
         if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
             loadSettings();
             setupCleanupButton();
+            loadUsers();
         }
 
         async function loadSettings() {
@@ -627,6 +1119,34 @@
                     document.getElementById('venueLocation').value = data.venue.location || '';
                     document.getElementById('venueNameDisplay').textContent = data.venue.name || 'Not Set';
                     document.getElementById('venueLocationDisplay').textContent = data.venue.location || 'Not Set';
+                    
+                    // Load logo if exists
+                    if (data.venue.logo) {
+                        const logoUrl = data.venue.logo;
+                        document.getElementById('logoPreview').src = logoUrl;
+                        document.getElementById('logoPreviewContainer').style.display = 'block';
+                        document.getElementById('logoUploadWrapper').style.display = 'none';
+                        
+                        // Update venue card icon to show logo
+                        const venueIconImage = document.getElementById('venueIconImage');
+                        const venueIconEmoji = document.getElementById('venueIconEmoji');
+                        if (venueIconImage && venueIconEmoji) {
+                            venueIconImage.src = logoUrl;
+                            venueIconImage.style.display = 'block';
+                            venueIconEmoji.style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('logoPreviewContainer').style.display = 'none';
+                        document.getElementById('logoUploadWrapper').style.display = 'block';
+                        
+                        // Show emoji if no logo
+                        const venueIconImage = document.getElementById('venueIconImage');
+                        const venueIconEmoji = document.getElementById('venueIconEmoji');
+                        if (venueIconImage && venueIconEmoji) {
+                            venueIconImage.style.display = 'none';
+                            venueIconEmoji.style.display = 'block';
+                        }
+                    }
                 }
                 
                 if (data.email) {
@@ -648,6 +1168,182 @@
                 console.error('Error loading settings:', error);
             }
         }
+
+        // Logo upload handler
+        async function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File size must be less than 5MB', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('logo', file);
+            
+            const progressDiv = document.getElementById('logoUploadProgress');
+            const uploadWrapper = document.getElementById('logoUploadWrapper');
+            
+            progressDiv.style.display = 'flex';
+            uploadWrapper.style.pointerEvents = 'none';
+            uploadWrapper.style.opacity = '0.5';
+            
+            try {
+                const response = await fetch('/api/settings/venue/logo', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update preview
+                    document.getElementById('logoPreview').src = data.logoPath;
+                    document.getElementById('logoPreviewContainer').style.display = 'block';
+                    uploadWrapper.style.display = 'none';
+                    
+                    // Update venue card icon
+                    const venueIconImage = document.getElementById('venueIconImage');
+                    const venueIconEmoji = document.getElementById('venueIconEmoji');
+                    if (venueIconImage && venueIconEmoji) {
+                        venueIconImage.src = data.logoPath;
+                        venueIconImage.style.display = 'block';
+                        venueIconEmoji.style.display = 'none';
+                    }
+                    
+                    showToast('Logo uploaded successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to upload logo');
+                }
+            } catch (error) {
+                console.error('Error uploading logo:', error);
+                showToast(error.message || 'Failed to upload logo', 'error');
+            } finally {
+                progressDiv.style.display = 'none';
+                uploadWrapper.style.pointerEvents = '';
+                uploadWrapper.style.opacity = '1';
+                event.target.value = ''; // Reset file input
+            }
+        }
+
+        // Delete logo
+        async function deleteLogo() {
+            if (!confirm('Are you sure you want to remove the venue logo?')) return;
+            
+            try {
+                const response = await fetch('/api/settings/venue/logo', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('logoPreviewContainer').style.display = 'none';
+                    document.getElementById('logoUploadWrapper').style.display = 'block';
+                    
+                    // Update venue card icon to show emoji
+                    const venueIconImage = document.getElementById('venueIconImage');
+                    const venueIconEmoji = document.getElementById('venueIconEmoji');
+                    if (venueIconImage && venueIconEmoji) {
+                        venueIconImage.style.display = 'none';
+                        venueIconEmoji.style.display = 'block';
+                    }
+                    
+                    showToast('Logo removed successfully', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to delete logo');
+                }
+            } catch (error) {
+                console.error('Error deleting logo:', error);
+                showToast(error.message || 'Failed to delete logo', 'error');
+            }
+        }
+
+        // Preview email
+        async function previewEmail() {
+            // Get a sample team for preview - try to get first available team
+            let sampleRfid = null;
+            
+            try {
+                const teamsResponse = await fetch('/api/teams');
+                const teamsData = await teamsResponse.json();
+                
+                if (teamsData.teams && teamsData.teams.length > 0) {
+                    sampleRfid = teamsData.teams[0].rfid;
+                } else {
+                    showToast('No teams available for preview. Create a team first.', 'error');
+                    return;
+                }
+            } catch (error) {
+                showToast('Could not load teams for preview', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('previewModal');
+            const loading = document.getElementById('previewLoading');
+            const iframe = document.getElementById('previewIframe');
+            
+            modal.classList.add('active');
+            loading.style.display = 'block';
+            iframe.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/email-scorecard/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rfid: sampleRfid })
+                });
+                
+                if (!response.ok) {
+                    // Try to parse error message, but handle HTML responses
+                    let errorMessage = 'Failed to generate preview';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                    } catch (e) {
+                        // If response is not JSON (might be HTML error page), use status text
+                        errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Write HTML to iframe
+                    iframe.srcdoc = data.html;
+                    loading.style.display = 'none';
+                    iframe.style.display = 'block';
+                } else {
+                    throw new Error(data.message || 'Failed to generate preview');
+                }
+            } catch (error) {
+                console.error('Error generating preview:', error);
+                showToast(error.message || 'Failed to generate preview', 'error');
+                closePreviewModal();
+            }
+        }
+
+        // Close preview modal
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('previewModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreviewModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePreviewModal();
+            }
+        });
 
         async function saveVenueInfo() {
             const btn = event.target.closest('button');
@@ -827,6 +1523,257 @@
 
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ==================== USER MANAGEMENT ====================
+
+        let editingUserId = null;
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayUsers(data.users || {});
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            const userEntries = Object.entries(users);
+            
+            if (userEntries.length === 0 && editingUserId === null) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No users added yet. Click "Add New User" to get started.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = userEntries.map(([userId, user]) => {
+                const isEditing = editingUserId === userId;
+                const isManagement = user.management === true;
+                
+                if (isEditing) {
+                    return `
+                        <tr class="editing" id="row-${userId}">
+                            <td>
+                                <input type="text" class="user-name-input" id="edit-name-${userId}" value="${escapeHtml(user.name)}" placeholder="Name">
+                            </td>
+                            <td>
+                                <input type="text" class="user-pin-input" id="edit-pin-${userId}" value="${user.pin}" maxlength="4" pattern="\\d{4}" placeholder="1234">
+                            </td>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="edit-management-${userId}" ${isManagement ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn-table btn-table-save" onclick="saveUser('${userId}')">
+                                        <iconify-icon icon="ph:check-bold"></iconify-icon>
+                                        Save
+                                    </button>
+                                    <button class="btn-table btn-table-cancel" onclick="cancelEdit('${userId}')">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    return `
+                        <tr id="row-${userId}">
+                            <td>${escapeHtml(user.name)}</td>
+                            <td><span class="user-pin-display">${user.pin}</span></td>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" ${isManagement ? 'checked' : ''} onchange="toggleManagement('${userId}', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn-table btn-table-edit" onclick="editUser('${userId}')" title="Edit">
+                                        <iconify-icon icon="ph:pencil-bold"></iconify-icon>
+                                    </button>
+                                    <button class="btn-table btn-table-delete" onclick="deleteUser('${userId}', '${escapeHtml(user.name)}')" title="Delete">
+                                        <iconify-icon icon="ph:trash-bold"></iconify-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addNewUserRow() {
+            editingUserId = 'new';
+            const tbody = document.getElementById('usersTableBody');
+            
+            // Remove "no users" message if present
+            if (tbody.querySelector('td[colspan]')) {
+                tbody.innerHTML = '';
+            }
+            
+            const newRow = `
+                <tr class="editing" id="row-new">
+                    <td>
+                        <input type="text" class="user-name-input" id="edit-name-new" placeholder="Name" autofocus>
+                    </td>
+                    <td>
+                        <input type="text" class="user-pin-input" id="edit-pin-new" maxlength="4" pattern="\\d{4}" placeholder="1234">
+                    </td>
+                    <td>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="edit-management-new">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-table btn-table-save" onclick="saveUser('new')">
+                                <iconify-icon icon="ph:check-bold"></iconify-icon>
+                                Save
+                            </button>
+                            <button class="btn-table btn-table-cancel" onclick="cancelEdit('new')">
+                                Cancel
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            tbody.insertAdjacentHTML('beforeend', newRow);
+            document.getElementById('edit-name-new')?.focus();
+        }
+
+        function editUser(userId) {
+            editingUserId = userId;
+            loadUsers();
+        }
+
+        function cancelEdit(userId) {
+            editingUserId = null;
+            if (userId === 'new') {
+                const row = document.getElementById('row-new');
+                if (row) row.remove();
+            } else {
+                loadUsers();
+            }
+        }
+
+        async function toggleManagement(userId, isManagement) {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId, 
+                        management: isManagement,
+                        // Preserve existing user data
+                        name: document.querySelector(`#row-${userId} td:first-child`)?.textContent.trim(),
+                        pin: document.querySelector(`#row-${userId} .user-pin-display`)?.textContent.trim()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to update user');
+                }
+                
+                showToast('User updated successfully!', 'success');
+            } catch (error) {
+                showToast(error.message || 'Failed to update user', 'error');
+                loadUsers(); // Reload to revert toggle
+            }
+        }
+
+        async function saveUser(userId) {
+            const nameInput = document.getElementById(`edit-name-${userId}`);
+            const pinInput = document.getElementById(`edit-pin-${userId}`);
+            const managementInput = document.getElementById(`edit-management-${userId}`);
+            
+            if (!nameInput || !pinInput || !managementInput) {
+                showToast('Error: Form fields not found', 'error');
+                return;
+            }
+            
+            const name = nameInput.value.trim();
+            const pin = pinInput.value.trim();
+            const management = managementInput.checked;
+            
+            if (!name) {
+                showToast('Please enter a name', 'error');
+                nameInput.focus();
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(pin)) {
+                showToast('PIN must be exactly 4 digits', 'error');
+                pinInput.focus();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: userId === 'new' ? undefined : userId,
+                        name, 
+                        pin, 
+                        management 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    editingUserId = null;
+                    showToast(userId === 'new' ? 'User added successfully!' : 'User updated successfully!', 'success');
+                    loadUsers();
+                } else {
+                    throw new Error(data.message || 'Failed to save user');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to save user', 'error');
+            }
+        }
+
+        async function deleteUser(userId, userName) {
+            if (!confirm(`Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('User deleted successfully!', 'success');
+                    loadUsers();
+                } else {
+                    throw new Error(data.message || 'Failed to delete user');
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to delete user', 'error');
+            }
         }
     </script>
 </body>

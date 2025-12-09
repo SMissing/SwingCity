@@ -867,6 +867,111 @@ class FirebaseRestService {
     }
   }
 
+  // ==================== USER MANAGEMENT ====================
+
+  // Get all users
+  async getUsers() {
+    if (this.mockMode) {
+      return {};
+    }
+
+    try {
+      const settings = await this.getSettings();
+      return settings.users || {};
+    } catch (error) {
+      console.error('Error fetching users:', error.message);
+      return {};
+    }
+  }
+
+  // Add or update a user
+  async saveUser(userId, userData) {
+    if (this.mockMode) {
+      console.log('🚨 MOCK MODE: Would save user:', { userId, userData });
+      return { success: true };
+    }
+
+    try {
+      const settings = await this.getSettings();
+      const users = settings.users || {};
+      
+      // Validate PIN is 4 digits
+      if (!/^\d{4}$/.test(userData.pin)) {
+        throw new Error('PIN must be exactly 4 digits');
+      }
+      
+      // Check if PIN is already used by another user
+      const existingUsers = Object.entries(users);
+      const pinConflict = existingUsers.find(([id, user]) => 
+        user.pin === userData.pin && id !== userId
+      );
+      
+      if (pinConflict) {
+        throw new Error(`PIN ${userData.pin} is already assigned to ${pinConflict[1].name}`);
+      }
+      
+      users[userId] = {
+        name: userData.name,
+        pin: userData.pin,
+        management: userData.management === true
+      };
+      
+      // Save users as part of settings
+      settings.users = users;
+      const response = await fetch(`${this.baseUrl}/settings.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log(`✅ User saved: ${userData.name} (${userId})`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving user:', error.message);
+      throw error;
+    }
+  }
+
+  // Delete a user
+  async deleteUser(userId) {
+    if (this.mockMode) {
+      console.log('🚨 MOCK MODE: Would delete user:', userId);
+      return { success: true };
+    }
+
+    try {
+      const settings = await this.getSettings();
+      const users = settings.users || {};
+      
+      if (!users[userId]) {
+        throw new Error('User not found');
+      }
+      
+      delete users[userId];
+      
+      // Save users as part of settings
+      settings.users = users;
+      const response = await fetch(`${this.baseUrl}/settings.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      console.log(`✅ User deleted: ${userId}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting user:', error.message);
+      throw error;
+    }
+  }
+
   // ==================== UTILITY FUNCTIONS ====================
 
   // Calculate total score for a team

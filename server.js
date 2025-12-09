@@ -4,6 +4,8 @@ const socketIo = require('socket.io');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
 require('dotenv').config();
 
 // Import services
@@ -19,6 +21,42 @@ const io = socketIo(server, {
 });
 
 const PORT = process.env.PORT || 3001;
+
+// Create venue logos directory if it doesn't exist
+const venueLogosDir = path.join(__dirname, 'public', 'images', 'venue-logos');
+if (!fs.existsSync(venueLogosDir)) {
+  fs.mkdirSync(venueLogosDir, { recursive: true });
+}
+
+// Configure multer for logo uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, venueLogosDir);
+  },
+  filename: function (req, file, cb) {
+    // Use a consistent filename: venue-logo.{ext}
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `venue-logo${ext}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, svg, webp)'));
+    }
+  }
+});
 
 // Middleware
 app.use(cors());
@@ -152,7 +190,7 @@ app.get('/team-creator', (req, res) => {
 // ==================== API ENDPOINTS ====================
 
 // PIN verification for dashboard access
-app.post('/api/verify-pin', (req, res) => {
+app.post('/api/verify-pin', async (req, res) => {
   const { pin } = req.body;
   const sitePin = process.env.SITE_PIN || '5656';
   
@@ -160,10 +198,47 @@ app.post('/api/verify-pin', (req, res) => {
     return res.status(400).json({ success: false, message: 'PIN required' });
   }
   
+  // Check default PIN first
   if (pin === sitePin) {
-    res.json({ success: true, message: 'Access granted' });
-  } else {
+    // Default PIN has full access (management = true)
+    return res.json({ 
+      success: true, 
+      message: 'Access granted',
+      user: {
+        name: 'Admin',
+        pin: sitePin,
+        management: true
+      }
+    });
+  }
+  
+  // Check user pins
+  try {
+    const settings = await firebaseService.getSettings();
+    const users = settings.users || {};
+    
+    // Find user by PIN
+    const userEntry = Object.entries(users).find(([id, user]) => user.pin === pin);
+    
+    if (userEntry) {
+      const [userId, user] = userEntry;
+      return res.json({
+        success: true,
+        message: 'Access granted',
+        user: {
+          id: userId,
+          name: user.name,
+          pin: user.pin,
+          management: user.management === true
+        }
+      });
+    }
+    
+    // PIN not found
     res.status(401).json({ success: false, message: 'Invalid PIN' });
+  } catch (error) {
+    console.error('Error verifying PIN:', error);
+    res.status(500).json({ success: false, message: 'Error verifying PIN' });
   }
 });
 
@@ -559,8 +634,13 @@ app.post('/api/email-scorecard', async (req, res) => {
       const { transporter, settings } = emailConfig;
       const venueName = settings.venue?.name || 'SwingCity';
       
+      // Get venue logo path from settings
+      const venueLogo = settings.venue?.logo || null;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const logoUrl = venueLogo ? `${baseUrl}${venueLogo}` : null;
+      
       // Generate scorecard HTML for email
-      const scorecardHtml = generateScorecardEmailHtml(teamData, venueName);
+      const scorecardHtml = generateScorecardEmailHtml(teamData, venueName, logoUrl, baseUrl);
       
       // Build from address
       const fromName = settings.email.fromName || venueName;
@@ -600,7 +680,7 @@ app.post('/api/email-scorecard', async (req, res) => {
 });
 
 // Helper function to generate beautiful scorecard email HTML
-function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
+function generateScorecardEmailHtml(teamData, venueName = 'SwingCity', logoUrl = null, baseUrl = '') {
   const holes = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
   
   // Calculate player totals and find winner
@@ -617,6 +697,14 @@ function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
   const winner = playersWithTotals[0];
   const teamTotal = playersWithTotals.reduce((sum, p) => sum + p.total, 0);
   
+  // Venue logo HTML - show logo if available
+  const venueLogoHtml = logoUrl 
+    ? `<img src="${logoUrl}" alt="${venueName}" style="max-width: 180px; max-height: 70px; height: auto; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto;">`
+    : '';
+  
+  // SwingCity logo URL
+  const swingCityLogoUrl = baseUrl ? `${baseUrl}/images/swingcity-main-logo.png` : '/images/swingcity-main-logo.png';
+  
   let html = `
 <!DOCTYPE html>
 <html>
@@ -624,50 +712,43 @@ function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #0a0a0f;">
-  <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #12121a 0%, #0a0a0f 100%); padding: 0;">
+<body style="margin: 0; padding: 0; font-family: 'Space Grotesk', 'Segoe UI', Arial, sans-serif; background-color: #06080d;">
+  <div style="max-width: 600px; margin: 0 auto; background: #0d1117; padding: 0;">
     
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #1a1a24 0%, #12121a 100%); padding: 30px 20px; text-align: center; border-bottom: 3px solid #00ff88;">
-      <h1 style="margin: 0; color: #00ff88; font-size: 32px; font-weight: 700; letter-spacing: 2px;">${venueName.toUpperCase()}</h1>
-      <p style="margin: 10px 0 0; color: #9ca3af; font-size: 14px;">Interactive Arcade Golf</p>
-    </div>
-    
-    <!-- Team Name -->
-    <div style="padding: 30px 20px; text-align: center;">
-      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">Team Scorecard</p>
-      <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">${teamData.teamName}</h2>
-      <p style="color: #00ff88; font-size: 18px; margin: 15px 0 0;">Team Total: <strong>${teamTotal} pts</strong></p>
+    <!-- Header with Venue Logo -->
+    <div style="background: #161b22; padding: 35px 20px 25px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+      ${venueLogoHtml}
+      <p style="margin: 12px 0 0; color: #8b949e; font-size: 12px; letter-spacing: 0.5px;">Interactive Arcade Golf</p>
     </div>
     
     <!-- Winner Highlight -->
-    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%); margin: 0 20px 20px; padding: 20px; border-radius: 12px; border-left: 4px solid #fbbf24; text-align: center;">
-      <p style="color: #fbbf24; font-size: 12px; margin: 0 0 5px; text-transform: uppercase; letter-spacing: 1px;">🏆 Winner</p>
-      <p style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0;">${winner.name}</p>
-      <p style="color: #fbbf24; font-size: 18px; margin: 5px 0 0;">${winner.total} pts</p>
+    <div style="margin: 30px 20px 25px; padding: 25px 20px; background: rgba(251, 191, 36, 0.08); border-radius: 12px; border: 1px solid rgba(251, 191, 36, 0.2); text-align: center;">
+      <p style="color: #fbbf24; font-size: 10px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">🏆 Winner</p>
+      <p style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 8px;">${winner.name}</p>
+      <p style="color: #fbbf24; font-size: 20px; font-weight: 600; margin: 0;">${winner.total} pts</p>
     </div>
     
     <!-- Player Scores -->
-    <div style="padding: 0 20px 20px;">
-      <table style="width: 100%; border-collapse: collapse; background: #1a1a24; border-radius: 12px; overflow: hidden;">
+    <div style="padding: 0 20px 25px;">
+      <table style="width: 100%; border-collapse: collapse; background: #161b22; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.06);">
         <thead>
           <tr>
-            <th style="padding: 15px 12px; background: #242430; color: #9ca3af; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Player</th>
-            <th style="padding: 15px 12px; background: #242430; color: #00ff88; text-align: right; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Score</th>
+            <th style="padding: 14px 16px; background: #0d1117; color: #8b949e; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Player</th>
+            <th style="padding: 14px 16px; background: #0d1117; color: #00ff88; text-align: right; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Score</th>
           </tr>
         </thead>
         <tbody>`;
   
   playersWithTotals.forEach((player, index) => {
     const isWinner = index === 0;
-    const bgColor = isWinner ? 'rgba(251, 191, 36, 0.1)' : 'transparent';
+    const bgColor = isWinner ? 'rgba(251, 191, 36, 0.05)' : 'transparent';
     const nameColor = isWinner ? '#fbbf24' : '#ffffff';
-    const prefix = isWinner ? '👑 ' : '';
+    const borderStyle = index < playersWithTotals.length - 1 ? 'border-bottom: 1px solid rgba(255,255,255,0.06);' : '';
     
     html += `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 14px 12px; background: ${bgColor}; color: ${nameColor}; font-weight: 500;">${prefix}${player.name}</td>
-            <td style="padding: 14px 12px; background: ${bgColor}; color: #00ff88; text-align: right; font-weight: 700; font-size: 16px;">${player.total}</td>
+          <tr style="${borderStyle}">
+            <td style="padding: 14px 16px; background: ${bgColor}; color: ${nameColor}; font-weight: 500; font-size: 14px;">${player.name}</td>
+            <td style="padding: 14px 16px; background: ${bgColor}; color: #00ff88; text-align: right; font-weight: 600; font-size: 16px;">${player.total}</td>
           </tr>`;
   });
   
@@ -676,37 +757,39 @@ function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
       </table>
     </div>
     
-    <!-- Hole Breakdown (Compact) -->
+    <!-- Hole Breakdown -->
     <div style="padding: 0 20px 30px;">
-      <p style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px;">Hole Breakdown</p>
-      <div style="background: #1a1a24; border-radius: 12px; padding: 15px; overflow-x: auto;">
+      <p style="color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 12px; font-weight: 600;">Hole Breakdown</p>
+      <div style="background: #161b22; border-radius: 8px; padding: 16px; overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.06);">
         <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
           <thead>
             <tr>
-              <th style="padding: 8px 4px; color: #9ca3af; text-align: left; font-size: 10px;">Player</th>`;
+              <th style="padding: 10px 8px; color: #8b949e; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Player</th>`;
   
   holes.forEach((hole, i) => {
     const colors = ['#ec4899', '#00d4ff', '#fbbf24'];
     const color = colors[i % 3];
-    html += `<th style="padding: 8px 2px; color: ${color}; text-align: center; font-size: 9px; font-weight: 500;">${hole.slice(0, 4)}</th>`;
+    html += `<th style="padding: 10px 4px; color: ${color}; text-align: center; font-size: 9px; font-weight: 600;">${hole.slice(0, 4)}</th>`;
   });
   
-  html += `<th style="padding: 8px 4px; color: #00ff88; text-align: center; font-size: 10px; font-weight: 700;">TOT</th>
+  html += `<th style="padding: 10px 8px; color: #00ff88; text-align: center; font-size: 10px; font-weight: 600;">TOT</th>
             </tr>
           </thead>
           <tbody>`;
   
-  playersWithTotals.forEach(player => {
-    html += `<tr>
-              <td style="padding: 6px 4px; color: #ffffff; font-size: 11px; white-space: nowrap;">${player.name.split(' ')[0]}</td>`;
+  playersWithTotals.forEach((player, playerIndex) => {
+    const isWinnerRow = playerIndex === 0;
+    const rowBg = isWinnerRow ? 'rgba(251, 191, 36, 0.03)' : 'transparent';
+    html += `<tr style="background: ${rowBg};">
+              <td style="padding: 10px 8px; color: ${isWinnerRow ? '#fbbf24' : '#ffffff'}; font-size: 11px; white-space: nowrap; font-weight: ${isWinnerRow ? '600' : '500'}; border-bottom: 1px solid rgba(255,255,255,0.06);">${player.name.split(' ')[0]}</td>`;
     
     holes.forEach(hole => {
       const score = player.scores && player.scores[hole] ? player.scores[hole].total : 0;
       const scoreColor = score > 0 ? '#00ff88' : score < 0 ? '#f87171' : '#6b7280';
-      html += `<td style="padding: 6px 2px; color: ${scoreColor}; text-align: center; font-size: 11px;">${score || '-'}</td>`;
+      html += `<td style="padding: 10px 4px; color: ${scoreColor}; text-align: center; font-size: 11px; font-weight: ${score !== 0 ? '500' : '400'}; border-bottom: 1px solid rgba(255,255,255,0.06);">${score || '-'}</td>`;
     });
     
-    html += `<td style="padding: 6px 4px; color: #00ff88; text-align: center; font-size: 12px; font-weight: 700;">${player.total}</td>
+    html += `<td style="padding: 10px 8px; color: #00ff88; text-align: center; font-size: 12px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.06);">${player.total}</td>
             </tr>`;
   });
   
@@ -717,19 +800,24 @@ function generateScorecardEmailHtml(teamData, venueName = 'SwingCity') {
     </div>
     
     <!-- Discount Offer -->
-    <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0.1) 100%); margin: 0 20px 20px; padding: 25px 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(168, 85, 247, 0.3);">
-      <p style="color: #a855f7; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">🎁 Special Offer</p>
-      <p style="color: #ffffff; font-size: 20px; font-weight: 700; margin: 0 0 10px;">10% OFF Your Next Visit!</p>
-      <div style="background: #0a0a0f; display: inline-block; padding: 12px 30px; border-radius: 8px; margin-top: 5px;">
-        <span style="color: #00ff88; font-size: 24px; font-weight: 700; letter-spacing: 4px;">SWING10</span>
+    <div style="background: rgba(168, 85, 247, 0.08); margin: 0 20px 25px; padding: 25px 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(168, 85, 247, 0.2);">
+      <p style="color: #a855f7; font-size: 10px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Special Offer</p>
+      <p style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0 0 12px;">10% OFF Your Next Visit!</p>
+      <div style="background: #0d1117; display: inline-block; padding: 12px 28px; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(0, 255, 136, 0.2);">
+        <span style="color: #00ff88; font-size: 24px; font-weight: 600; letter-spacing: 4px;">SWING10</span>
       </div>
-      <p style="color: #9ca3af; font-size: 12px; margin: 15px 0 0;">Show this code at reception on your next visit</p>
+      <p style="color: #8b949e; font-size: 11px; margin: 15px 0 0;">Show this code at reception on your next visit</p>
     </div>
     
-    <!-- Footer -->
-    <div style="padding: 25px 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
-      <p style="color: #9ca3af; font-size: 12px; margin: 0;">Thank you for playing at ${venueName}!</p>
-      <p style="color: #6b7280; font-size: 11px; margin: 10px 0 0;">© ${new Date().getFullYear()} ${venueName} • Interactive Arcade Golf</p>
+    <!-- Footer with SwingCity Logo -->
+    <div style="padding: 30px 20px 25px; text-align: center; border-top: 1px solid rgba(255,255,255,0.06); background: #161b22;">
+      <!-- SwingCity Logo -->
+      <div style="margin-bottom: 18px;">
+        <img src="${swingCityLogoUrl}" alt="SwingCity" style="max-width: 180px; height: auto; opacity: 0.85;">
+      </div>
+      
+      <p style="color: #8b949e; font-size: 12px; margin: 0 0 6px;">Thank you for playing at ${venueName}!</p>
+      <p style="color: #6b7280; font-size: 10px; margin: 0;">© ${new Date().getFullYear()} ${venueName} • Interactive Arcade Golf</p>
     </div>
     
   </div>
@@ -756,17 +844,159 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
+// Test route to verify server is running updated code
+app.get('/api/test-routes', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Routes are working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Save venue settings
 app.post('/api/settings/venue', async (req, res) => {
   const { name, location } = req.body;
   
   try {
-    await firebaseService.saveSettings('venue', { name, location });
+    // Get existing settings to preserve logo if not provided
+    const existing = await firebaseService.getSettings();
+    const venueSettings = {
+      name,
+      location,
+      logo: existing.venue?.logo || null
+    };
+    
+    await firebaseService.saveSettings('venue', venueSettings);
     console.log(`✅ Venue settings saved: ${name}, ${location}`);
     res.json({ success: true });
   } catch (error) {
     console.error('Error saving venue settings:', error);
     res.status(500).json({ error: 'Failed to save', message: error.message });
+  }
+});
+
+// Upload venue logo
+app.post('/api/settings/venue/logo', upload.single('logo'), async (req, res) => {
+  console.log('📤 Logo upload endpoint hit');
+  try {
+    if (!req.file) {
+      console.log('⚠️ No file in request');
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    // Get existing settings
+    const existing = await firebaseService.getSettings();
+    const logoPath = `/images/venue-logos/${req.file.filename}`;
+    
+    // If there's an old logo, delete it
+    if (existing.venue?.logo) {
+      const oldLogoPath = path.join(__dirname, 'public', existing.venue.logo);
+      if (fs.existsSync(oldLogoPath)) {
+        fs.unlinkSync(oldLogoPath);
+      }
+    }
+    
+    // Save logo path to settings
+    const venueSettings = {
+      ...existing.venue,
+      logo: logoPath
+    };
+    
+    await firebaseService.saveSettings('venue', venueSettings);
+    console.log(`✅ Venue logo uploaded: ${logoPath}`);
+    
+    res.json({ 
+      success: true, 
+      logoPath: logoPath,
+      message: 'Logo uploaded successfully' 
+    });
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    res.status(500).json({ error: 'Failed to upload logo', message: error.message });
+  }
+});
+
+// Delete venue logo
+app.delete('/api/settings/venue/logo', async (req, res) => {
+  try {
+    const existing = await firebaseService.getSettings();
+    
+    if (existing.venue?.logo) {
+      const logoPath = path.join(__dirname, 'public', existing.venue.logo);
+      if (fs.existsSync(logoPath)) {
+        fs.unlinkSync(logoPath);
+      }
+      
+      // Remove logo from settings
+      const venueSettings = {
+        ...existing.venue,
+        logo: null
+      };
+      
+      await firebaseService.saveSettings('venue', venueSettings);
+      console.log('✅ Venue logo deleted');
+    }
+    
+    res.json({ success: true, message: 'Logo deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting logo:', error);
+    res.status(500).json({ error: 'Failed to delete logo', message: error.message });
+  }
+});
+
+// Preview email scorecard
+app.post('/api/email-scorecard/preview', async (req, res) => {
+  console.log('👁️ Email preview endpoint hit');
+  try {
+    const { rfid } = req.body;
+    
+    if (!rfid) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'RFID required',
+        message: 'RFID is required to generate preview' 
+      });
+    }
+    
+    // Get team data
+    let teamData;
+    try {
+      teamData = await firebaseService.getTeamByRFID(rfid);
+    } catch (teamError) {
+      console.error('Error fetching team:', teamError);
+      return res.status(404).json({ 
+        success: false,
+        error: 'Team not found',
+        message: `No team found with RFID: ${rfid}` 
+      });
+    }
+    
+    if (!teamData || !teamData.players || teamData.players.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Team not found',
+        message: `Team with RFID ${rfid} has no players` 
+      });
+    }
+    
+    // Get settings
+    const settings = await firebaseService.getSettings();
+    const venueName = settings.venue?.name || 'SwingCity';
+    const logoPath = settings.venue?.logo || null;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const logoUrl = logoPath ? `${baseUrl}${logoPath}` : null;
+    
+    // Generate HTML
+    const html = generateScorecardEmailHtml(teamData, venueName, logoUrl, baseUrl);
+    
+    res.json({ success: true, html: html });
+  } catch (error) {
+    console.error('Error generating preview:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to generate preview', 
+      message: error.message || 'An unexpected error occurred' 
+    });
   }
 });
 
@@ -796,6 +1026,61 @@ app.post('/api/settings/email', async (req, res) => {
   } catch (error) {
     console.error('Error saving email settings:', error);
     res.status(500).json({ error: 'Failed to save', message: error.message });
+  }
+});
+
+// ==================== USER MANAGEMENT API ====================
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await firebaseService.getUsers();
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users', message: error.message });
+  }
+});
+
+// Add or update a user
+app.post('/api/users', async (req, res) => {
+  const { userId, name, pin, management } = req.body;
+  
+  if (!name || !pin) {
+    return res.status(400).json({ error: 'Name and PIN are required' });
+  }
+  
+  if (!/^\d{4}$/.test(pin)) {
+    return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+  }
+  
+  try {
+    // Generate userId if not provided
+    const finalUserId = userId || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    await firebaseService.saveUser(finalUserId, {
+      name,
+      pin,
+      management: management === true
+    });
+    
+    res.json({ success: true, userId: finalUserId });
+  } catch (error) {
+    console.error('Error saving user:', error);
+    res.status(500).json({ error: 'Failed to save user', message: error.message });
+  }
+});
+
+// Delete a user
+app.delete('/api/users/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    await firebaseService.deleteUser(userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user', message: error.message });
   }
 });
 
@@ -900,6 +1185,15 @@ io.on('connection', (socket) => {
 // ==================== ERROR HANDLERS ====================
 
 app.use((req, res) => {
+  // Return JSON for API routes, HTML for page routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      message: `API endpoint ${req.method} ${req.path} not found`
+    });
+  }
+  
   res.status(404).render('404', {
     title: '404 - Page Not Found'
   });
@@ -907,6 +1201,16 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // If it's an API route, return JSON instead of HTML
+  if (req.path.startsWith('/api/')) {
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'An error occurred'
+    });
+  }
+  
   res.status(500).render('error', {
     title: 'Error - SwingCity',
     error: process.env.NODE_ENV === 'development' ? err : {}
@@ -986,6 +1290,10 @@ async function startServer() {
       console.log('      • POST /api/unity/score');
       console.log('      • POST /api/unity/refresh-leaderboard');
       console.log('      • POST /api/unity/show-podium');
+      console.log('');
+      console.log('   ⚙️  Settings & Email:');
+      console.log('      • POST /api/settings/venue/logo');
+      console.log('      • POST /api/email-scorecard/preview');
       console.log('═══════════════════════════════════════════════════════════');
       console.log('');
     });
