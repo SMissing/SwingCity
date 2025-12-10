@@ -1113,6 +1113,58 @@ app.delete('/api/users/:userId', async (req, res) => {
   }
 });
 
+// ==================== TRAINING PROGRESS API ====================
+
+// Get training progress for current user
+app.get('/api/training/progress', async (req, res) => {
+  try {
+    // Get PIN from session or request
+    const pin = req.query.pin;
+    
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN required' });
+    }
+    
+    const progress = await firebaseService.getTrainingProgress(pin);
+    res.json({ success: true, progress });
+  } catch (error) {
+    console.error('Error fetching training progress:', error);
+    res.status(500).json({ error: 'Failed to fetch training progress', message: error.message });
+  }
+});
+
+// Save training progress for current user
+app.post('/api/training/progress', async (req, res) => {
+  try {
+    const { pin, completedModules } = req.body;
+    
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN required' });
+    }
+    
+    if (!completedModules || typeof completedModules !== 'object') {
+      return res.status(400).json({ error: 'completedModules object required' });
+    }
+    
+    await firebaseService.saveTrainingProgress(pin, completedModules);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving training progress:', error);
+    res.status(500).json({ error: 'Failed to save training progress', message: error.message });
+  }
+});
+
+// Get all training progress (for admin/settings view)
+app.get('/api/training/progress/all', async (req, res) => {
+  try {
+    const allProgress = await firebaseService.getAllTrainingProgress();
+    res.json({ success: true, progress: allProgress });
+  } catch (error) {
+    console.error('Error fetching all training progress:', error);
+    res.status(500).json({ error: 'Failed to fetch training progress', message: error.message });
+  }
+});
+
 // Test email
 app.post('/api/settings/email/test', async (req, res) => {
   const { to } = req.body;

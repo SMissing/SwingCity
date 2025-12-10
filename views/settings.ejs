@@ -1004,6 +1004,7 @@
                             <th>Name</th>
                             <th>PIN</th>
                             <th>Management</th>
+                            <th>Training Progress</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -1597,8 +1598,70 @@
 
         let editingUserId = null;
 
+        // Training progress cache (loaded from Firebase)
+        let trainingProgressCache = {};
+
+        // Load all training progress from Firebase
+        async function loadAllTrainingProgress() {
+            try {
+                const response = await fetch('/api/training/progress/all');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.progress) {
+                        trainingProgressCache = data.progress;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading training progress from Firebase:', error);
+                // Fall back to localStorage
+                trainingProgressCache = {};
+            }
+        }
+
+        // Calculate training progress for a given PIN
+        function getTrainingProgress(pin) {
+            // List of all training modules (update this when new modules are added)
+            const allModules = ['web-1', 'soft-1'];
+            
+            // Get completed modules from Firebase cache (or localStorage as fallback)
+            let completedModules = {};
+            
+            // Try Firebase first
+            const storageKey = pin === 'default' ? 'default' : `pin_${pin}`;
+            if (trainingProgressCache[storageKey]) {
+                completedModules = trainingProgressCache[storageKey];
+            } else {
+                // Fallback to localStorage
+                const localStorageKey = pin === 'default' 
+                    ? 'swingcity_training_completed_default' 
+                    : `swingcity_training_completed_pin_${pin}`;
+                try {
+                    const stored = localStorage.getItem(localStorageKey);
+                    if (stored) {
+                        completedModules = JSON.parse(stored);
+                    }
+                } catch (e) {
+                    console.error('Error reading training progress from localStorage:', e);
+                }
+            }
+            
+            // Count completed modules
+            const completedCount = allModules.filter(moduleId => completedModules[moduleId]).length;
+            const totalModules = allModules.length;
+            const percentage = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
+            
+            return {
+                completed: completedCount,
+                total: totalModules,
+                percentage: percentage
+            };
+        }
+
         async function loadUsers() {
             try {
+                // Load training progress first
+                await loadAllTrainingProgress();
+                
                 const response = await fetch('/api/users');
                 const data = await response.json();
                 
@@ -1617,7 +1680,7 @@
             const userEntries = Object.entries(users);
             
             if (userEntries.length === 0 && editingUserId === null) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No users added yet. Click "Add New User" to get started.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No users added yet. Click "Add New User" to get started.</td></tr>';
                 return;
             }
             
@@ -1641,6 +1704,9 @@
                                 </label>
                             </td>
                             <td>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            </td>
+                            <td>
                                 <div class="table-actions">
                                     <button class="btn-table btn-table-save" onclick="saveUser('${userId}')">
                                         <iconify-icon icon="ph:check-bold"></iconify-icon>
@@ -1654,6 +1720,9 @@
                         </tr>
                     `;
                 } else {
+                    const progress = getTrainingProgress(user.pin);
+                    const progressColor = progress.percentage === 100 ? 'var(--success)' : progress.percentage > 0 ? 'var(--accent-blue)' : 'var(--text-muted)';
+                    
                     return `
                         <tr id="row-${userId}">
                             <td>${escapeHtml(user.name)}</td>
@@ -1663,6 +1732,16 @@
                                     <input type="checkbox" ${isManagement ? 'checked' : ''} onchange="toggleManagement('${userId}', this.checked)">
                                     <span class="toggle-slider"></span>
                                 </label>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="flex: 1; min-width: 60px; height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden;">
+                                        <div style="height: 100%; width: ${progress.percentage}%; background: ${progressColor}; transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <span style="color: ${progressColor}; font-weight: 600; font-size: 0.85rem; min-width: 45px; text-align: right;">
+                                        ${progress.percentage}%
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <div class="table-actions">
@@ -1708,6 +1787,9 @@
                             <input type="checkbox" id="edit-management-new">
                             <span class="toggle-slider"></span>
                         </label>
+                    </td>
+                    <td>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
                     </td>
                     <td>
                         <div class="table-actions">

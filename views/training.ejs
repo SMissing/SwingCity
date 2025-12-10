@@ -1023,8 +1023,37 @@
             return user && user.pin === 'default';
         }
 
+        // Load training progress from Firebase
+        async function loadTrainingProgress() {
+            const user = getCurrentUser();
+            const userPin = user?.pin || 'default';
+            
+            try {
+                const response = await fetch(`/api/training/progress?pin=${userPin}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.progress) {
+                        // Merge Firebase data with localStorage (Firebase takes priority)
+                        const storageKey = getStorageKey();
+                        const localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+                        completedModules = { ...localData, ...data.progress };
+                        // Update localStorage with merged data
+                        localStorage.setItem(storageKey, JSON.stringify(completedModules));
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading training progress from Firebase:', error);
+                // Fall back to localStorage only
+                const storageKey = getStorageKey();
+                completedModules = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            }
+        }
+
         // Initialize on page load
-        function initTraining() {
+        async function initTraining() {
+            // Load progress from Firebase first
+            await loadTrainingProgress();
+            
             // Hide progress bar for default staff account
             const progressSection = document.querySelector('.progress-section');
             if (isDefaultStaff() && progressSection) {
@@ -1472,9 +1501,11 @@
         });
 
         // Mark module as complete (after quiz passed)
-        function markModuleComplete(moduleId) {
+        async function markModuleComplete(moduleId) {
             // Get the storage key for current user
             const storageKey = getStorageKey();
+            const user = getCurrentUser();
+            const userPin = user?.pin || 'default';
             
             // Reload modules from storage in case user changed
             completedModules = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -1482,8 +1513,27 @@
             // Mark as completed
             completedModules[moduleId] = true;
             
-            // Save to localStorage with user-specific key
+            // Save to localStorage with user-specific key (for offline/cache)
             localStorage.setItem(storageKey, JSON.stringify(completedModules));
+            
+            // Save to Firebase (primary storage)
+            try {
+                const response = await fetch('/api/training/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pin: userPin,
+                        completedModules: completedModules
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.warn('Failed to save training progress to Firebase, using localStorage only');
+                }
+            } catch (error) {
+                console.error('Error saving training progress to Firebase:', error);
+                // Continue with localStorage only if Firebase fails
+            }
             
             // Find the module card
             const card = document.querySelector(`[data-module="${moduleId}"]`);
@@ -1587,19 +1637,19 @@
         }
 
         // Initialize when PIN is unlocked
-        window.addEventListener('pinUnlocked', () => {
+        window.addEventListener('pinUnlocked', async () => {
             // Reload modules when user logs in
-            completedModules = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
-            initTraining();
+            await initTraining();
             // Load videos after initialization
             loadVideo('web-1', 'dashboard-video-container');
         });
         
         // Also check if already authenticated
         if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
-            initTraining();
-            // Load videos after initialization
-            loadVideo('web-1', 'dashboard-video-container');
+            initTraining().then(() => {
+                // Load videos after initialization
+                loadVideo('web-1', 'dashboard-video-container');
+            });
         }
 
         // Reload when user changes (if they log out and back in)

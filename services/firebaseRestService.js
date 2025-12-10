@@ -972,6 +972,78 @@ class FirebaseRestService {
     }
   }
 
+  // ==================== TRAINING PROGRESS OPERATIONS ====================
+
+  // Get training progress for a specific user (by PIN)
+  async getTrainingProgress(pin) {
+    if (this.mockMode) {
+      return {};
+    }
+
+    try {
+      const storageKey = pin === 'default' ? 'default' : `pin_${pin}`;
+      const response = await fetch(`${this.baseUrl}/trainingProgress/${storageKey}.json`);
+      
+      if (!response.ok) {
+        return {};
+      }
+      
+      const data = await response.json();
+      return data || {};
+    } catch (error) {
+      console.error('Error fetching training progress:', error.message);
+      return {};
+    }
+  }
+
+  // Save training progress for a specific user (by PIN)
+  async saveTrainingProgress(pin, completedModules) {
+    if (this.mockMode) {
+      console.log('🚨 MOCK MODE: Would save training progress:', { pin, completedModules });
+      return { success: true };
+    }
+
+    try {
+      const storageKey = pin === 'default' ? 'default' : `pin_${pin}`;
+      const response = await fetch(`${this.baseUrl}/trainingProgress/${storageKey}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(completedModules)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log(`✅ Training progress saved for PIN: ${pin}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving training progress:', error.message);
+      throw error;
+    }
+  }
+
+  // Get all training progress (for admin view)
+  async getAllTrainingProgress() {
+    if (this.mockMode) {
+      return {};
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/trainingProgress.json`);
+      
+      if (!response.ok) {
+        return {};
+      }
+      
+      const data = await response.json();
+      return data || {};
+    } catch (error) {
+      console.error('Error fetching all training progress:', error.message);
+      return {};
+    }
+  }
+
   // ==================== UTILITY FUNCTIONS ====================
 
   // Calculate total score for a team
