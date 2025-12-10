@@ -951,11 +951,60 @@
 
             <!-- Hardware Training Content -->
             <div class="training-content" data-role="hardware">
-                <div class="empty-state">
-                    <iconify-icon icon="ph:cpu-bold"></iconify-icon>
-                    <h3>Coming Soon</h3>
-                    <p>Hardware training modules will be added here.</p>
+                
+                <!-- Module 1: Sensor Location and Replacement -->
+                <div class="module-card" data-module="hard-1">
+                    <div class="module-header" onclick="toggleModule(this)">
+                        <div class="module-icon video">
+                            <iconify-icon icon="ph:play-bold"></iconify-icon>
+                        </div>
+                        <div class="module-info">
+                            <h3 class="module-title">Sensor Location</h3>
+                            <div class="module-meta">
+                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 4 min</span>
+                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
+                            </div>
+                        </div>
+                        <div class="module-status">
+                            <span class="status-badge not-started">Not Started</span>
+                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="content-body">
+                            <div class="video-container" id="hard-1-video-container">
+                                <!-- Video will be loaded here via JavaScript -->
+                            </div>
+                            <div class="content-text">
+                                <p>This video provides a comprehensive guide on locating sensors throughout the SwingCity course and how to replace them when needed.</p>
+                                <p><strong>What you'll learn:</strong></p>
+                                <ul>
+                                    <li>How to identify sensor locations on each hole</li>
+
+                                    <li>Tools and equipment needed for sensor maintenance</li>
+                                
+                                </ul>
+                                <p><strong>Key Points:</strong></p>
+                                <ul>
+                                
+                                    <li> How to quickly locate sensors on each hole</li>
+                                
+                                </ul>
+                                <p><strong>Important Notes:</strong></p>
+                                <ul>
+                                    <li>Document sensor locations for future reference</li>
+                                    <li>Test sensors thoroughly after replacement</li>
+                                    <li>Keep spare sensors on hand for quick replacements</li>
+                                </ul>
+                            </div>
+                            <button class="complete-btn" onclick="toggleComplete(this, 'hard-1')">
+                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+                                Mark as Complete
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             <footer class="footer">
@@ -1224,6 +1273,11 @@
                 // Hosting a Booking video - YouTube unlisted
                 type: 'youtube',
                 url: '_PMBBdwD6BU'
+            },
+            'hard-1': {
+                // Sensor Location Video 01 - YouTube
+                type: 'youtube',
+                url: 'JXdsVZlco3w'
             }
             // Add more video configs for other modules as needed
         };
@@ -1250,16 +1304,16 @@
                             'Leaderboard',
                             'High Scores',
                             'Teams',
-                            'Podium'
+                            'Training'
                         ],
                         correct: 2
                     },
                     {
                         question: 'What does the Leaderboard display?',
                         options: [
-                            'All-time best performances',
-                            'Live scores and rankings for active teams',
-                            'Winner celebrations',
+                            'All-time best scores',
+                            'Both live scores for active teams and all-time best scores',
+                            'Team managment',
                             'App downloads'
                         ],
                         correct: 1
@@ -1282,8 +1336,8 @@
                         question: 'What should you explain to customers during a booking?',
                         options: [
                             'Only the scoring system',
-                            'How to use RFID cards, navigate the course, and view progress',
-                            'Just the rules of golf',
+                            'How to use RFID cards, navigate the holes, and view progress',
+                            'The rules of crazy golf',
                             'Nothing - let them figure it out'
                         ],
                         correct: 1
@@ -1294,7 +1348,51 @@
                             'Be quiet and let customers explore alone',
                             'Be friendly, explain clearly, and answer questions',
                             'Rush through the explanation quickly',
-                            'Only show advanced features'
+                            'Show how the sensors work'
+                        ],
+                        correct: 1
+                    }
+                ]
+            },
+            'hard-1': {
+                questions: [
+                    {
+                        question: 'What is the main purpose of the sensor location video?',
+                        options: [
+                            'To learn how to play the game',
+                            'To understand where to find sensors',
+                            'To install new sensors',
+                            'To design new holes'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'What should you do before replacing a sensor?',
+                        options: [
+                            'Test the sensor first',
+                            'Power down the system',
+                            'Call technical support',
+                            'Nothing - just replace it'
+                        ],
+                        correct: 0
+                    },
+                    {
+                        question: 'Why is it important to know sensor locations?',
+                        options: [
+                            'To improve game scores',
+                            'To quickly locate and replace faulty sensors when needed',
+                            'To change game settings',
+                            'To update the software'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'What should you do after replacing a sensor?',
+                        options: [
+                            'Leave it and hope it works',
+                            'Test the sensor to verify it is working correctly',
+                            'Replace all other sensors too',
+                            'Restart the entire system'
                         ],
                         correct: 1
                     }
