@@ -1005,6 +1005,56 @@
                     </div>
                 </div>
 
+                <!-- Module 2: System Shutdown -->
+                <div class="module-card" data-module="hard-2">
+                    <div class="module-header" onclick="toggleModule(this)">
+                        <div class="module-icon video">
+                            <iconify-icon icon="ph:play-bold"></iconify-icon>
+                        </div>
+                        <div class="module-info">
+                            <h3 class="module-title">System Shutdown</h3>
+                            <div class="module-meta">
+                                <span><iconify-icon icon="ph:clock-bold"></iconify-icon> 2 min</span>
+                                <span><iconify-icon icon="ph:video-bold"></iconify-icon> Video</span>
+                            </div>
+                        </div>
+                        <div class="module-status">
+                            <span class="status-badge not-started">Not Started</span>
+                            <iconify-icon icon="ph:caret-down-bold" class="expand-icon"></iconify-icon>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="content-body">
+                            <div class="video-container" id="hard-2-video-container">
+                                <!-- Video will be loaded here via JavaScript -->
+                            </div>
+                            <div class="content-text">
+                                <p>This video provides a comprehensive guide on how to shut down the golf system.</p>
+                                <p><strong>What you'll learn:</strong></p>
+                                <ul>
+                                    <li>How to safely shut down the system</li>
+                                    <li>Proper shutdown procedures and sequence</li>
+                                </ul>
+                                <p><strong>Key Points:</strong></p>
+                                <ul>
+                                    <li>Follow the correct shutdown sequence to prevent data loss</li>
+                                    <li>Ensure all active sessions are properly closed</li>
+                                </ul>
+                                <p><strong>Important Notes:</strong></p>
+                                <ul>
+                                    <li>Always follow the proper shutdown procedure</li>
+                                    <li>Wait for confirmation before powering off equipment</li>
+                                    <li>Ensure the bar closedown is complete before the system shut down</li>
+                                </ul>
+                            </div>
+                            <button class="complete-btn" onclick="toggleComplete(this, 'hard-2')">
+                                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+                                Mark as Complete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <footer class="footer">
@@ -1275,9 +1325,14 @@
                 url: '_PMBBdwD6BU'
             },
             'hard-1': {
-                // Sensor Location Video 01 - YouTube
+                // Sensor Location Video 01 - YouTube unlisted
                 type: 'youtube',
                 url: 'JXdsVZlco3w'
+            },
+            'hard-2': {
+                // System Shutdown Video 01 - YouTube unlisted
+                type: 'youtube',
+                url: 'V2zgrb_SwGQ'
             }
             // Add more video configs for other modules as needed
         };
@@ -1382,7 +1437,7 @@
                             'Jump down the behind the hole',
                             'To quickly locate and replace faulty sensors when needed',
                             'By putting a ball through the pipe and looking through the other end',
-                            'By sliding out and then lifting the inner octagon'
+                            'By sliding out the inner octagon then lifting it up'
                         ],
                         correct: 3
                     },
@@ -1397,8 +1452,51 @@
                         correct: 1
                     }
                 ]
+            },
+            'hard-2': {
+                questions: [
+                    {
+                        question: 'How do you shut down the tablet on ski-jump?',
+                        options: [
+                            'Just press and hold the power button',
+                            'Tap the power button',
+                            'Press and hold the power button and then confirm it on the screen.',
+                            'It does not need to be shut down'
+                        ],
+                        correct: 2
+                    },
+                    {
+                        question: 'How do you close down the host laptop?',
+                        options: [
+                            'Just close the laptop',
+                            'Close down all apps appropriate then shut down the laptop',
+                            'Smack it with a golf club',
+                            'The close down fairies will do it for you'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'Why is it important to follow the shutdown procedure?',
+                        options: [
+                            'To save time',
+                            'To prevent system errors',
+                            'To test the system',
+                            'It is not important'
+                        ],
+                        correct: 1
+                    },
+                    {
+                        question: 'What should you do first in the shutdown procedure?',
+                        options: [
+                            'Flick the fuses',
+                            'Why am I shutting them down? I told you, the fairies will do it!',
+                            'Shut down the tablets one by one',
+                            'Ignore the shutdown process'
+                        ],
+                        correct: 2
+                    }
+                ]
             }
-            // Add more quiz data for other modules as needed
         };
 
         let currentQuiz = null;

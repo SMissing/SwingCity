@@ -1044,6 +1044,57 @@ class FirebaseRestService {
     }
   }
 
+  // ==================== UPDATE LOG TRACKING ====================
+
+  // Get the latest update log version that a user has seen
+  async getLastSeenUpdateVersion(pin) {
+    if (this.mockMode) {
+      return null;
+    }
+
+    try {
+      const storageKey = pin === 'default' ? 'default' : `pin_${pin}`;
+      const response = await fetch(`${this.baseUrl}/updateLogViews/${storageKey}/lastSeenVersion.json`);
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      return data || null;
+    } catch (error) {
+      console.error('Error fetching last seen update version:', error.message);
+      return null;
+    }
+  }
+
+  // Mark an update log version as seen by a user
+  async markUpdateVersionAsSeen(pin, version) {
+    if (this.mockMode) {
+      console.log('🚨 MOCK MODE: Would mark update version as seen:', { pin, version });
+      return { success: true };
+    }
+
+    try {
+      const storageKey = pin === 'default' ? 'default' : `pin_${pin}`;
+      const response = await fetch(`${this.baseUrl}/updateLogViews/${storageKey}/lastSeenVersion.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(version)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log(`✅ Update version ${version} marked as seen for PIN: ${pin}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking update version as seen:', error.message);
+      throw error;
+    }
+  }
+
   // ==================== UTILITY FUNCTIONS ====================
 
   // Calculate total score for a team

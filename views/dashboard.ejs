@@ -296,6 +296,210 @@
             font-size: 0.95rem;
         }
 
+        /* Training Badge */
+        .training-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #ef4444;
+            color: white;
+            border-radius: 12px;
+            padding: 0.4rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        /* Update Logs Button */
+        .update-logs-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            opacity: 0.5;
+            font-family: inherit;
+        }
+
+        .update-logs-btn:hover {
+            opacity: 1;
+            color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .update-logs-btn iconify-icon {
+            font-size: 0.95rem;
+        }
+
+        /* Update Modal */
+        .update-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .update-modal-overlay.active {
+            display: flex;
+        }
+
+        .update-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .update-modal-header {
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .update-modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .update-modal-title iconify-icon {
+            color: var(--accent-blue);
+            font-size: 1.75rem;
+        }
+
+        .update-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .update-modal-close:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .update-modal-content {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .update-log-entry {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .update-log-entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .update-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .update-log-version {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .update-log-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .update-log-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .update-log-content {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .update-modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .update-modal-btn {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .update-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .container {
@@ -405,6 +609,7 @@
                     <iconify-icon icon="ph:graduation-cap-bold" class="nav-icon"></iconify-icon>
                     <span class="nav-title">Training</span>
                     <span class="nav-desc">Staff & management guides</span>
+                    <span class="training-badge" id="trainingBadge" style="display: none;">0</span>
                 </a>
             </nav>
 
@@ -420,12 +625,41 @@
             </div>
 
             <footer class="footer">
-                <a href="/settings" class="settings-link">
-                    <iconify-icon icon="ph:gear-bold"></iconify-icon>
-                    Settings
-                </a>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                    <a href="/settings" class="settings-link">
+                        <iconify-icon icon="ph:gear-bold"></iconify-icon>
+                        Settings
+                    </a>
+                    <button class="update-logs-btn" id="updateLogsBtn" onclick="showUpdateLogsModal()">
+                        <iconify-icon icon="ph:scroll-bold"></iconify-icon>
+                        Update Logs
+                    </button>
+                </div>
                 <div>SwingCity © <%= new Date().getFullYear() %></div>
             </footer>
+        </div>
+    </div>
+
+    <!-- Update Logs Modal -->
+    <div class="update-modal-overlay" id="updateLogsModal">
+        <div class="update-modal">
+            <div class="update-modal-header">
+                <div class="update-modal-title">
+                    <iconify-icon icon="ph:scroll-bold"></iconify-icon>
+                    Update Logs
+                </div>
+                <button class="update-modal-close" onclick="closeUpdateLogsModal()">
+                    <iconify-icon icon="ph:x-bold"></iconify-icon>
+                </button>
+            </div>
+            <div class="update-modal-content" id="updateLogsContent">
+                <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    Loading update logs...
+                </div>
+            </div>
+            <div class="update-modal-footer">
+                <button class="update-modal-btn" onclick="closeUpdateLogsModal()">Close</button>
+            </div>
         </div>
     </div>
 
@@ -515,11 +749,182 @@
             }
         }
 
+        // ==================== UPDATE LOGS SYSTEM ====================
+
+        // Load training progress badge
+        async function loadTrainingBadge() {
+            const badge = document.getElementById('trainingBadge');
+            if (!badge) return;
+            
+            try {
+                const userStr = sessionStorage.getItem('swingcity_user');
+                if (!userStr) {
+                    badge.style.display = 'none';
+                    return;
+                }
+                
+                let userPin;
+                try {
+                    const user = JSON.parse(userStr);
+                    userPin = user?.pin || 'default';
+                } catch {
+                    userPin = 'default';
+                }
+                
+                // Skip badge for default staff account
+                if (userPin === 'default') {
+                    badge.style.display = 'none';
+                    return;
+                }
+                
+                // Get total modules count and training progress
+                let totalModules = 4; // Default: web-1, soft-1, hard-1, hard-2
+                let completedCount = 0;
+                
+                // Try to get total modules from API
+                try {
+                    const modulesResponse = await fetch('/api/training/modules/count');
+                    if (modulesResponse.ok) {
+                        const modulesData = await modulesResponse.json();
+                        if (modulesData.success && modulesData.totalModules) {
+                            totalModules = modulesData.totalModules;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Failed to fetch module count, using default:', err);
+                }
+                
+                // Get completed modules from API or localStorage
+                let completedModules = [];
+                try {
+                    const progressResponse = await fetch(`/api/training/progress?pin=${userPin}`);
+                    if (progressResponse.ok) {
+                        const progressData = await progressResponse.json();
+                        if (progressData.success && progressData.progress) {
+                            const progress = progressData.progress;
+                            // Get all completed module IDs (check for truthy values, not just === true)
+                            completedModules = Object.keys(progress).filter(m => progress[m]);
+                        }
+                    }
+                } catch (err) {
+                    // Fallback to localStorage
+                    const storageKey = `swingcity_training_completed_pin_${userPin}`;
+                    try {
+                        const stored = localStorage.getItem(storageKey);
+                        if (stored) {
+                            const completed = JSON.parse(stored);
+                            completedModules = Object.keys(completed).filter(m => completed[m]);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to read from localStorage:', e);
+                    }
+                }
+                
+                completedCount = completedModules.length;
+                
+                // Get the actual list of all modules to ensure we're comparing correctly
+                let allModuleIds = [];
+                try {
+                    const modulesResponse = await fetch('/api/training/modules/count');
+                    if (modulesResponse.ok) {
+                        const modulesData = await modulesResponse.json();
+                        if (modulesData.success && modulesData.modules) {
+                            allModuleIds = modulesData.modules;
+                            totalModules = allModuleIds.length;
+                        }
+                    }
+                } catch (err) {
+                    // Use default modules if API fails
+                    allModuleIds = ['web-1', 'soft-1', 'hard-1', 'hard-2'];
+                    totalModules = allModuleIds.length;
+                }
+                
+                // Count incomplete: modules that exist but aren't in completed list
+                const incompleteModules = allModuleIds.filter(m => !completedModules.includes(m));
+                const incompleteCount = incompleteModules.length;
+                
+                // Update badge - only show if there are incomplete modules
+                // Hide badge when incompleteCount is 0 (all modules completed)
+                if (incompleteCount > 0) {
+                    const countText = incompleteCount > 99 ? '99+' : incompleteCount.toString();
+                    badge.textContent = `${countText} not started`;
+                    badge.style.display = 'flex';
+                } else {
+                    // All modules completed - hide badge
+                    badge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading training badge:', error);
+                badge.style.display = 'none';
+            }
+        }
+
+        // Show update logs modal
+        async function showUpdateLogsModal() {
+            const modal = document.getElementById('updateLogsModal');
+            const content = document.getElementById('updateLogsContent');
+            
+            modal.classList.add('active');
+            
+            try {
+                const response = await fetch('/api/update-logs');
+                const data = await response.json();
+                
+                if (data.success && data.logs && data.logs.length > 0) {
+                    let html = '';
+                    data.logs.forEach(log => {
+                        const date = new Date(log.timestamp);
+                        const formattedDate = date.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        html += `
+                            <div class="update-log-entry">
+                                <div class="update-log-header">
+                                    <div>
+                                        <div class="update-log-version">Version ${log.version}</div>
+                                        <div class="update-log-title">${log.title}</div>
+                                    </div>
+                                    <div class="update-log-date">${formattedDate}</div>
+                                </div>
+                                <div class="update-log-content">${log.content || log.fullContent}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">No update logs available.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading update logs:', error);
+                content.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Error loading update logs.</div>';
+            }
+        }
+
+        // Close update logs modal
+        function closeUpdateLogsModal() {
+            document.getElementById('updateLogsModal').classList.remove('active');
+        }
+
+
+        // Close modals on overlay click
+        document.getElementById('updateLogsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUpdateLogsModal();
+            }
+        });
+
         // Start health check when PIN is unlocked
         window.addEventListener('pinUnlocked', function() {
             checkHealth();
             filterNavigation();
             displayUserInfo();
+            loadTrainingBadge();
         });
 
         // Also check if already authenticated on page load
@@ -527,12 +932,14 @@
             checkHealth();
             filterNavigation();
             displayUserInfo();
+            loadTrainingBadge();
         }
 
         // Recheck every 30 seconds (only when authenticated)
         setInterval(() => {
             if (sessionStorage.getItem('swingcity_authenticated') === 'true') {
                 checkHealth();
+                loadTrainingBadge();
             }
         }, 30000);
     </script>

@@ -585,6 +585,10 @@ const nodemailer = require('nodemailer');
 let emailTransporter = null;
 let emailSettings = null;
 
+// Temporary storage for captured photos (keyed by RFID)
+// Photos are stored as base64 data URLs and cleared after email is sent
+const capturedPhotos = new Map();
+
 async function getEmailTransporter() {
   // Get settings from Firebase
   const settings = await firebaseService.getSettings();
@@ -617,9 +621,73 @@ async function getEmailTransporter() {
   return { transporter: emailTransporter, settings: settings };
 }
 
+// Store captured photo temporarily (from leaderboard)
+app.post('/api/scorecard-photo', async (req, res) => {
+  const { rfid, photoData } = req.body;
+  
+  if (!rfid || !photoData) {
+    return res.status(400).json({ 
+      error: 'Missing required fields', 
+      message: 'RFID and photoData are required' 
+    });
+  }
+
+  try {
+    // Store photo with RFID as key
+    capturedPhotos.set(rfid, photoData);
+    console.log(`📸 Photo stored for RFID: ${rfid}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Photo stored successfully' 
+    });
+  } catch (error) {
+    console.error('Error storing photo:', error);
+    res.status(500).json({ 
+      error: 'Failed to store photo', 
+      message: error.message 
+    });
+  }
+});
+
+// Get captured photo by RFID
+app.get('/api/scorecard-photo/:rfid', async (req, res) => {
+  const { rfid } = req.params;
+  
+  if (!rfid) {
+    return res.status(400).json({ 
+      error: 'Missing required fields', 
+      message: 'RFID is required' 
+    });
+  }
+
+  try {
+    const photoData = capturedPhotos.get(rfid);
+    
+    if (photoData) {
+      res.json({ 
+        success: true, 
+        photoData: photoData 
+      });
+    } else {
+      res.status(404).json({ 
+        success: false,
+        error: 'Photo not found',
+        message: 'No photo found for this RFID' 
+      });
+    }
+  } catch (error) {
+    console.error('Error retrieving photo:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve photo', 
+      message: error.message 
+    });
+  }
+});
+
 // Email scorecard to team
 app.post('/api/email-scorecard', async (req, res) => {
-  const { rfid, email } = req.body;
+  const { rfid, email, photoData } = req.body;
   
   if (!rfid || !email) {
     return res.status(400).json({ 
@@ -638,6 +706,9 @@ app.post('/api/email-scorecard', async (req, res) => {
 
     console.log(`📧 Scorecard email requested for ${email} (Team: ${teamData.teamName})`);
     
+    // Get photo (from request body or temporary storage)
+    const photo = photoData || capturedPhotos.get(rfid);
+    
     // Get email transporter with settings from Firebase
     const emailConfig = await getEmailTransporter();
     
@@ -650,23 +721,50 @@ app.post('/api/email-scorecard', async (req, res) => {
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const logoUrl = venueLogo ? `${baseUrl}${venueLogo}` : null;
       
-      // Generate scorecard HTML for email
-      const scorecardHtml = generateScorecardEmailHtml(teamData, venueName, logoUrl, baseUrl);
+      // Generate scorecard HTML for email (with photo if available)
+      const scorecardHtml = generateScorecardEmailHtml(teamData, venueName, logoUrl, baseUrl, photo);
       
       // Build from address
       const fromName = settings.email.fromName || venueName;
       const fromAddress = `${fromName} <${settings.email.user}>`;
+      
+      // Prepare email attachments
+      const attachments = [];
+      
+      // If photo is provided, add it as an attachment and embed in HTML
+      if (photo) {
+        // Extract base64 from data URL
+        const base64Match = photo.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (base64Match) {
+          const imageType = base64Match[1] || 'jpeg';
+          const base64Data = base64Match[2];
+          const buffer = Buffer.from(base64Data, 'base64');
+          
+          attachments.push({
+            filename: `team-photo.${imageType}`,
+            content: buffer,
+            contentType: `image/${imageType}`,
+            cid: 'team-photo' // Content ID for embedding in HTML
+          });
+        }
+      }
       
       // Send the actual email
       const mailOptions = {
         from: fromAddress,
         to: email,
         subject: `🏌️ Your ${venueName} Scorecard - ${teamData.teamName}`,
-        html: scorecardHtml
+        html: scorecardHtml,
+        attachments: attachments
       };
       
       await transporter.sendMail(mailOptions);
-      console.log(`✅ Scorecard email sent to ${email}`);
+      console.log(`✅ Scorecard email sent to ${email}${photo ? ' with photo' : ''}`);
+      
+      // Clear stored photo after sending
+      if (capturedPhotos.has(rfid)) {
+        capturedPhotos.delete(rfid);
+      }
       
       res.json({ 
         success: true, 
@@ -691,7 +789,7 @@ app.post('/api/email-scorecard', async (req, res) => {
 });
 
 // Helper function to generate beautiful scorecard email HTML
-function generateScorecardEmailHtml(teamData, venueName = 'SwingCity', logoUrl = null, baseUrl = '') {
+function generateScorecardEmailHtml(teamData, venueName = 'SwingCity', logoUrl = null, baseUrl = '', photo = null) {
   const holes = ['Plinko', 'SpinningTop', 'Haphazard', 'Roundhouse', 'HillHop', 'SkiJump', 'Mastermind', 'Igloo', 'Octagon', 'LoopDeLoop', 'UpAndOver', 'Lopside'];
   
   // Calculate player totals and find winner
@@ -738,6 +836,15 @@ function generateScorecardEmailHtml(teamData, venueName = 'SwingCity', logoUrl =
       <p style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 8px;">${winner.name}</p>
       <p style="color: #fbbf24; font-size: 20px; font-weight: 600; margin: 0;">${winner.total} pts</p>
     </div>
+    
+    ${photo ? `
+    <!-- Team Photo -->
+    <div style="margin: 0 20px 25px; text-align: center;">
+      <div style="background: #161b22; border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.06);">
+        <img src="cid:team-photo" alt="Team Photo" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+      </div>
+    </div>
+    ` : ''}
     
     <!-- Player Scores -->
     <div style="padding: 0 20px 25px;">
@@ -1164,6 +1271,136 @@ app.get('/api/training/progress/all', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch training progress', message: error.message });
   }
 });
+
+// Get total training modules count
+app.get('/api/training/modules/count', async (req, res) => {
+  try {
+    // Read the training.ejs file to count modules
+    const trainingPath = path.join(__dirname, 'views', 'training.ejs');
+    const content = fs.readFileSync(trainingPath, 'utf8');
+    
+    // Count all data-module attributes
+    const moduleMatches = content.match(/data-module="([^"]+)"/g) || [];
+    const uniqueModules = new Set();
+    moduleMatches.forEach(match => {
+      const moduleId = match.match(/data-module="([^"]+)"/)[1];
+      uniqueModules.add(moduleId);
+    });
+    
+    res.json({ success: true, totalModules: uniqueModules.size, modules: Array.from(uniqueModules) });
+  } catch (error) {
+    console.error('Error counting training modules:', error);
+    res.status(500).json({ error: 'Failed to count modules', message: error.message });
+  }
+});
+
+// ==================== UPDATE LOG API ====================
+
+// Get update logs from CHANGELOG.txt file
+app.get('/api/update-logs', async (req, res) => {
+  try {
+    const changelogPath = path.join(__dirname, 'update-logs', 'CHANGELOG.txt');
+    
+    if (!fs.existsSync(changelogPath)) {
+      return res.json({ success: true, logs: [], latestVersion: null });
+    }
+    
+    const content = fs.readFileSync(changelogPath, 'utf8');
+    const logs = parseUpdateLogs(content);
+    
+    // Get the latest version (first entry)
+    const latestVersion = logs.length > 0 ? logs[0].version : null;
+    
+    res.json({ success: true, logs, latestVersion });
+  } catch (error) {
+    console.error('Error reading update logs:', error);
+    res.status(500).json({ error: 'Failed to read update logs', message: error.message });
+  }
+});
+
+// Get the latest update version that user has seen
+app.get('/api/update-logs/last-seen', async (req, res) => {
+  try {
+    const pin = req.query.pin;
+    
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN required' });
+    }
+    
+    const lastSeenVersion = await firebaseService.getLastSeenUpdateVersion(pin);
+    res.json({ success: true, lastSeenVersion });
+  } catch (error) {
+    console.error('Error fetching last seen update version:', error);
+    res.status(500).json({ error: 'Failed to fetch last seen version', message: error.message });
+  }
+});
+
+// Mark update version as seen
+app.post('/api/update-logs/mark-seen', async (req, res) => {
+  try {
+    const { pin, version } = req.body;
+    
+    if (!pin || !version) {
+      return res.status(400).json({ error: 'PIN and version are required' });
+    }
+    
+    await firebaseService.markUpdateVersionAsSeen(pin, version);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking update as seen:', error);
+    res.status(500).json({ error: 'Failed to mark update as seen', message: error.message });
+  }
+});
+
+// Helper function to parse update logs from text file
+function parseUpdateLogs(content) {
+  const logs = [];
+  
+  // Split by timestamp pattern [YYYY-MM-DD HH:MM:SS]
+  const sections = content.split(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/);
+  
+  for (let i = 1; i < sections.length; i += 2) {
+    const timestamp = sections[i];
+    const sectionContent = sections[i + 1]?.trim() || '';
+    
+    if (!sectionContent) continue;
+    
+    // Extract version and title from first line if present
+    const lines = sectionContent.split('\n').filter(line => line.trim());
+    const firstLine = lines[0] || '';
+    
+    // Try to extract version (e.g., "Version 1.0.0 - Title")
+    const versionMatch = firstLine.match(/Version ([\d.]+)/);
+    const version = versionMatch ? versionMatch[1] : timestamp;
+    
+    // Extract title (everything after "Version X.X.X - " or use first line)
+    let title = firstLine;
+    if (versionMatch) {
+      title = firstLine.replace(/^Version [\d.]+ - /, '').trim();
+    }
+    if (!title) title = 'Update';
+    
+    // Get the rest of the content (bullet points, descriptions, etc.)
+    const description = lines.slice(1).join('\n').trim();
+    
+    logs.push({
+      version,
+      timestamp,
+      title: title,
+      content: description || sectionContent,
+      fullContent: sectionContent
+    });
+  }
+  
+  // Sort by timestamp (newest first)
+  logs.sort((a, b) => {
+    const dateA = new Date(a.timestamp);
+    const dateB = new Date(b.timestamp);
+    return dateB - dateA;
+  });
+  
+  return logs;
+}
 
 // Test email
 app.post('/api/settings/email/test', async (req, res) => {
